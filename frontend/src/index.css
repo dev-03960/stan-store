@@ -1,0 +1,82 @@
+@import "tailwindcss";
+
+/* ============================================
+   Stan-store Design Tokens
+   Source: ux-design-specification.md
+   ============================================ */
+
+@theme {
+  /* ── Primary Palette: "Creator Purple" ── */
+  --color-primary: #6C5CE7;
+  --color-primary-hover: #5A4BD5;
+  --color-primary-soft: #A29BFE;
+  --color-primary-ghost: #F0EEFF;
+
+  /* ── Semantic Colors ── */
+  --color-success: #00B894;
+  --color-success-soft: #E6F9F3;
+  --color-danger: #FF6B6B;
+  --color-danger-soft: #FFF0F0;
+  --color-warning: #FDCB6E;
+  --color-info: #74B9FF;
+
+  /* ── Neutral Scale ── */
+  --color-text-primary: #1A1A2E;
+  --color-text-secondary: #6B7280;
+  --color-text-muted: #9CA3AF;
+  --color-border: #E5E7EB;
+  --color-surface: #FFFFFF;
+  --color-background: #F9FAFB;
+
+  /* ── Dark Mode Overrides (Creator Dashboard) ── */
+  --color-surface-dark: #1E1E2E;
+  --color-background-dark: #13131A;
+  --color-text-primary-dark: #F1F1F1;
+  --color-border-dark: #2D2D3F;
+
+  /* ── Typography ── */
+  --font-display: 'Outfit', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* ── Border Radius ── */
+  --radius-card: 16px;
+  --radius-button: 12px;
+  --radius-input: 8px;
+
+  /* ── Shadows ── */
+  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.08);
+  --shadow-elevated: 0 8px 32px rgba(0, 0, 0, 0.12);
+
+  /* ── Spacing (4px base unit) ── */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+}
+
+/* ── Base Styles ── */
+
+html {
+  font-family: var(--font-body);
+  color: var(--color-text-primary);
+  background-color: var(--color-background);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+}
+
+/* ── Accessibility: Reduced Motion ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

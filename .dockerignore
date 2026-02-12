@@ -1,0 +1,15 @@
+node_modules
+vendor
+dist
+tmp
+.git
+.env
+.env.local
+*.log
+coverage
+.vscode
+.idea
+.DS_Store
+frontend/dist
+frontend/.vite
+backend/tmp
