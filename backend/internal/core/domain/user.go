@@ -12,6 +12,16 @@ type SocialLink struct {
 	URL      string `bson:"url" json:"url"`
 }
 
+const (
+	RoleCreator = "creator"
+	RoleAdmin   = "admin"
+)
+
+const (
+	UserStatusActive = "active"
+	UserStatusBanned = "banned"
+)
+
 // User represents a user in the system.
 type User struct {
 	ID               primitive.ObjectID `bson:"_id,omitempty" json:"id"`
@@ -21,9 +31,12 @@ type User struct {
 	AvatarURL        string             `bson:"avatar_url" json:"avatarUrl"`
 	GoogleID         string             `bson:"google_id" json:"googleId"`
 	SubscriptionTier string             `bson:"subscription_tier" json:"subscriptionTier"`
+	Role             string             `bson:"role" json:"role"` // "creator" or "admin"
 	Bio              string             `bson:"bio,omitempty" json:"bio,omitempty"`
 	SocialLinks      []SocialLink       `bson:"social_links,omitempty" json:"socialLinks,omitempty"`
 	Status           string             `bson:"status" json:"status"`
+	BannedAt         *time.Time         `bson:"banned_at,omitempty" json:"bannedAt,omitempty"`
+	BanReason        string             `bson:"ban_reason,omitempty" json:"banReason,omitempty"`
 	CreatedAt        time.Time          `bson:"created_at" json:"createdAt"`
 	UpdatedAt        time.Time          `bson:"updated_at" json:"updatedAt"`
 }
@@ -37,6 +50,7 @@ func NewUserFromGoogle(email, displayName, avatarURL, googleID string) *User {
 		AvatarURL:        avatarURL,
 		GoogleID:         googleID,
 		SubscriptionTier: "free",
+		Role:             RoleCreator, // Default to creator
 		Status:           "active",
 		SocialLinks:      []SocialLink{},
 		CreatedAt:        now,

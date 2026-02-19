@@ -8,6 +8,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 
+	"github.com/devanshbhargava/stan-store/internal/adapters/email"
 	httpAdapter "github.com/devanshbhargava/stan-store/internal/adapters/http"
 	"github.com/devanshbhargava/stan-store/internal/adapters/storage"
 	"github.com/devanshbhargava/stan-store/internal/config"
@@ -37,12 +38,51 @@ func main() {
 
 	// 4. Initialize repositories
 	userRepo := storage.NewMongoUserRepository(mongoDB)
+	productRepo := storage.NewMongoProductRepository(mongoDB)
+	orderRepo := storage.NewMongoOrderRepository(mongoDB.Database)
 
 	// 5. Initialize services
 	jwtService := services.NewJWTService(cfg.JWTSecret)
 	authService := services.NewAuthService(userRepo, jwtService)
 	usernameService := services.NewUsernameService(userRepo)
 	profileService := services.NewProfileService(userRepo)
+	productService := services.NewProductService(productRepo)
+	storeService := services.NewStoreService(userRepo, productRepo)
+
+	// Convert *MongoDB to *mongo.Database if needed, or update repo constructor.
+	paymentRepo := storage.NewMongoPaymentRepository(mongoDB.Database)
+	paymentService := services.NewPaymentService(paymentRepo, cfg)
+
+	// ... (S3 storage init) ...
+	fileStorage, err := storage.NewS3Storage(
+		cfg.R2AccountID,
+		cfg.R2AccessKeyID,
+		cfg.R2SecretAccessKey,
+		cfg.R2BucketName,
+		cfg.R2Endpoint,
+	)
+	if err != nil {
+		logger.Error("failed to initialize s3 storage", "error", err.Error())
+		// non-fatal for now to allow app to start even if storage is misconfigured (unless it's critical)
+	}
+
+	uploadService := services.NewUploadService(fileStorage)
+
+	// Initialize Email Service
+	emailAdapter := email.NewSMTPEmailAdapter(
+		cfg.SMTPHost,
+		cfg.SMTPPort,
+		cfg.SMTPUser,
+		cfg.SMTPPass,
+		cfg.SMTPFrom,
+	)
+
+	// Initialize Wallet Service
+	transactionRepo := storage.NewMongoTransactionRepository(mongoDB.Database)
+	walletService := services.NewWalletService(transactionRepo)
+
+	orderService := services.NewOrderService(orderRepo, productRepo, paymentService, uploadService, walletService, emailAdapter)
+	uploadHandler := httpAdapter.NewUploadHandler(uploadService)
 
 	// 6. Initialize handlers
 	authHandler := httpAdapter.NewAuthHandler(
@@ -50,9 +90,19 @@ func main() {
 		cfg.GoogleClientID,
 		cfg.GoogleClientSecret,
 		cfg.GoogleRedirectURL,
+		cfg.FrontendURL,
 	)
 	usernameHandler := httpAdapter.NewUsernameHandler(usernameService)
 	profileHandler := httpAdapter.NewProfileHandler(profileService)
+	productHandler := httpAdapter.NewProductHandler(productService)
+	storeHandler := httpAdapter.NewStoreHandler(storeService)
+	// Pass OrderService and Webhook Secret
+	paymentHandler := httpAdapter.NewPaymentHandler(paymentService, orderService, cfg.RazorpayWebhookSecret)
+	orderHandler := httpAdapter.NewOrderHandler(orderService)
+	walletHandler := httpAdapter.NewWalletHandler(walletService)
+
+	adminService := services.NewAdminService(userRepo, transactionRepo, orderRepo)
+	adminHandler := httpAdapter.NewAdminHandler(adminService)
 
 	// 7. Create Fiber app
 	app := fiber.New(fiber.Config{
@@ -65,9 +115,18 @@ func main() {
 	httpAdapter.SetupRouter(app, &httpAdapter.RouterDeps{
 		FrontendURL:     cfg.FrontendURL,
 		JWTService:      jwtService,
+		UserRepo:        userRepo,
 		AuthHandler:     authHandler,
 		UsernameHandler: usernameHandler,
 		ProfileHandler:  profileHandler,
+
+		ProductHandler: productHandler,
+		UploadHandler:  uploadHandler,
+		StoreHandler:   storeHandler,
+		PaymentHandler: paymentHandler,
+		OrderHandler:   orderHandler,
+		WalletHandler:  walletHandler,
+		AdminHandler:   adminHandler,
 	})
 
 	// 9. Graceful shutdown

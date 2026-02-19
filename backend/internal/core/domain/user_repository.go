@@ -14,4 +14,7 @@ type UserRepository interface {
 
 	// FindByUsername finds a user by their claimed username (case-insensitive).
 	FindByUsername(ctx context.Context, username string) (*User, error)
+
+	// UpdateStatus updates a user's status (active/banned) along with ban metadata.
+	UpdateStatus(ctx context.Context, id string, status string, reason string) error
 }

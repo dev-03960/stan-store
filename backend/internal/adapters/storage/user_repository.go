@@ -2,9 +2,12 @@ package storage
 
 import (
 	"context"
+	"fmt"
 	"strings"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
@@ -99,4 +102,43 @@ func (r *MongoUserRepository) FindByUsername(ctx context.Context, username strin
 		return nil, err
 	}
 	return &user, nil
+}
+
+// UpdateStatus updates a user's status (active/banned) with ban metadata.
+func (r *MongoUserRepository) UpdateStatus(ctx context.Context, id string, status string, reason string) error {
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return fmt.Errorf("invalid id: %w", err)
+	}
+
+	col := r.Collection()
+	now := time.Now()
+
+	update := bson.M{
+		"$set": bson.M{
+			"status":     status,
+			"updated_at": now,
+		},
+	}
+
+	if status == domain.UserStatusBanned {
+		update["$set"].(bson.M)["banned_at"] = now
+		update["$set"].(bson.M)["ban_reason"] = reason
+	} else {
+		// On unban, clear ban fields
+		update["$unset"] = bson.M{
+			"banned_at":  "",
+			"ban_reason": "",
+		}
+	}
+
+	result, err := col.UpdateByID(ctx, objectID, update)
+	if err != nil {
+		return fmt.Errorf("update status: %w", err)
+	}
+	if result.MatchedCount == 0 {
+		return fmt.Errorf("user not found")
+	}
+
+	return nil
 }

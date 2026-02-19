@@ -24,10 +24,11 @@ const (
 type AuthHandler struct {
 	authService *services.AuthService
 	oauthConfig *oauth2.Config
+	frontendURL string
 }
 
 // NewAuthHandler creates a new AuthHandler.
-func NewAuthHandler(authService *services.AuthService, clientID, clientSecret, redirectURL string) *AuthHandler {
+func NewAuthHandler(authService *services.AuthService, clientID, clientSecret, redirectURL, frontendURL string) *AuthHandler {
 	oauthConfig := &oauth2.Config{
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
@@ -39,6 +40,7 @@ func NewAuthHandler(authService *services.AuthService, clientID, clientSecret, r
 	return &AuthHandler{
 		authService: authService,
 		oauthConfig: oauthConfig,
+		frontendURL: frontendURL,
 	}
 }
 
@@ -106,13 +108,19 @@ func (h *AuthHandler) GoogleCallback(c *fiber.Ctx) error {
 		Path:     "/",
 	})
 
-	// Redirect to frontend
-	frontendURL := c.Query("state", result.RedirectURL)
-	if frontendURL == "" {
-		frontendURL = result.RedirectURL
+	// Determine where to redirect
+	finalPath := result.RedirectURL // Default from service (handles onboarding check)
+
+	// If the user is active (service allows dashboard), check if a specific return path was requested via state
+	state := c.Query("state")
+	if finalPath == "/dashboard" && state != "" && state != "/dashboard" {
+		finalPath = state
 	}
 
-	return c.Redirect(frontendURL, fiber.StatusTemporaryRedirect)
+	// Construct full URL using configuration
+	redirectURL := h.frontendURL + finalPath
+
+	return c.Redirect(redirectURL, fiber.StatusTemporaryRedirect)
 }
 
 // GetMe returns the current authenticated user.

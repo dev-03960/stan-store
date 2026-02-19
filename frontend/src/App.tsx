@@ -1,9 +1,17 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { PrivateRoute } from './components/auth/PrivateRoute';
+
 import LoginPage from './pages/auth/LoginPage';
 import OnboardingPage from './pages/onboarding/OnboardingPage';
+import StorePage from './pages/StorePage';
+import OrderPage from './pages/OrderPage';
+import DashboardPage from './pages/DashboardPage';
 import { RootLayout } from './components/layout/RootLayout';
+import { DashboardLayout } from './components/layout/DashboardLayout';
+import EarningsPage from './pages/dashboard/EarningsPage';
+import OrdersPage from './pages/dashboard/OrdersPage';
+import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
 function StorefrontPage() {
@@ -33,18 +41,7 @@ function StorefrontPage() {
   );
 }
 
-function DashboardPage() {
-  return (
-    <div className="py-12 text-center">
-      <h1 className="mb-4 font-heading text-4xl font-bold text-gray-900">
-        Creator Dashboard
-      </h1>
-      <p className="text-lg text-gray-600">
-        Manage your products and track sales.
-      </p>
-    </div>
-  );
-}
+
 
 export default function App() {
   return (
@@ -56,10 +53,17 @@ export default function App() {
               {/* Public Routes */}
               <Route path="/" element={<StorefrontPage />} />
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/store/:username" element={<StorePage />} />
+              <Route path="/orders/:orderId" element={<OrderPage />} />
 
               {/* Protected Routes */}
               <Route element={<PrivateRoute />}>
-                <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/dashboard" element={<DashboardLayout />}>
+                  <Route index element={<DashboardPage />} />
+                  <Route path="earnings" element={<EarningsPage />} />
+                  <Route path="orders" element={<OrdersPage />} />
+                </Route>
+                <Route path="/admin" element={<AdminDashboardPage />} />
                 <Route path="/onboarding" element={<OnboardingPage />} />
               </Route>
             </Route>

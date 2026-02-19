@@ -1,8 +1,11 @@
 package http
 
 import (
+	"context"
+
 	"github.com/gofiber/fiber/v2"
 
+	"github.com/devanshbhargava/stan-store/internal/core/domain"
 	"github.com/devanshbhargava/stan-store/internal/core/services"
 )
 
@@ -13,7 +16,15 @@ func AuthRequired(jwtService *services.JWTService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		token := extractTokenFromCookie(c)
 		if token == "" {
-			return SendError(c, fiber.StatusUnauthorized, ErrUnauthorized, "Authentication required", nil)
+			// Fallback to Authorization header
+			authHeader := c.Get("Authorization")
+			if len(authHeader) > 7 && authHeader[:7] == "Bearer " {
+				token = authHeader[7:]
+			}
+		}
+
+		if token == "" {
+			return SendError(c, fiber.StatusUnauthorized, ErrUnauthorized, "Authentication required - No Token", nil)
 		}
 
 		claims, err := jwtService.ValidateToken(token)
@@ -45,6 +56,37 @@ func RoleRequired(roles ...string) fiber.Handler {
 
 		if !allowed[role] {
 			return SendError(c, fiber.StatusForbidden, ErrForbidden, "Insufficient permissions", nil)
+		}
+
+		return c.Next()
+	}
+}
+
+// BanCheck middleware verifies that the authenticated user is not banned.
+// Must be used AFTER AuthRequired in the middleware chain.
+// Admin users bypass this check so they can still manage bans.
+func BanCheck(userRepo domain.UserRepository) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		userID, ok := c.Locals("userId").(string)
+		if !ok || userID == "" {
+			return c.Next() // Let AuthRequired handle missing userId
+		}
+
+		// Admin users bypass ban check
+		role, _ := c.Locals("role").(string)
+		if role == domain.RoleAdmin {
+			return c.Next()
+		}
+
+		user, err := userRepo.FindByID(context.Background(), userID)
+		if err != nil || user == nil {
+			// If user not found in DB, let the request through —
+			// other handlers will handle missing users appropriately.
+			return c.Next()
+		}
+
+		if user.Status == domain.UserStatusBanned {
+			return SendError(c, fiber.StatusForbidden, ErrAccountBanned, "Your account has been suspended", nil)
 		}
 
 		return c.Next()

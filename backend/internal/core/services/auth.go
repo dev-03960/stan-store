@@ -72,7 +72,7 @@ func (s *AuthService) HandleGoogleCallback(ctx context.Context, gUser *GoogleUse
 	}
 
 	// Generate JWT
-	token, err := s.jwtService.GenerateToken(user.ID.Hex(), "creator")
+	token, err := s.jwtService.GenerateToken(user.ID.Hex(), user.Role)
 	if err != nil {
 		return nil, fmt.Errorf("generate token: %w", err)
 	}

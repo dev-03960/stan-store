@@ -1,0 +1,595 @@
+{
+    "info": {
+        "name": "Stan Store API",
+        "description": "Complete API collection for Stan Store — a digital product store platform. Includes auth, products, orders, payments, storefront, wallet, admin, and moderation endpoints.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:8080"
+        },
+        {
+            "key": "apiBase",
+            "value": "{{baseUrl}}/api/v1"
+        },
+        {
+            "key": "creatorToken",
+            "value": ""
+        },
+        {
+            "key": "adminToken",
+            "value": ""
+        },
+        {
+            "key": "creatorId",
+            "value": ""
+        },
+        {
+            "key": "productId",
+            "value": ""
+        },
+        {
+            "key": "orderId",
+            "value": ""
+        },
+        {
+            "key": "creatorUsername",
+            "value": ""
+        }
+    ],
+    "item": [
+        {
+            "name": "🔐 Auth",
+            "description": "Authentication endpoints — Google OAuth flow, session management",
+            "item": [
+                {
+                    "name": "Health Check",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{apiBase}}/health",
+                        "description": "Verify the API server is running."
+                    }
+                },
+                {
+                    "name": "Google Login (Browser)",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{apiBase}}/auth/google?redirect=/dashboard",
+                            "host": [
+                                "{{apiBase}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "google"
+                            ],
+                            "query": [
+                                {
+                                    "key": "redirect",
+                                    "value": "/dashboard"
+                                }
+                            ]
+                        },
+                        "description": "Open this URL in a BROWSER (not Postman). It redirects to Google OAuth consent. After login, the callback sets an HTTP-Only cookie `stan_token`. \n\nTo get a token for Postman:\n1. Open this URL in your browser\n2. After redirect, open DevTools → Application → Cookies\n3. Copy the `stan_token` value\n4. Paste into the `creatorToken` collection variable"
+                    }
+                },
+                {
+                    "name": "Get Current User",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{apiBase}}/auth/me",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{creatorToken}}"
+                            }
+                        ],
+                        "description": "Returns the authenticated user's profile. Requires auth token."
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "  var data = pm.response.json().data;",
+                                    "  pm.collectionVariables.set('creatorId', data.id);",
+                                    "  pm.collectionVariables.set('creatorUsername', data.username || '');",
+                                    "  console.log('Saved creatorId:', data.id);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Logout",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{apiBase}}/auth/logout",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{creatorToken}}"
+                            }
+                        ],
+                        "description": "Clears the auth cookie. Returns 200."
+                    }
+                }
+            ]
+        },
+        {
+            "name": "👤 Username",
+            "description": "Username management — check availability and claim a username during onboarding",
+            "item": [
+                {
+                    "name": "Check Username Availability",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{apiBase}}/auth/username/check?username=mystore",
+                            "host": [
+                                "{{apiBase}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "username",
+                                "check"
+                            ],
+                            "query": [
+                                {
+                                    "key": "username",
+                                    "value": "mystore"
+                                }
+                            ]
+                        },
+                        "description": "PUBLIC — Check if a username is available. Returns `{available: true/false}`."
+                    }
+                },
+                {
+                    "name": "Claim Username",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{apiBase}}/auth/username",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{creatorToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"username\": \"mystore\"\n}"
+                        },
+                        "description": "Claim a username for onboarding. Only works once per user. 3-30 chars, lowercase alphanumeric + underscores."
+                    }
+                }
+            ]
+        },
+        {
+            "name": "🎨 Creator Profile",
+            "description": "Creator profile management — bio, display name, social links, theme",
+            "item": [
+                {
+                    "name": "Get Profile",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{apiBase}}/creator/profile",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{creatorToken}}"
+                            }
+                        ],
+                        "description": "Get the authenticated creator's full profile."
+                    }
+                },
+                {
+                    "name": "Update Profile",
+                    "request": {
+                        "method": "PUT",
+                        "url": "{{apiBase}}/creator/profile",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{creatorToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"display_name\": \"My Awesome Store\",\n  \"bio\": \"Digital creator selling premium content\",\n  \"profile_image_url\": \"https://example.com/avatar.jpg\",\n  \"social_links\": {\n    \"twitter\": \"https://twitter.com/mystore\",\n    \"instagram\": \"https://instagram.com/mystore\"\n  },\n  \"theme_color\": \"#6c5ce7\"\n}"
+                        },
+                        "description": "Update creator profile fields. All fields are optional — only provided fields are updated."
+                    }
+                }
+            ]
+        },
+        {
+            "name": "📦 Products",
+            "description": "Product CRUD, visibility toggles, and reordering",
+            "item": [
+                {
+                    "name": "Create Product",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{apiBase}}/products",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{creatorToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"title\": \"My Workout PDF\",\n  \"description\": \"Lose fat and build muscle in 30 days with this complete workout plan\",\n  \"price\": 49900,\n  \"cover_image_url\": \"https://example.com/cover.jpg\",\n  \"file_url\": \"s3://bucket/workout-plan.pdf\",\n  \"product_type\": \"download\"\n}"
+                        },
+                        "description": "Create a new digital product. Price is in paise (₹499 = 49900). Min price: 100 paise (₹1)."
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "  var data = pm.response.json().data;",
+                                    "  pm.collectionVariables.set('productId', data.id);",
+                                    "  console.log('Saved productId:', data.id);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "List My Products",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{apiBase}}/products",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{creatorToken}}"
+                            }
+                        ],
+                        "description": "Get all products for the authenticated creator."
+                    }
+                },
+                {
+                    "name": "Update Product",
+                    "request": {
+                        "method": "PUT",
+                        "url": "{{apiBase}}/products/{{productId}}",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{creatorToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"title\": \"Updated Workout PDF v2\",\n  \"price\": 69900,\n  \"description\": \"Updated description with more details\"\n}"
+                        },
+                        "description": "Update product fields. Only provided fields are changed."
+                    }
+                },
+                {
+                    "name": "Toggle Product Visibility",
+                    "request": {
+                        "method": "PATCH",
+                        "url": "{{apiBase}}/products/{{productId}}/visibility",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{creatorToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"is_visible\": false\n}"
+                        },
+                        "description": "Show/hide a product on the public storefront."
+                    }
+                },
+                {
+                    "name": "Reorder Products",
+                    "request": {
+                        "method": "PATCH",
+                        "url": "{{apiBase}}/products/reorder",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{creatorToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"product_ids\": [\"{{productId}}\"]\n}"
+                        },
+                        "description": "Set the display order of products on the storefront. Pass product IDs in desired order."
+                    }
+                },
+                {
+                    "name": "Delete Product",
+                    "request": {
+                        "method": "DELETE",
+                        "url": "{{apiBase}}/products/{{productId}}",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{creatorToken}}"
+                            }
+                        ],
+                        "description": "Soft-delete a product. It won't appear in listings but stays in the database."
+                    }
+                }
+            ]
+        },
+        {
+            "name": "📤 Uploads",
+            "description": "File upload management via presigned URLs (S3/R2)",
+            "item": [
+                {
+                    "name": "Get Presigned Upload URL",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{apiBase}}/uploads/presigned",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{creatorToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"file_name\": \"workout-plan.pdf\",\n  \"content_type\": \"application/pdf\",\n  \"purpose\": \"product\"\n}"
+                        },
+                        "description": "Get a presigned URL for uploading a file. Purpose: 'product' (PDF, ZIP) or 'cover' (images).\n\nAfter getting the URL, upload your file with a PUT request to the returned `upload_url`."
+                    }
+                }
+            ]
+        },
+        {
+            "name": "🛒 Orders (Customer)",
+            "description": "Customer-facing order creation and digital product download",
+            "item": [
+                {
+                    "name": "Create Order",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{apiBase}}/orders",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"product_id\": \"{{productId}}\",\n  \"customer_name\": \"John Doe\",\n  \"customer_email\": \"john@example.com\"\n}"
+                        },
+                        "description": "PUBLIC — Create an order for a product. Returns a Razorpay order for payment processing. No auth required (customer endpoint)."
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "  var data = pm.response.json().data;",
+                                    "  pm.collectionVariables.set('orderId', data.id || data.ID);",
+                                    "  console.log('Saved orderId:', data.id || data.ID);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Download Purchased Product",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{apiBase}}/orders/{{orderId}}/download",
+                        "description": "PUBLIC — Get a secure, time-limited download link for a purchased product. Only works for paid orders."
+                    }
+                }
+            ]
+        },
+        {
+            "name": "💰 Payments",
+            "description": "Payment gateway settings and webhook handler",
+            "item": [
+                {
+                    "name": "Get Payment Settings",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{apiBase}}/payments/settings",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{creatorToken}}"
+                            }
+                        ],
+                        "description": "Get the creator's payment settings (Razorpay enabled status)."
+                    }
+                },
+                {
+                    "name": "Update Payment Settings",
+                    "request": {
+                        "method": "PUT",
+                        "url": "{{apiBase}}/payments/settings",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{creatorToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"enabled\": true\n}"
+                        },
+                        "description": "Enable or disable payment processing for the creator's store."
+                    }
+                },
+                {
+                    "name": "Payment Webhook (Razorpay)",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{apiBase}}/payments/webhook",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Razorpay-Signature",
+                                "value": "{{webhookSignature}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"event\": \"order.paid\",\n  \"payload\": {\n    \"payment\": {\n      \"entity\": {\n        \"id\": \"pay_test123\",\n        \"order_id\": \"order_test123\"\n      }\n    }\n  }\n}"
+                        },
+                        "description": "Razorpay webhook endpoint. Requires valid X-Razorpay-Signature header. This is called by Razorpay, not manually."
+                    }
+                }
+            ]
+        },
+        {
+            "name": "📊 Sales & Wallet (Creator)",
+            "description": "Creator dashboard — sales history and wallet/earnings",
+            "item": [
+                {
+                    "name": "Get Sales History",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{apiBase}}/sales",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{creatorToken}}"
+                            }
+                        ],
+                        "description": "Get all orders for the creator's products (sales dashboard)."
+                    }
+                },
+                {
+                    "name": "Get Wallet Details",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{apiBase}}/wallet",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{creatorToken}}"
+                            }
+                        ],
+                        "description": "Get the creator's wallet balance and transaction history."
+                    }
+                }
+            ]
+        },
+        {
+            "name": "🏪 Storefront (Public)",
+            "description": "Public storefront — view any creator's store by username",
+            "item": [
+                {
+                    "name": "Get Creator Store",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{apiBase}}/store/{{creatorUsername}}",
+                        "description": "PUBLIC — View a creator's public store page. Returns profile + visible products. Returns 403 if creator is banned."
+                    }
+                }
+            ]
+        },
+        {
+            "name": "🛡️ Admin",
+            "description": "Platform administration — metrics and moderation (requires admin role)",
+            "item": [
+                {
+                    "name": "Get Platform Metrics",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{apiBase}}/admin/metrics",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{adminToken}}"
+                            }
+                        ],
+                        "description": "ADMIN ONLY — Get platform-wide metrics: total users, revenue, orders, active creators."
+                    }
+                },
+                {
+                    "name": "Ban Creator",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{apiBase}}/admin/creators/{{creatorId}}/ban",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{adminToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"reason\": \"Policy violation - spam content\"\n}"
+                        },
+                        "description": "ADMIN ONLY — Ban a creator. Requires a reason. Effects:\n- Creator's store returns 403\n- Creator cannot access any protected routes (dashboard, products, etc.)\n- Ban can be reversed with unban"
+                    }
+                },
+                {
+                    "name": "Unban Creator",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{apiBase}}/admin/creators/{{creatorId}}/unban",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{adminToken}}"
+                            }
+                        ],
+                        "description": "ADMIN ONLY — Unban a creator. Restores store access and dashboard access."
+                    }
+                }
+            ]
+        }
+    ]
+}
