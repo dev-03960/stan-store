@@ -25,11 +25,13 @@ type Config struct {
 	RazorpayKeyID         string `json:"razorpayKeyId"`
 	RazorpayKeySecret     string `json:"razorpayKeySecret"`
 	RazorpayWebhookSecret string `json:"razorpayWebhookSecret"`
+	RazorpayAccountNumber string `json:"razorpayAccountNumber"` // RazorpayX business account for payouts
 	SMTPHost              string `json:"smtpHost"`
 	SMTPPort              string `json:"smtpPort"`
 	SMTPUser              string `json:"smtpUser"`
 	SMTPPass              string `json:"smtpPass"`
 	SMTPFrom              string `json:"smtpFrom"`
+	AIApiKey              string `json:"aiApiKey"`
 }
 
 // Load reads configuration from environment variables with sensible defaults.
@@ -55,11 +57,13 @@ func Load() (*Config, error) {
 		RazorpayKeyID:         os.Getenv("RAZORPAY_KEY_ID"),
 		RazorpayKeySecret:     os.Getenv("RAZORPAY_KEY_SECRET"),
 		RazorpayWebhookSecret: os.Getenv("RAZORPAY_WEBHOOK_SECRET"),
+		RazorpayAccountNumber: os.Getenv("RAZORPAY_ACCOUNT_NUMBER"),
 		SMTPHost:              os.Getenv("SMTP_HOST"),
 		SMTPPort:              getEnv("SMTP_PORT", "587"),
 		SMTPUser:              os.Getenv("SMTP_USER"),
 		SMTPPass:              os.Getenv("SMTP_PASS"),
 		SMTPFrom:              getEnv("SMTP_FROM", "noreply@stanstore.com"),
+		AIApiKey:              os.Getenv("AI_API_KEY"),
 	}
 
 	if cfg.JWTSecret == "" {

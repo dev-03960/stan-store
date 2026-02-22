@@ -20,4 +20,11 @@ type Cache interface {
 
 	// Exists checks if a key exists in the cache.
 	Exists(ctx context.Context, key string) (bool, error)
+
+	// Increment increments the integer value of a key by 1.
+	// If the key does not exist, it is set to 1.
+	Increment(ctx context.Context, key string) (int64, error)
+
+	// Expire sets a timeout on key.
+	Expire(ctx context.Context, key string, ttl time.Duration) error
 }

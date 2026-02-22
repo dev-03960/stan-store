@@ -2,7 +2,7 @@ import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getOrder, getOrderDownloadUrl } from '../features/orders/api';
-import { CheckCircle, Download, FileText, Loader2, AlertCircle } from 'lucide-react';
+import { CheckCircle, Download, FileText, Loader2, AlertCircle, Calendar } from 'lucide-react';
 
 const OrderPage: React.FC = () => {
     const { orderId } = useParams<{ orderId: string }>();
@@ -14,9 +14,9 @@ const OrderPage: React.FC = () => {
         retry: 1
     });
 
-    const handleDownload = async () => {
+    const handleDownload = async (productId?: string) => {
         try {
-            const url = await getOrderDownloadUrl(orderId!);
+            const url = await getOrderDownloadUrl(orderId!, productId);
             window.open(url, '_blank');
         } catch (err) {
             console.error('Download failed', err);
@@ -67,45 +67,67 @@ const OrderPage: React.FC = () => {
 
                 {/* Content */}
                 <div className="p-8 space-y-8">
-                    {/* Product Details */}
+                    {/* Purchased Items */}
                     <div>
-                        <h2 className="text-sm font-medium text-slate-500 uppercase tracking-wide mb-4">Purchased Item</h2>
-                        <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-xl border border-slate-100">
-                            <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center text-indigo-600">
-                                <FileText className="w-6 h-6" />
-                            </div>
-                            <div>
-                                <p className="font-semibold text-slate-900">{order.product?.title || 'Digital Product'}</p>
-                                <p className="text-sm text-slate-500">
-                                    {new Intl.NumberFormat('en-IN', { style: 'currency', currency: order.currency }).format(order.amount / 100)}
-                                </p>
-                            </div>
+                        <h2 className="text-sm font-medium text-slate-500 uppercase tracking-wide mb-4">Purchased Items</h2>
+                        <div className="space-y-4">
+                            {(() => {
+                                const items = order.line_items?.length ? order.line_items : (order.product ? [{ ...order.product, product_id: order.product_id, amount: order.product.price }] : []);
+                                return items.map((item, idx) => (
+                                    <div key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-slate-50 rounded-xl border border-slate-100">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center text-indigo-600 shrink-0">
+                                                {item.product_type === 'booking' ? <Calendar className="w-6 h-6" /> : <FileText className="w-6 h-6" />}
+                                            </div>
+                                            <div>
+                                                <p className="font-semibold text-slate-900">{item.title || 'Digital Product'}</p>
+                                                <p className="text-sm text-slate-500">
+                                                    {new Intl.NumberFormat('en-IN', { style: 'currency', currency: order.currency }).format(item.amount / 100)}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        {isPaid && (
+                                            <div className="w-full sm:w-auto mt-2 sm:mt-0">
+                                                {item.product_type === 'booking' ? (
+                                                    <div className="text-sm text-green-700 bg-green-50 px-3 py-2 rounded-lg border border-green-100 text-center">
+                                                        <span className="font-medium mr-1">✅ Booked</span>
+                                                        {order.booking_slot_start && (
+                                                            <span className="block text-xs mt-1 text-green-600 font-medium">
+                                                                {new Date(order.booking_slot_start).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <button
+                                                        onClick={() => handleDownload(item.product_id)}
+                                                        className="w-full sm:w-auto flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 px-5 rounded-lg transition-colors text-sm shadow-sm"
+                                                    >
+                                                        <Download className="w-4 h-4" />
+                                                        Download
+                                                    </button>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                ));
+                            })()}
                         </div>
                     </div>
 
+                    {!isPaid && (
+                        <div className="text-center p-4 bg-yellow-50 rounded-xl text-yellow-800 text-sm">
+                            Your payment is being processed. Please check back later or check your email for confirmation.
+                        </div>
+                    )}
+
                     {/* Customer Details */}
                     <div>
-                        <h2 className="text-sm font-medium text-slate-500 uppercase tracking-wide mb-4">Sent To</h2>
+                        <h2 className="text-sm font-medium text-slate-500 uppercase tracking-wide mb-4">Receipt Sent To</h2>
                         <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 text-sm text-slate-700">
                             <p className="font-medium text-slate-900">{order.customer_name}</p>
                             <p>{order.customer_email}</p>
                         </div>
                     </div>
-
-                    {/* Action */}
-                    {isPaid ? (
-                        <button
-                            onClick={handleDownload}
-                            className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-indigo-200 hover:shadow-indigo-300 transform hover:-translate-y-1"
-                        >
-                            <Download className="w-5 h-5" />
-                            Download My Product
-                        </button>
-                    ) : (
-                        <div className="text-center p-4 bg-yellow-50 rounded-xl text-yellow-800 text-sm">
-                            Your payment is being processed. Please check back later or check your email for confirmation.
-                        </div>
-                    )}
 
                     <div className="text-center">
                         <Link to="/" className="text-sm text-slate-500 hover:text-indigo-600 transition-colors">

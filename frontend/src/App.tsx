@@ -2,15 +2,18 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { PrivateRoute } from './components/auth/PrivateRoute';
 
-import LoginPage from './pages/auth/LoginPage';
 import OnboardingPage from './pages/onboarding/OnboardingPage';
 import StorePage from './pages/StorePage';
-import OrderPage from './pages/OrderPage';
+import CustomerOrderPage from './pages/OrderPage';
+import BuyerAuthPage from './pages/buyer/BuyerAuthPage';
+import MyPurchasesPage from './pages/buyer/MyPurchasesPage';
+import { CoursePlayer } from './pages/buyer/CoursePlayer';
 import DashboardPage from './pages/DashboardPage';
 import { RootLayout } from './components/layout/RootLayout';
 import { DashboardLayout } from './components/layout/DashboardLayout';
 import EarningsPage from './pages/dashboard/EarningsPage';
 import OrdersPage from './pages/dashboard/OrdersPage';
+import CouponsPage from './pages/dashboard/CouponsPage';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
@@ -52,16 +55,22 @@ export default function App() {
             <Route element={<RootLayout />}>
               {/* Public Routes */}
               <Route path="/" element={<StorefrontPage />} />
-              <Route path="/login" element={<LoginPage />} />
+              {/* Storefront / Customer Routes */}
               <Route path="/store/:username" element={<StorePage />} />
-              <Route path="/orders/:orderId" element={<OrderPage />} />
+              <Route path="/order/:orderId" element={<CustomerOrderPage />} />
 
-              {/* Protected Routes */}
+              {/* Buyer Auth & Dashboard Routes */}
+              <Route path="/login" element={<BuyerAuthPage />} />
+              <Route path="/my-purchases" element={<MyPurchasesPage />} />
+              <Route path="/course-player/:productId" element={<CoursePlayer />} />
+
+              {/* Creator Protected Routes */}
               <Route element={<PrivateRoute />}>
                 <Route path="/dashboard" element={<DashboardLayout />}>
                   <Route index element={<DashboardPage />} />
                   <Route path="earnings" element={<EarningsPage />} />
                   <Route path="orders" element={<OrdersPage />} />
+                  <Route path="coupons" element={<CouponsPage />} />
                 </Route>
                 <Route path="/admin" element={<AdminDashboardPage />} />
                 <Route path="/onboarding" element={<OnboardingPage />} />

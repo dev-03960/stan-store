@@ -19,6 +19,7 @@ const getProductTypeLabel = (type: string) => {
     switch (type) {
         case 'course': return 'Online Course';
         case 'coaching': return 'Coaching Call';
+        case 'membership': return 'Membership';
         default: return 'Digital Download';
     }
 };
@@ -76,6 +77,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onBuy }) => {
                             currency: 'INR',
                             minimumFractionDigits: 0
                         }).format(product.price / 100)}
+                        {product.product_type === 'membership' && (
+                            <span className="text-sm font-normal text-slate-500 ml-1">
+                                /{product.subscription_interval === 'yearly' ? 'year' : 'mo'}
+                            </span>
+                        )}
                     </span>
                     <button className="bg-slate-900 text-white p-2 rounded-full group-hover:bg-indigo-600 transition-colors">
                         <ArrowRight className="w-5 h-5" />

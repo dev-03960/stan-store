@@ -229,3 +229,41 @@ func (r *MongoProductRepository) ReorderProducts(ctx context.Context, creatorID 
 
 	return nil
 }
+
+// UpdateBumpConfig updates the bump configuration for a product.
+// Passing a nil bump config will remove the bump from the product.
+func (r *MongoProductRepository) UpdateBumpConfig(ctx context.Context, productID primitive.ObjectID, creatorID primitive.ObjectID, bump *domain.BumpConfig) error {
+	filter := bson.M{
+		"_id":        productID,
+		"creator_id": creatorID,
+		"deleted_at": bson.M{"$exists": false},
+	}
+
+	var update bson.M
+	if bump == nil {
+		// Remove bump config
+		update = bson.M{
+			"$unset": bson.M{"bump": ""},
+			"$set":   bson.M{"updated_at": time.Now()},
+		}
+	} else {
+		// Set bump config
+		update = bson.M{
+			"$set": bson.M{
+				"bump":       bump,
+				"updated_at": time.Now(),
+			},
+		}
+	}
+
+	result, err := r.Collection().UpdateOne(ctx, filter, update)
+	if err != nil {
+		return fmt.Errorf("update bump config: %w", err)
+	}
+
+	if result.MatchedCount == 0 {
+		return fmt.Errorf("product not found or unauthorized")
+	}
+
+	return nil
+}

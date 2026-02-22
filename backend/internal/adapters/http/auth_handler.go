@@ -159,3 +159,57 @@ func (h *AuthHandler) Logout(c *fiber.Ctx) error {
 func extractTokenFromCookie(c *fiber.Ctx) string {
 	return c.Cookies(cookieName)
 }
+
+// BuyerMagicLinkRequest handles sending a magic link to a buyer.
+// POST /api/v1/auth/buyer/magic-link
+func (h *AuthHandler) BuyerMagicLinkRequest(c *fiber.Ctx) error {
+	var req struct {
+		Email string `json:"email"`
+	}
+
+	if err := c.BodyParser(&req); err != nil {
+		return SendError(c, fiber.StatusBadRequest, ErrBadRequest, "Invalid request body", nil)
+	}
+
+	if req.Email == "" {
+		return SendError(c, fiber.StatusBadRequest, ErrBadRequest, "Email is required", nil)
+	}
+
+	err := h.authService.HandleMagicLinkRequest(c.Context(), req.Email)
+	if err != nil {
+		logger.Error("magic link request failed", "error", err, "email", req.Email)
+		return SendError(c, fiber.StatusInternalServerError, ErrInternalServer, "Failed to send magic link", nil)
+	}
+
+	return SendSuccess(c, fiber.StatusOK, map[string]string{"message": "If that email is valid, a magic link has been sent."}, nil)
+}
+
+// BuyerMagicLinkVerify handles the redemption of a magic link.
+// GET /api/v1/auth/buyer/verify?token=...
+func (h *AuthHandler) BuyerMagicLinkVerify(c *fiber.Ctx) error {
+	token := c.Query("token")
+	if token == "" {
+		return SendError(c, fiber.StatusBadRequest, ErrBadRequest, "Token is required", nil)
+	}
+
+	result, err := h.authService.HandleMagicLinkVerify(c.Context(), token)
+	if err != nil {
+		logger.Error("magic link verify failed", "error", err, "token", token)
+		// Redirect to frontend login with an error so they can try again instead of dropping them on a blank JSON screen
+		return c.Redirect(h.frontendURL+"/login?error=invalid_token", fiber.StatusTemporaryRedirect)
+	}
+
+	// Set JWT as HTTP-Only cookie
+	c.Cookie(&fiber.Cookie{
+		Name:     cookieName,
+		Value:    result.Token,
+		MaxAge:   cookieMaxAge,
+		HTTPOnly: true,
+		Secure:   c.Protocol() == "https",
+		SameSite: "Strict",
+		Path:     "/",
+	})
+
+	// Redirect to the frontend dashboard for buyers
+	return c.Redirect(h.frontendURL+"/my-purchases", fiber.StatusTemporaryRedirect)
+}

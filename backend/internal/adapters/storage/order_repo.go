@@ -50,6 +50,18 @@ func (r *MongoOrderRepository) UpdateStatus(ctx context.Context, razorpayOrderID
 	return nil
 }
 
+func (r *MongoOrderRepository) UpdatePlatformFee(ctx context.Context, orderID primitive.ObjectID, fee int64) error {
+	filter := bson.M{"_id": orderID}
+	update := bson.M{
+		"$set": bson.M{
+			"platform_fee": fee,
+			"updated_at":   time.Now(),
+		},
+	}
+	_, err := r.collection.UpdateOne(ctx, filter, update)
+	return err
+}
+
 func (r *MongoOrderRepository) FindByRazorpayOrderID(ctx context.Context, razorpayOrderID string) (*domain.Order, error) {
 	var order domain.Order
 	err := r.collection.FindOne(ctx, bson.M{"razorpay_order_id": razorpayOrderID}).Decode(&order)
@@ -76,6 +88,20 @@ func (r *MongoOrderRepository) FindByID(ctx context.Context, id primitive.Object
 
 func (r *MongoOrderRepository) FindAllByCreatorID(ctx context.Context, creatorID primitive.ObjectID) ([]*domain.Order, error) {
 	cursor, err := r.collection.Find(ctx, bson.M{"creator_id": creatorID})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var orders []*domain.Order
+	if err = cursor.All(ctx, &orders); err != nil {
+		return nil, err
+	}
+	return orders, nil
+}
+
+func (r *MongoOrderRepository) FindAllByCustomerEmail(ctx context.Context, email string) ([]*domain.Order, error) {
+	cursor, err := r.collection.Find(ctx, bson.M{"customer_email": email})
 	if err != nil {
 		return nil, err
 	}

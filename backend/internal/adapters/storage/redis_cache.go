@@ -69,3 +69,21 @@ func (c *RedisCache) Exists(ctx context.Context, key string) (bool, error) {
 
 	return n > 0, nil
 }
+
+// Increment increments the integer value of a key by 1.
+func (c *RedisCache) Increment(ctx context.Context, key string) (int64, error) {
+	if c.client == nil {
+		return 0, nil // Graceful degradation
+	}
+
+	return c.client.Incr(ctx, key).Result()
+}
+
+// Expire sets a timeout on key.
+func (c *RedisCache) Expire(ctx context.Context, key string, ttl time.Duration) error {
+	if c.client == nil {
+		return nil // Graceful degradation
+	}
+
+	return c.client.Expire(ctx, key, ttl).Err()
+}

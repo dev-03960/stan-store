@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { createProduct, updateProduct, getPresignedUrl, uploadFileToUrl } from '../../lib/api/products';
+import { createProduct, updateProduct, getPresignedUrl, uploadFileToUrl, updateBumpConfig } from '../../lib/api/products';
 import type { CreateProductDTO } from '../../lib/api/products';
-import type { Product } from '../../lib/api/store';
-import { Loader2, Upload, X } from 'lucide-react';
+import type { Product, BumpConfig } from '../../lib/api/store';
+import { Loader2, Upload, X, Sparkles } from 'lucide-react';
+import { aiApi } from '../../features/dashboard/aiApi';
+import { CoachingSettings } from './CoachingSettings';
+import { OrderBumpSettings } from './OrderBumpSettings';
+import { CourseBuilder } from './CourseBuilder';
 
 interface ProductFormProps {
     product?: Product;
@@ -23,11 +27,47 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose }) => {
         product_type: product?.product_type || 'download',
         image_url: product?.image_url || '',
         file_url: product?.file_url || '',
+        duration_minutes: product?.duration_minutes || 30,
+        timezone: product?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
+        cancellation_window_hours: product?.cancellation_window_hours || 24,
+        availability: product?.availability || [],
+        subscription_interval: product?.subscription_interval || 'monthly',
     });
 
+    const [bumpConfig, setBumpConfig] = useState<BumpConfig | null>(product?.bump || null);
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [productFile, setProductFile] = useState<File | null>(null);
     const [uploading, setUploading] = useState(false);
+
+    // AI Assist State
+    const [aiPrompt, setAiPrompt] = useState('');
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [showAiInput, setShowAiInput] = useState(false);
+
+    const handleGenerateCopy = async () => {
+        if (!aiPrompt.trim()) return;
+        setIsGenerating(true);
+        try {
+            const result = await aiApi.generateProductCopy(aiPrompt);
+            if (!result.data) {
+                throw new Error("No content generated");
+            }
+            const data = result.data;
+            const bulletsText = data.bullets?.length > 0 ? `\n\nFeatures:\n${data.bullets.map((b: string) => `• ${b}`).join('\n')}` : '';
+            setFormData(prev => ({
+                ...prev,
+                title: data.title || prev.title,
+                description: (data.description || '') + bulletsText,
+            }));
+            setShowAiInput(false);
+            setAiPrompt('');
+        } catch (error: any) {
+            console.error('Failed to generate copy:', error);
+            alert(error.response?.data?.error || 'Failed to generate copy. Has the AI_API_KEY been configured?');
+        } finally {
+            setIsGenerating(false);
+        }
+    };
 
     const mutation = useMutation({
         mutationFn: async (data: CreateProductDTO) => {
@@ -66,15 +106,26 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose }) => {
                 finalFileUrl = `https://pub-your-r2-domain.r2.dev/${presigned.key}`; // Placeholder
             }
 
+            // Force price to 0 if it's a lead magnet
+            const finalPrice = data.product_type === 'lead_magnet' ? 0 : Math.round(data.price * 100);
+
             // Convert rupees to paise before sending to backend
-            const payload = { ...data, price: Math.round(data.price * 100), image_url: finalImageUrl, file_url: finalFileUrl };
+            const payload = { ...data, price: finalPrice, image_url: finalImageUrl, file_url: finalFileUrl };
 
             if (isEditing && product) {
                 return updateProduct(product.id, payload);
             }
             return createProduct(payload);
         },
-        onSuccess: () => {
+        onSuccess: async (savedProduct) => {
+            // Save bump config separately via dedicated endpoint
+            if (savedProduct?.id) {
+                try {
+                    await updateBumpConfig(savedProduct.id, bumpConfig);
+                } catch (err) {
+                    console.error('Failed to save bump config:', err);
+                }
+            }
             queryClient.invalidateQueries({ queryKey: ['my-products'] });
             onClose();
         },
@@ -110,18 +161,79 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose }) => {
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-1">Product Type</label>
                             <select
-                                className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                                className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all disabled:bg-slate-100 disabled:opacity-75"
                                 value={formData.product_type}
-                                onChange={(e) => setFormData({ ...formData, product_type: e.target.value })}
+                                onChange={(e) => setFormData({ ...formData, product_type: e.target.value as any })}
+                                disabled={isEditing}
                             >
                                 <option value="download">Digital Download</option>
-                                <option value="course">Online Course</option>
-                                <option value="coaching">Coaching Call</option>
+                                <option value="lead_magnet">Lead Magnet</option>
+                                <option value="booking">1:1 Coaching</option>
+                                <option value="course">Course / e-Learning</option>
+                                <option value="membership">Membership</option>
                             </select>
+                            {isEditing && (
+                                <p className="text-xs text-slate-400 mt-1">Product type cannot be changed after creation.</p>
+                            )}
                         </div>
 
+                        {formData.product_type === 'membership' && (
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Billing Cycle</label>
+                                <select
+                                    className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                                    value={formData.subscription_interval}
+                                    onChange={(e) => setFormData({ ...formData, subscription_interval: e.target.value as any })}
+                                >
+                                    <option value="monthly">Monthly</option>
+                                    <option value="yearly">Yearly</option>
+                                </select>
+                            </div>
+                        )}
+
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Title</label>
+                            <div className="flex justify-between items-center mb-1">
+                                <label className="block text-sm font-medium text-slate-700">Title</label>
+                                {!isEditing && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowAiInput(!showAiInput)}
+                                        className="text-xs flex items-center gap-1 text-indigo-600 hover:text-indigo-700 font-medium transition-colors"
+                                    >
+                                        <Sparkles className="w-3 h-3" />
+                                        AI Assist
+                                    </button>
+                                )}
+                            </div>
+
+                            {showAiInput && (
+                                <div className="mb-3 p-3 bg-indigo-50 border border-indigo-100 rounded-lg flex gap-2 items-start">
+                                    <input
+                                        type="text"
+                                        placeholder="E.g., A 30-day keto meal plan for beginners..."
+                                        className="flex-1 p-2 border border-indigo-200 rounded outline-none focus:border-indigo-400 text-sm"
+                                        value={aiPrompt}
+                                        onChange={(e) => setAiPrompt(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                handleGenerateCopy();
+                                            }
+                                        }}
+                                        disabled={isGenerating}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={handleGenerateCopy}
+                                        disabled={isGenerating || !aiPrompt.trim()}
+                                        className="px-3 py-2 bg-indigo-600 text-white rounded text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2 whitespace-nowrap"
+                                    >
+                                        {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                                        Generate
+                                    </button>
+                                </div>
+                            )}
+
                             <input
                                 type="text"
                                 required
@@ -141,23 +253,29 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose }) => {
                             />
                         </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Price (₹ INR)</label>
-                            <div className="relative">
-                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium">₹</span>
-                                <input
-                                    type="number"
-                                    required
-                                    min="1"
-                                    step="1"
-                                    className="w-full pl-8 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
-                                    value={formData.price || ''}
-                                    onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
-                                    placeholder="4000"
-                                />
+                        {formData.product_type !== 'lead_magnet' && (
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Price (₹ INR)</label>
+                                <div className="relative">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium">₹</span>
+                                    <input
+                                        type="number"
+                                        required
+                                        min="1"
+                                        step="1"
+                                        className="w-full pl-8 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                                        value={formData.price || ''}
+                                        onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
+                                        placeholder="4000"
+                                    />
+                                </div>
+                                <p className="text-xs text-slate-400 mt-1">
+                                    {formData.product_type === 'membership'
+                                        ? `Enter price in rupees per ${formData.subscription_interval === 'yearly' ? 'year' : 'month'}`
+                                        : 'Enter price in rupees (e.g., 4000 for ₹4,000)'}
+                                </p>
                             </div>
-                            <p className="text-xs text-slate-400 mt-1">Enter price in rupees (e.g., 4000 for ₹4,000)</p>
-                        </div>
+                        )}
 
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-1">Thumbnail Image</label>
@@ -178,23 +296,53 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose }) => {
                             </div>
                         </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Product File</label>
-                            <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:bg-slate-50 transition-colors">
-                                <input
-                                    type="file"
-                                    className="hidden"
-                                    id="product-file-upload"
-                                    onChange={(e) => setProductFile(e.target.files?.[0] || null)}
-                                />
-                                <label htmlFor="product-file-upload" className="cursor-pointer flex flex-col items-center">
-                                    <Upload className="w-8 h-8 text-slate-400 mb-2" />
-                                    <span className="text-sm text-slate-600">
-                                        {productFile ? productFile.name : (formData.file_url ? 'Change File' : 'Click to upload product file')}
-                                    </span>
-                                </label>
+                        {formData.product_type !== 'booking' && formData.product_type !== 'course' && (
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Product File</label>
+                                <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:bg-slate-50 transition-colors">
+                                    <input
+                                        type="file"
+                                        className="hidden"
+                                        id="product-file-upload"
+                                        onChange={(e) => setProductFile(e.target.files?.[0] || null)}
+                                    />
+                                    <label htmlFor="product-file-upload" className="cursor-pointer flex flex-col items-center">
+                                        <Upload className="w-8 h-8 text-slate-400 mb-2" />
+                                        <span className="text-sm text-slate-600">
+                                            {productFile ? productFile.name : (formData.file_url ? 'Change File' : 'Click to upload product file')}
+                                        </span>
+                                    </label>
+                                </div>
                             </div>
-                        </div>
+                        )}
+
+                        {formData.product_type === 'booking' && (
+                            <CoachingSettings
+                                duration_minutes={formData.duration_minutes!}
+                                timezone={formData.timezone!}
+                                cancellation_window_hours={formData.cancellation_window_hours!}
+                                availability={formData.availability || []}
+                                onChange={(updates) => setFormData({ ...formData, ...updates })}
+                            />
+                        )}
+
+                        {/* Order Bump Settings — only for paid products when editing */}
+                        {isEditing && formData.product_type !== 'lead_magnet' && (
+                            <OrderBumpSettings
+                                currentProductId={product?.id}
+                                bumpConfig={bumpConfig || undefined}
+                                onChange={(bump) => setBumpConfig(bump)}
+                            />
+                        )}
+
+                        {/* Course Builder UI - Documented in Story 8.5 */}
+                        {isEditing && formData.product_type === 'course' && (
+                            <div className="pt-6 border-t border-slate-100">
+                                <h3 className="text-lg font-bold font-heading mb-4">Course Curriculum</h3>
+                                <p className="text-sm text-slate-500 mb-4">Manage your course modules and lessons. Drag and drop to reorder.</p>
+                                <CourseBuilder productId={product.id} />
+                            </div>
+                        )}
 
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>

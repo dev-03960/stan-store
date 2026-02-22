@@ -65,9 +65,19 @@ const SortableProductItem = ({ product, onEdit, onToggleVisibility, onDelete }: 
 
             <div className="flex-1 min-w-0">
                 <h3 className="font-semibold text-slate-900 truncate">{product.title}</h3>
-                <p className="text-sm text-slate-500 truncate">
-                    {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(product.price / 100)} • {product.product_type}
-                </p>
+                <div className="flex items-center gap-2 mt-1">
+                    <p className="text-sm text-slate-500 truncate">
+                        {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(product.price / 100)}
+                    </p>
+                    <span
+                        className={`text-xs px-2 py-0.5 rounded-full font-medium ${product.product_type === 'lead_magnet'
+                                ? 'bg-green-100 text-green-700'
+                                : 'bg-blue-100 text-blue-700'
+                            }`}
+                    >
+                        {product.product_type === 'lead_magnet' ? 'Lead Magnet' : 'Digital Download'}
+                    </span>
+                </div>
             </div>
 
             <div className="flex items-center gap-2 sm:gap-2 ml-auto sm:ml-0">

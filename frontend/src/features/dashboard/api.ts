@@ -1,28 +1,6 @@
 import { api } from '../../lib/api';
 
-// Wallet Interface
-export interface Transaction {
-    id: string;
-    amount: number;
-    type: 'credit' | 'debit';
-    source: 'order' | 'payout';
-    reference_id: string;
-    description: string;
-    created_at: string;
-}
 
-export interface WalletDetails {
-    balance: number;
-    transactions: Transaction[];
-}
-
-export const getWalletDetails = async (): Promise<WalletDetails> => {
-    const response = await api.get<WalletDetails>('/wallet');
-    if (!response.data) {
-        throw new Error('Failed to fetch wallet details');
-    }
-    return response.data;
-};
 
 // Sales / Order History Interface
 export interface Order {

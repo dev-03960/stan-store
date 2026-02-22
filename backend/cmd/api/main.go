@@ -7,7 +7,11 @@ import (
 	"syscall"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/redis/go-redis/v9"
 
+	"context"
+
+	"github.com/devanshbhargava/stan-store/internal/adapters/ai"
 	"github.com/devanshbhargava/stan-store/internal/adapters/email"
 	httpAdapter "github.com/devanshbhargava/stan-store/internal/adapters/http"
 	"github.com/devanshbhargava/stan-store/internal/adapters/storage"
@@ -40,14 +44,23 @@ func main() {
 	userRepo := storage.NewMongoUserRepository(mongoDB)
 	productRepo := storage.NewMongoProductRepository(mongoDB)
 	orderRepo := storage.NewMongoOrderRepository(mongoDB.Database)
+	bookingRepo := storage.NewMongoBookingRepository(mongoDB)
+	courseRepo := storage.NewMongoCourseRepository(mongoDB)
 
 	// 5. Initialize services
 	jwtService := services.NewJWTService(cfg.JWTSecret)
-	authService := services.NewAuthService(userRepo, jwtService)
+
+	// RedisClient holds a raw *redis.Client. Pull it out for the AuthService interface
+	var rawRedisClient *redis.Client
+	if redisClient != nil {
+		rawRedisClient = redisClient.Client
+	}
+	authService := services.NewAuthService(userRepo, jwtService, rawRedisClient)
 	usernameService := services.NewUsernameService(userRepo)
 	profileService := services.NewProfileService(userRepo)
 	productService := services.NewProductService(productRepo)
 	storeService := services.NewStoreService(userRepo, productRepo)
+	bookingService := services.NewBookingService(bookingRepo, productRepo)
 
 	// Convert *MongoDB to *mongo.Database if needed, or update repo constructor.
 	paymentRepo := storage.NewMongoPaymentRepository(mongoDB.Database)
@@ -81,7 +94,9 @@ func main() {
 	transactionRepo := storage.NewMongoTransactionRepository(mongoDB.Database)
 	walletService := services.NewWalletService(transactionRepo)
 
-	orderService := services.NewOrderService(orderRepo, productRepo, paymentService, uploadService, walletService, emailAdapter)
+	subscriberRepo := storage.NewMongoSubscriberRepository(mongoDB.Database)
+	subRepo := storage.NewMongoSubscriptionRepository(mongoDB)
+	orderService := services.NewOrderService(orderRepo, productRepo, userRepo, subscriberRepo, paymentService, uploadService, walletService, emailAdapter, bookingService, subRepo)
 	uploadHandler := httpAdapter.NewUploadHandler(uploadService)
 
 	// 6. Initialize handlers
@@ -103,6 +118,42 @@ func main() {
 
 	adminService := services.NewAdminService(userRepo, transactionRepo, orderRepo)
 	adminHandler := httpAdapter.NewAdminHandler(adminService)
+	buyerHandler := httpAdapter.NewBuyerHandler(orderService, authService)
+	bookingHandler := httpAdapter.NewBookingHandler(bookingService)
+
+	// Initialize Payout Service (reuses Razorpay credentials)
+	payoutRepo := storage.NewMongoPayoutRepository(mongoDB.Database)
+	payoutService := services.NewPayoutService(
+		paymentService.GetRazorpayClient(), // reuse Razorpay client
+		userRepo,
+		payoutRepo,
+		transactionRepo,
+		cfg.RazorpayAccountNumber,
+		cfg.RazorpayKeyID,
+		cfg.RazorpayKeySecret,
+	)
+	payoutHandler := httpAdapter.NewPayoutHandler(payoutService)
+
+	// Initialize Coupon Service
+	couponRepo := storage.NewMongoCouponRepository(mongoDB.Database)
+	couponService := services.NewCouponService(couponRepo)
+	couponHandler := httpAdapter.NewCouponHandler(couponService)
+
+	courseService := services.NewCourseService(courseRepo, productRepo, orderRepo, userRepo)
+	courseHandler := httpAdapter.NewCourseHandler(courseService)
+
+	var aiHandler *httpAdapter.AIHandler
+	if cfg.AIApiKey != "" {
+		geminiGen, err := ai.NewGeminiGenerator(context.Background(), cfg.AIApiKey)
+		if err == nil {
+			aiService := services.NewAIService(geminiGen, cache)
+			aiHandler = httpAdapter.NewAIHandler(aiService)
+		} else {
+			logger.Warn("Failed to init AI Generator. AI endpoints disabled", "error", err.Error())
+		}
+	} else {
+		logger.Warn("AI_API_KEY block missing. AI copy generation disabled.")
+	}
 
 	// 7. Create Fiber app
 	app := fiber.New(fiber.Config{
@@ -120,13 +171,20 @@ func main() {
 		UsernameHandler: usernameHandler,
 		ProfileHandler:  profileHandler,
 
-		ProductHandler: productHandler,
-		UploadHandler:  uploadHandler,
-		StoreHandler:   storeHandler,
-		PaymentHandler: paymentHandler,
-		OrderHandler:   orderHandler,
-		WalletHandler:  walletHandler,
-		AdminHandler:   adminHandler,
+		ProductHandler:    productHandler,
+		UploadHandler:     uploadHandler,
+		StoreHandler:      storeHandler,
+		PaymentHandler:    paymentHandler,
+		OrderHandler:      orderHandler,
+		WalletHandler:     walletHandler,
+		AdminHandler:      adminHandler,
+		BuyerHandler:      buyerHandler,
+		PayoutHandler:     payoutHandler,
+		SubscriberHandler: httpAdapter.NewSubscriberHandler(subscriberRepo),
+		CouponHandler:     couponHandler,
+		BookingHandler:    bookingHandler,
+		CourseHandler:     courseHandler,
+		AIHandler:         aiHandler,
 	})
 
 	// 9. Graceful shutdown

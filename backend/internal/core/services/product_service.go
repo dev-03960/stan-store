@@ -236,3 +236,51 @@ func (s *ProductService) ReorderProducts(ctx context.Context, creatorID string, 
 
 	return s.repo.ReorderProducts(ctx, cid, oids)
 }
+
+// UpdateBumpConfig updates the bump configuration for a product.
+func (s *ProductService) UpdateBumpConfig(ctx context.Context, id string, creatorID string, bumpProductID string, bumpDiscount int64) error {
+	oid, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return errors.New("invalid product ID")
+	}
+
+	cid, err := primitive.ObjectIDFromHex(creatorID)
+	if err != nil {
+		return errors.New("invalid creator ID")
+	}
+
+	var bump *domain.BumpConfig
+	if bumpProductID != "" {
+		bpid, err := primitive.ObjectIDFromHex(bumpProductID)
+		if err != nil {
+			return errors.New("invalid bump product ID")
+		}
+
+		// Validate bump product exists and belongs to the same creator
+		bProduct, err := s.repo.FindByID(ctx, bpid)
+		if err != nil {
+			return err
+		}
+		if bProduct == nil {
+			return errors.New("bump product not found")
+		}
+		if bProduct.CreatorID != cid {
+			return errors.New("unauthorized: bump product belongs to another creator")
+		}
+
+		// Validate discount doesn't exceed bump product price
+		if bumpDiscount < 0 {
+			return errors.New("bump discount cannot be negative")
+		}
+		if bumpDiscount > bProduct.Price {
+			return errors.New("bump discount cannot exceed bump product price")
+		}
+
+		bump = &domain.BumpConfig{
+			BumpProductID: bpid,
+			BumpDiscount:  bumpDiscount,
+		}
+	}
+
+	return s.repo.UpdateBumpConfig(ctx, oid, cid, bump)
+}

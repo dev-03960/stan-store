@@ -248,3 +248,36 @@ func (h *ProductHandler) ReorderProducts(c *fiber.Ctx) error {
 
 	return SendSuccess(c, fiber.StatusOK, map[string]string{"message": "Products reordered successfully"}, nil)
 }
+
+// UpdateBumpConfig defines the request body for updating a product's bump configuration.
+type UpdateBumpConfigDTO struct {
+	BumpProductID string `json:"bump_product_id"` // Empty string removes the bump
+	BumpDiscount  int64  `json:"bump_discount"`   // Optional discount in paise
+}
+
+// UpdateBumpConfig handles PUT /api/v1/products/:id/bump.
+func (h *ProductHandler) UpdateBumpConfig(c *fiber.Ctx) error {
+	productID := c.Params("id")
+	userID := c.Locals("userId").(string)
+
+	var req UpdateBumpConfigDTO
+	if err := c.BodyParser(&req); err != nil {
+		return SendError(c, fiber.StatusBadRequest, ErrBadRequest, "Invalid request body", nil)
+	}
+
+	err := h.service.UpdateBumpConfig(c.Context(), productID, userID, req.BumpProductID, req.BumpDiscount)
+	if err != nil {
+		status := fiber.StatusInternalServerError
+		if err.Error() == "unauthorized: you do not own this product" || err.Error() == "unauthorized: bump product belongs to another creator" {
+			status = fiber.StatusForbidden
+		} else if err.Error() == "product not found" || err.Error() == "bump product not found" {
+			status = fiber.StatusNotFound
+		} else if err.Error() == "invalid product ID" || err.Error() == "invalid bump product ID" || err.Error() == "bump discount cannot be negative" || err.Error() == "bump discount cannot exceed bump product price" {
+			status = fiber.StatusBadRequest
+		}
+
+		return SendError(c, status, "UPDATE_BUMP_FAILED", err.Error(), nil)
+	}
+
+	return SendSuccess(c, fiber.StatusOK, map[string]string{"message": "Bump configuration updated successfully"}, nil)
+}

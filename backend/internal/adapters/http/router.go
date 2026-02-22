@@ -10,19 +10,26 @@ import (
 
 // RouterDeps holds dependencies needed by the router.
 type RouterDeps struct {
-	FrontendURL     string
-	JWTService      *services.JWTService
-	UserRepo        domain.UserRepository
-	AuthHandler     *AuthHandler
-	UsernameHandler *UsernameHandler
-	ProfileHandler  *ProfileHandler
-	ProductHandler  *ProductHandler
-	UploadHandler   *UploadHandler
-	StoreHandler    *StoreHandler
-	PaymentHandler  *PaymentHandler
-	OrderHandler    *OrderHandler
-	WalletHandler   *WalletHandler
-	AdminHandler    *AdminHandler
+	FrontendURL       string
+	JWTService        *services.JWTService
+	UserRepo          domain.UserRepository
+	AuthHandler       *AuthHandler
+	UsernameHandler   *UsernameHandler
+	ProfileHandler    *ProfileHandler
+	ProductHandler    *ProductHandler
+	UploadHandler     *UploadHandler
+	StoreHandler      *StoreHandler
+	PaymentHandler    *PaymentHandler
+	OrderHandler      *OrderHandler
+	WalletHandler     *WalletHandler
+	AdminHandler      *AdminHandler
+	BuyerHandler      *BuyerHandler
+	PayoutHandler     *PayoutHandler
+	SubscriberHandler *SubscriberHandler
+	CouponHandler     *CouponHandler
+	BookingHandler    *BookingHandler
+	CourseHandler     *CourseHandler
+	AIHandler         *AIHandler
 }
 
 // SetupRouter configures all routes and middleware on the Fiber app.
@@ -52,6 +59,15 @@ func SetupRouter(app *fiber.App, deps *RouterDeps) {
 	auth.Get("/google/callback", deps.AuthHandler.GoogleCallback)
 	auth.Get("/username/check", deps.UsernameHandler.CheckAvailability) // public
 
+	// Buyer auth routes (public)
+	buyerAuth := auth.Group("/buyer")
+	buyerAuth.Post("/magic-link", deps.AuthHandler.BuyerMagicLinkRequest)
+	buyerAuth.Get("/verify", deps.AuthHandler.BuyerMagicLinkVerify)
+
+	// Buyer functionality routes (protected)
+	buyer := v1.Group("/buyer")
+	buyer.Get("/purchases", authRequired, RoleRequired("buyer"), deps.BuyerHandler.GetPurchases)
+
 	// Auth routes (protected)
 	auth.Get("/me", authRequired, banCheck, deps.AuthHandler.GetMe)
 	auth.Post("/logout", authRequired, deps.AuthHandler.Logout)
@@ -61,6 +77,28 @@ func SetupRouter(app *fiber.App, deps *RouterDeps) {
 	creator := v1.Group("/creator")
 	creator.Get("/profile", authRequired, banCheck, deps.ProfileHandler.GetProfile)
 	creator.Put("/profile", authRequired, banCheck, deps.ProfileHandler.UpdateProfile)
+	creator.Post("/payout-settings", authRequired, banCheck, deps.PayoutHandler.SavePayoutSettings)
+	creator.Get("/payout-settings", authRequired, banCheck, deps.PayoutHandler.GetPayoutSettings)
+	creator.Post("/payouts/withdraw", authRequired, banCheck, deps.PayoutHandler.WithdrawFunds)
+	creator.Get("/payouts", authRequired, banCheck, deps.PayoutHandler.GetPayoutHistory)
+	creator.Get("/payouts/balance", authRequired, banCheck, deps.PayoutHandler.GetBalance)
+	creator.Get("/subscribers", authRequired, banCheck, deps.SubscriberHandler.GetSubscribers)
+
+	// Coupon routes (protected)
+	coupons := v1.Group("/coupons", authRequired, banCheck)
+	coupons.Post("/", deps.CouponHandler.CreateCoupon)
+	coupons.Get("/", deps.CouponHandler.GetCoupons)
+	coupons.Patch("/:id", deps.CouponHandler.UpdateCoupon)
+	coupons.Delete("/:id", deps.CouponHandler.DeleteCoupon)
+
+	// Coupon validation (public — called from storefront)
+	v1.Post("/coupons/validate", deps.CouponHandler.ValidateCoupon)
+
+	// Product slots route (public - called from storefront)
+	v1.Get("/products/:id/slots", deps.BookingHandler.GetSlots)
+
+	// Course structure route (requires auth to check if buyer actually bought it)
+	v1.Get("/products/:id/course", authRequired, banCheck, deps.CourseHandler.GetCourse)
 
 	// Product routes (protected)
 	products := v1.Group("/products")
@@ -70,7 +108,26 @@ func SetupRouter(app *fiber.App, deps *RouterDeps) {
 	products.Put("/:id", deps.ProductHandler.UpdateProduct)
 	products.Delete("/:id", deps.ProductHandler.DeleteProduct)
 	products.Patch("/:id/visibility", deps.ProductHandler.UpdateVisibility)
+	products.Put("/:id/bump", deps.ProductHandler.UpdateBumpConfig)
 	products.Patch("/reorder", deps.ProductHandler.ReorderProducts)
+
+	// Course sub-routes (nested under products)
+	// GET course structure is public if checking permissions inside handler, or we can make it public
+	// Actually we should place GET /api/v1/products/:id/course outside auth checks if buyers need to see it,
+	// but the handler uses `user` context. Let's put it outside the protected `products` group.
+
+	// Protected Course CRUD routes
+	products.Post("/:id/course/modules", deps.CourseHandler.CreateModule)
+	products.Put("/:id/course/modules/:modId", deps.CourseHandler.UpdateModule)
+	products.Delete("/:id/course/modules/:modId", deps.CourseHandler.DeleteModule)
+	products.Post("/:id/course/modules/:modId/lessons", deps.CourseHandler.CreateLesson)
+	products.Put("/:id/course/modules/:modId/lessons/:lesId", deps.CourseHandler.UpdateLesson)
+	products.Delete("/:id/course/modules/:modId/lessons/:lesId", deps.CourseHandler.DeleteLesson)
+	products.Put("/:id/course/reorder", deps.CourseHandler.ReorderStructure)
+
+	// Booking routes (protected)
+	bookings := v1.Group("/bookings", authRequired, banCheck)
+	bookings.Post("/:id/cancel", deps.BookingHandler.CancelBooking)
 
 	// Upload routes (protected)
 	uploads := v1.Group("/uploads")
@@ -91,6 +148,11 @@ func SetupRouter(app *fiber.App, deps *RouterDeps) {
 	orders.Get("/:id", deps.OrderHandler.GetOrder)
 	orders.Get("/:id/download", deps.OrderHandler.DownloadOrder)
 
+	// AI routes (Protected)
+	if deps.AIHandler != nil {
+		v1.Post("/ai/generate-copy", authRequired, banCheck, deps.AIHandler.GenerateCopy)
+	}
+
 	// Sales routes (Creator - Protected)
 	sales := v1.Group("/sales")
 	sales.Get("/", authRequired, banCheck, deps.OrderHandler.GetSalesHistory)
@@ -108,6 +170,13 @@ func SetupRouter(app *fiber.App, deps *RouterDeps) {
 	admin.Get("/metrics", authRequired, RoleRequired("admin"), deps.AdminHandler.GetMetrics)
 	admin.Post("/creators/:id/ban", authRequired, RoleRequired("admin"), deps.AdminHandler.BanCreator)
 	admin.Post("/creators/:id/unban", authRequired, RoleRequired("admin"), deps.AdminHandler.UnbanCreator)
+
+	// Protected buyer routes
+	buyers := v1.Group("/buyer", authRequired, banCheck)
+	buyers.Get("/orders", deps.BuyerHandler.GetPurchases)
+	buyers.Get("/courses/:id", deps.CourseHandler.GetCourse)
+	buyers.Get("/subscriptions", deps.BuyerHandler.GetSubscriptions)
+	buyers.Post("/subscriptions/:id/cancel", deps.BuyerHandler.CancelSubscription)
 
 	// 404 handler for unmatched routes
 	app.Use(func(c *fiber.Ctx) error {

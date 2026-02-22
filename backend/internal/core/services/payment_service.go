@@ -74,6 +74,80 @@ func (s *PaymentService) CreateRazorpayOrder(amount int64, currency string, rece
 	return orderID, nil
 }
 
+// CreateRazorpayPlan creates a recurring billing plan in Razorpay
+func (s *PaymentService) CreateRazorpayPlan(name string, amount int64, currency string, interval string) (string, error) {
+	// period can be "daily", "weekly", "monthly", "yearly"
+	period := "monthly"
+	if interval == "yearly" {
+		period = "yearly"
+	}
+
+	data := map[string]interface{}{
+		"period":   period,
+		"interval": 1,
+		"item": map[string]interface{}{
+			"name":     name,
+			"amount":   amount,
+			"currency": currency,
+		},
+	}
+
+	if s.razorpayKeyID == "test_key" {
+		return "plan_mock_123", nil
+	}
+
+	body, err := s.client.Plan.Create(data, nil)
+	if err != nil {
+		return "", err
+	}
+
+	planID, ok := body["id"].(string)
+	if !ok {
+		return "", fmt.Errorf("failed to cast razorpay plan id")
+	}
+
+	return planID, nil
+}
+
+// CreateRazorpaySubscription creates a subscription for a plan
+func (s *PaymentService) CreateRazorpaySubscription(planID string) (string, error) {
+	data := map[string]interface{}{
+		"plan_id":         planID,
+		"total_count":     1200, // Large number for ongoing subscription
+		"customer_notify": 1,
+	}
+
+	if s.razorpayKeyID == "test_key" {
+		return "sub_mock_123", nil
+	}
+
+	body, err := s.client.Subscription.Create(data, nil)
+	if err != nil {
+		return "", err
+	}
+
+	subID, ok := body["id"].(string)
+	if !ok {
+		return "", fmt.Errorf("failed to cast razorpay subscription id")
+	}
+
+	return subID, nil
+}
+
+// CancelRazorpaySubscription cancels an active subscription
+func (s *PaymentService) CancelRazorpaySubscription(subID string) error {
+	if s.razorpayKeyID == "test_key" {
+		return nil
+	}
+
+	data := map[string]interface{}{
+		"cancel_at_cycle_end": 0, // cancel immediately for MVP
+	}
+
+	_, err := s.client.Subscription.Cancel(subID, data, nil)
+	return err
+}
+
 // VerifyWebhookSignature verifies the signature of the webhook payload
 // body: raw request body as string
 // signature: X-Razorpay-Signature header

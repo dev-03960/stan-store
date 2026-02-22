@@ -122,8 +122,14 @@ func setupTestApp(t *testing.T) (*fiber.App, func()) {
 	userRepo := storage.NewMongoUserRepository(testStorageDB)
 	productRepo := storage.NewMongoProductRepository(testStorageDB)
 
+	// Since integration tests don't require an actual Redis connection for basic routes initially,
+	// or we can mock it. For now pass a disconnected/nil-safe wrapper from `storage.ConnectRedis("")`
+	// but we need the raw `*redis.Client` wrapped inside. `storage.ConnectRedis` returns `*storage.RedisClient`.
+	// For testing, `nil` is fine if the methods handled check for it, or we use a mini-redis.
+	// Since `HandleMagicLinkRequest` assumes a valid redis.Client, we will pass `nil` and skip testing magic links
+	// in the old integration tests, or spin up a real test one later.
 	jwtService := services.NewJWTService(testJWTSecret)
-	authService := services.NewAuthService(userRepo, jwtService)
+	authService := services.NewAuthService(userRepo, jwtService, nil)
 	usernameService := services.NewUsernameService(userRepo)
 	profileService := services.NewProfileService(userRepo)
 	productService := services.NewProductService(productRepo)
@@ -145,7 +151,7 @@ func setupTestApp(t *testing.T) (*fiber.App, func()) {
 	orderRepo := storage.NewMongoOrderRepository(testStorageDB.Database)
 	transactionRepo := storage.NewMongoTransactionRepository(testStorageDB.Database)
 	walletSvc := services.NewWalletService(transactionRepo)
-	orderService := services.NewOrderService(orderRepo, productRepo, paymentService, uploadSvc, walletSvc, emailSvc)
+	orderService := services.NewOrderService(orderRepo, productRepo, userRepo, nil, paymentService, uploadSvc, walletSvc, emailSvc, nil, nil)
 
 	authHandler := httpAdapter.NewAuthHandler(authService, "test_client", "test_secret", "http://localhost/callback", "http://localhost:3000")
 	usernameHandler := httpAdapter.NewUsernameHandler(usernameService)

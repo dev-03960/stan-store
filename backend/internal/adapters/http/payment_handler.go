@@ -114,6 +114,11 @@ func (h *PaymentHandler) HandleWebhook(c *fiber.Ctx) error {
 				return SendError(c, fiber.StatusInternalServerError, ErrInternalServer, "Failed to process order", nil)
 			}
 		}
+	} else if eventName == "subscription.charged" || eventName == "subscription.halted" || eventName == "subscription.cancelled" || eventName == "subscription.completed" {
+		payload, _ := event["payload"].(map[string]interface{})
+		if err := h.orderService.HandleSubscriptionEvent(c.Context(), eventName, payload); err != nil {
+			return SendError(c, fiber.StatusInternalServerError, ErrInternalServer, "Failed to process subscription event", nil)
+		}
 	}
 
 	return SendOK(c, map[string]string{"status": "received"})

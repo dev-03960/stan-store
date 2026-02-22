@@ -14,6 +14,17 @@ export interface CreatorProfile {
     socialLinks: SocialLink[];
 }
 
+export interface AvailabilityWindow {
+    day_of_week: number;
+    start_time: string;
+    end_time: string;
+}
+
+export interface BumpConfig {
+    bump_product_id: string;
+    bump_discount: number;
+}
+
 export interface Product {
     id: string;
     title: string;
@@ -22,10 +33,16 @@ export interface Product {
     description?: string;
     image_url?: string;
     product_type: string;
+    duration_minutes?: number;
+    timezone?: string;
+    cancellation_window_hours?: number;
+    availability?: AvailabilityWindow[];
+    bump?: BumpConfig;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     file_url?: string;
     is_visible?: boolean;
     sort_order?: number;
+    subscription_interval?: 'monthly' | 'yearly';
 }
 
 export interface StoreResponse {

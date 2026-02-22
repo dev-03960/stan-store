@@ -69,6 +69,14 @@ func TestOrderFlow(t *testing.T) {
 		assert.Equal(t, "order_mock_123456", orderResp.Data.RazorpayOrderID)
 		assert.Equal(t, domain.OrderStatusCreated, orderResp.Data.Status)
 		assert.Equal(t, int64(1000), orderResp.Data.Amount)
+
+		// Story 9.0: Verify LineItems populated
+		assert.Len(t, orderResp.Data.LineItems, 1, "Single-product order should have exactly 1 LineItem")
+		assert.Equal(t, "Test Ebook", orderResp.Data.LineItems[0].Title)
+		assert.Equal(t, int64(1000), orderResp.Data.LineItems[0].Amount)
+		assert.Equal(t, domain.ProductTypeDownload, orderResp.Data.LineItems[0].ProductType)
+		// Backward compat invariant: ProductID == LineItems[0].ProductID
+		assert.Equal(t, orderResp.Data.ProductID, orderResp.Data.LineItems[0].ProductID, "Legacy ProductID must match LineItems[0].ProductID")
 	})
 
 	// 3. Test Webhook (Payment Success)

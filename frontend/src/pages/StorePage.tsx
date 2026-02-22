@@ -84,6 +84,7 @@ const StorePage: React.FC = () => {
                     isOpen={isCheckoutOpen}
                     onClose={handleCloseCheckout}
                     product={selectedProduct}
+                    allProducts={store.products}
                 />
             )}
         </div>

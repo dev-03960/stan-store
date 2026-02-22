@@ -19,9 +19,11 @@ func NewOrderHandler(service *services.OrderService) *OrderHandler {
 // CreateOrder handles POST /api/v1/orders
 func (h *OrderHandler) CreateOrder(c *fiber.Ctx) error {
 	var req struct {
-		ProductID     string `json:"product_id" validate:"required"`
-		CustomerName  string `json:"customer_name" validate:"required"`
-		CustomerEmail string `json:"customer_email" validate:"required,email"`
+		ProductID        string `json:"product_id" validate:"required"`
+		CustomerName     string `json:"customer_name" validate:"required"`
+		CustomerEmail    string `json:"customer_email" validate:"required,email"`
+		BumpAccepted     bool   `json:"bump_accepted"`
+		BookingSlotStart string `json:"booking_slot_start,omitempty"`
 	}
 
 	if err := c.BodyParser(&req); err != nil {
@@ -35,7 +37,7 @@ func (h *OrderHandler) CreateOrder(c *fiber.Ctx) error {
 	}
 
 	// Create Order
-	order, err := h.service.CreateOrder(c.Context(), productID, req.CustomerName, req.CustomerEmail)
+	order, err := h.service.CreateOrder(c.Context(), productID, req.CustomerName, req.CustomerEmail, req.BumpAccepted, req.BookingSlotStart)
 	if err != nil {
 		return SendError(c, fiber.StatusInternalServerError, ErrInternalServer, "Failed to create order", err)
 	}
@@ -70,7 +72,7 @@ func (h *OrderHandler) DownloadOrder(c *fiber.Ctx) error {
 		return SendError(c, fiber.StatusBadRequest, ErrBadRequest, "Invalid order ID", nil)
 	}
 
-	url, err := h.service.GetOrderDownloadURL(c.Context(), orderID)
+	url, err := h.service.GetOrderDownloadURL(c.Context(), orderID, c.Query("product_id"))
 	if err != nil {
 		// Differentiate errors if needed (Order Not Found vs Not Paid vs System Error)
 		// For now generic 400 or 500

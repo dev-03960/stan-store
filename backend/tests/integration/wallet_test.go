@@ -121,9 +121,9 @@ func TestWalletFlow(t *testing.T) {
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 	json.NewDecoder(resp.Body).Decode(&walletResp)
-	assert.Equal(t, int64(1000), walletResp.Data.Balance)
+	assert.Equal(t, int64(950), walletResp.Data.Balance) // 1000 - 5% platform fee (50) = 950
 	assert.Len(t, walletResp.Data.Transactions, 1)
-	assert.Equal(t, int64(1000), walletResp.Data.Transactions[0].Amount)
+	assert.Equal(t, int64(950), walletResp.Data.Transactions[0].Amount)
 	assert.Equal(t, domain.TransactionTypeCredit, walletResp.Data.Transactions[0].Type)
 	assert.Equal(t, domain.TransactionSourceOrder, walletResp.Data.Transactions[0].Source)
 }
