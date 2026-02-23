@@ -16,10 +16,12 @@ var allowedPlatforms = map[string]bool{
 
 // ProfileInput represents the input for updating a creator's profile.
 type ProfileInput struct {
-	DisplayName string              `json:"displayName"`
-	Bio         string              `json:"bio"`
-	AvatarURL   string              `json:"avatarUrl"`
-	SocialLinks []domain.SocialLink `json:"socialLinks"`
+	DisplayName          string              `json:"displayName"`
+	Bio                  string              `json:"bio"`
+	AvatarURL            string              `json:"avatarUrl"`
+	Theme                string              `json:"theme"`
+	SocialLinks          []domain.SocialLink `json:"socialLinks"`
+	AbandonedCartEnabled *bool               `json:"abandonedCartEnabled"`
 }
 
 // ProfileService handles creator profile operations.
@@ -57,7 +59,19 @@ func (s *ProfileService) UpdateProfile(ctx context.Context, userID string, input
 	}
 	user.SocialLinks = input.SocialLinks
 	if user.SocialLinks == nil {
-		user.SocialLinks = []domain.SocialLink{}
+		user.SocialLinks = make([]domain.SocialLink, 0)
+	}
+
+	if input.Theme != "" {
+		if input.Theme == "minimal" || input.Theme == "bold" || input.Theme == "gradient" || input.Theme == "warm" {
+			user.Theme = input.Theme
+		} else {
+			return nil, &ValidationErrors{Errors: []FieldError{{Field: "theme", Message: "Invalid theme type: must be minimal, bold, gradient, or warm"}}}
+		}
+	}
+
+	if input.AbandonedCartEnabled != nil {
+		user.AbandonedCartEnabled = *input.AbandonedCartEnabled
 	}
 	user.UpdatedAt = time.Now()
 
@@ -102,7 +116,7 @@ func (s *ProfileService) validateProfileInput(input *ProfileInput) *ValidationEr
 			if !allowedPlatforms[platform] {
 				errs = append(errs, FieldError{
 					Field:   "socialLinks",
-					Message: "Invalid platform at index " + strings.Repeat("", 0) + string(rune('0'+i)) + ": must be instagram, youtube, twitter, linkedin, or tiktok",
+					Message: "Invalid platform at index " + string(rune('0'+i)) + ": must be instagram, youtube, twitter, linkedin, or tiktok",
 				})
 			}
 			if link.URL == "" {

@@ -135,6 +135,19 @@ func (s *ProductService) UpdateProduct(ctx context.Context, id string, creatorID
 	return existing, nil
 }
 
+// UpdateProductRaw commits internal logic states mapped safely bypassing the frontend UI mapping constraints
+func (s *ProductService) UpdateProductRaw(ctx context.Context, id string, product *domain.Product) error {
+	oid, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return errors.New("invalid product ID")
+	}
+
+	product.UpdatedAt = time.Now()
+	product.ID = oid
+
+	return s.repo.Update(ctx, product)
+}
+
 // DeleteProduct soft-deletes a product with ownership check.
 func (s *ProductService) DeleteProduct(ctx context.Context, id string, creatorID string) error {
 	oid, err := primitive.ObjectIDFromHex(id)

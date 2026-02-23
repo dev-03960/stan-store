@@ -1,12 +1,17 @@
 
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, ShoppingBag, Wallet, Menu, X } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag, Wallet, Settings, Menu, X, Megaphone, Plug, Users, TrendingUp } from 'lucide-react';
 
 const navItems = [
+    { name: 'Analytics', path: '/dashboard/analytics', icon: TrendingUp },
     { name: 'Products', path: '/dashboard', icon: LayoutDashboard },
     { name: 'Orders', path: '/dashboard/orders', icon: ShoppingBag },
     { name: 'Earnings', path: '/dashboard/earnings', icon: Wallet },
+    { name: 'Campaigns', path: '/dashboard/campaigns', icon: Megaphone },
+    { name: 'Integrations', path: '/dashboard/integrations', icon: Plug },
+    { name: 'Affiliates', path: '/dashboard/affiliates', icon: Users },
+    { name: 'Settings', path: '/dashboard/settings', icon: Settings },
 ];
 
 const NavLinks = ({ onNavigate }: { onNavigate?: () => void }) => (

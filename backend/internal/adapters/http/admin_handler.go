@@ -80,3 +80,14 @@ func (h *AdminHandler) UnbanCreator(c *fiber.Ctx) error {
 
 	return SendSuccess(c, fiber.StatusOK, map[string]string{"message": "Creator unbanned successfully"}, nil)
 }
+
+// GetJobStats returns job queue health metrics
+// GET /api/v1/admin/jobs/stats
+func (h *AdminHandler) GetJobStats(c *fiber.Ctx) error {
+	stats, err := h.adminService.GetJobStats(c.Context())
+	if err != nil {
+		return SendError(c, fiber.StatusInternalServerError, ErrInternalServer, "Failed to retrieve job stats", err)
+	}
+
+	return SendSuccess(c, fiber.StatusOK, stats, nil)
+}

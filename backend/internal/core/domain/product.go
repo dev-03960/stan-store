@@ -51,6 +51,10 @@ type Product struct {
 	// Subscription Fields
 	SubscriptionInterval string `bson:"subscription_interval,omitempty" json:"subscription_interval,omitempty"` // "monthly", "yearly"
 
+	// Affiliate Fields
+	AffiliateEnabled bool    `bson:"affiliate_enabled" json:"affiliate_enabled"`
+	CommissionRate   float64 `bson:"commission_rate,omitempty" json:"commission_rate,omitempty"` // Percentage 1-50
+
 	DeletedAt *time.Time `bson:"deleted_at,omitempty" json:"-"`
 	CreatedAt time.Time  `bson:"created_at" json:"created_at"`
 	UpdatedAt time.Time  `bson:"updated_at" json:"updated_at"`

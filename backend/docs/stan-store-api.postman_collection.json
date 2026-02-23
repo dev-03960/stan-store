@@ -536,6 +536,103 @@
             ]
         },
         {
+            "name": "🚀 Marketing & Affiliates",
+            "description": "Email campaigns, automations, and affiliate tracking",
+            "item": [
+                {
+                    "name": "Register Affiliate",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{apiBase}}/affiliates/register",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"creator_id\": \"{{creatorId}}\",\n  \"email\": \"affiliate@example.com\",\n  \"name\": \"Jane Promoter\"\n}"
+                        },
+                        "description": "Register a new affiliate for a creator. Returns a unique referral_code."
+                    }
+                },
+                {
+                    "name": "Get Creator Affiliates",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{apiBase}}/creator/affiliates",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{creatorToken}}"
+                            }
+                        ],
+                        "description": "List all affiliates promoting this creator."
+                    }
+                },
+                {
+                    "name": "Create Email Campaign",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{apiBase}}/creator/campaigns",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{creatorToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"Summer Sale\",\n  \"subject\": \"50% Off Everything!\",\n  \"content_html\": \"<h1>Huge Sale</h1><p>Click here to buy.</p>\"\n}"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "📈 Analytics",
+            "description": "Store funnel tracking and dashboard metrics",
+            "item": [
+                {
+                    "name": "Track Funnel Event",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{apiBase}}/analytics/events",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"event_type\": \"page_view\",\n  \"creator_id\": \"{{creatorId}}\"\n}"
+                        },
+                        "description": "PUBLIC. Track a funnel event (page_view, product_view, checkout_start, purchase)."
+                    }
+                },
+                {
+                    "name": "Get Dashboard Metrics",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{apiBase}}/creator/analytics?period=7d",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{creatorToken}}"
+                            }
+                        ],
+                        "description": "Returns aggregated analytics data for the creator's dashboard."
+                    }
+                }
+            ]
+        },
+        {
             "name": "🛡️ Admin",
             "description": "Platform administration — metrics and moderation (requires admin role)",
             "item": [

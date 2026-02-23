@@ -1,8 +1,11 @@
 package http
 
 import (
+	"time"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/limiter"
 
 	"github.com/devanshbhargava/stan-store/internal/core/domain"
 	"github.com/devanshbhargava/stan-store/internal/core/services"
@@ -10,26 +13,33 @@ import (
 
 // RouterDeps holds dependencies needed by the router.
 type RouterDeps struct {
-	FrontendURL       string
-	JWTService        *services.JWTService
-	UserRepo          domain.UserRepository
-	AuthHandler       *AuthHandler
-	UsernameHandler   *UsernameHandler
-	ProfileHandler    *ProfileHandler
-	ProductHandler    *ProductHandler
-	UploadHandler     *UploadHandler
-	StoreHandler      *StoreHandler
-	PaymentHandler    *PaymentHandler
-	OrderHandler      *OrderHandler
-	WalletHandler     *WalletHandler
-	AdminHandler      *AdminHandler
-	BuyerHandler      *BuyerHandler
-	PayoutHandler     *PayoutHandler
-	SubscriberHandler *SubscriberHandler
-	CouponHandler     *CouponHandler
-	BookingHandler    *BookingHandler
-	CourseHandler     *CourseHandler
-	AIHandler         *AIHandler
+	FrontendURL          string
+	JWTService           *services.JWTService
+	UserRepo             domain.UserRepository
+	AuthHandler          *AuthHandler
+	UsernameHandler      *UsernameHandler
+	ProfileHandler       *ProfileHandler
+	ProductHandler       *ProductHandler
+	UploadHandler        *UploadHandler
+	StoreHandler         *StoreHandler
+	PaymentHandler       *PaymentHandler
+	OrderHandler         *OrderHandler
+	WalletHandler        *WalletHandler
+	AdminHandler         *AdminHandler
+	BuyerHandler         *BuyerHandler
+	PayoutHandler        *PayoutHandler
+	SubscriberHandler    *SubscriberHandler
+	CouponHandler        *CouponHandler
+	BookingHandler       *BookingHandler
+	CourseHandler        *CourseHandler
+	AIHandler            *AIHandler
+	EmailTemplateHandler *EmailTemplateHandler
+	CampaignHandler      *CampaignHandler
+	TestimonialHandler   *TestimonialHandler
+	InstagramHandler     *InstagramHandler
+	AffiliateHandler     *AffiliateHandler
+	AnalyticsHandler     *AnalyticsHandler
+	WorkerService        *services.WorkerService
 }
 
 // SetupRouter configures all routes and middleware on the Fiber app.
@@ -52,6 +62,12 @@ func SetupRouter(app *fiber.App, deps *RouterDeps) {
 	// API v1 routes
 	v1 := app.Group("/api/v1")
 	v1.Get("/health", HealthHandler())
+
+	// Analytics routes (public, rate limited)
+	v1.Post("/analytics/events", limiter.New(limiter.Config{
+		Max:        100,
+		Expiration: 1 * time.Minute,
+	}), deps.AnalyticsHandler.TrackEvent)
 
 	// Auth routes (public)
 	auth := v1.Group("/auth")
@@ -83,6 +99,23 @@ func SetupRouter(app *fiber.App, deps *RouterDeps) {
 	creator.Get("/payouts", authRequired, banCheck, deps.PayoutHandler.GetPayoutHistory)
 	creator.Get("/payouts/balance", authRequired, banCheck, deps.PayoutHandler.GetBalance)
 	creator.Get("/subscribers", authRequired, banCheck, deps.SubscriberHandler.GetSubscribers)
+	creator.Get("/analytics", authRequired, banCheck, deps.AnalyticsHandler.GetDashboardMetrics)
+
+	creator.Get("/email-templates/:type", authRequired, banCheck, deps.EmailTemplateHandler.GetTemplate)
+	creator.Put("/email-templates/:type", authRequired, banCheck, deps.EmailTemplateHandler.UpdateTemplate)
+
+	creator.Post("/campaigns", authRequired, banCheck, deps.CampaignHandler.CreateCampaign)
+	creator.Get("/campaigns", authRequired, banCheck, deps.CampaignHandler.GetCampaigns)
+	creator.Patch("/campaigns/:id", authRequired, banCheck, deps.CampaignHandler.UpdateCampaignStatus)
+
+	// Instagram Creator Automations (protected)
+	creator.Get("/automations/instagram", authRequired, banCheck, deps.InstagramHandler.GetAutomations)
+	creator.Post("/automations/instagram", authRequired, banCheck, deps.InstagramHandler.CreateAutomation)
+	creator.Delete("/automations/instagram/:id", authRequired, banCheck, deps.InstagramHandler.DeleteAutomation)
+
+	// Affiliate Protected Routes
+	creator.Post("/products/:id/affiliates", deps.AffiliateHandler.EnableAffiliate)
+	creator.Get("/affiliates", deps.AffiliateHandler.GetCreatorAffiliates)
 
 	// Coupon routes (protected)
 	coupons := v1.Group("/coupons", authRequired, banCheck)
@@ -100,6 +133,9 @@ func SetupRouter(app *fiber.App, deps *RouterDeps) {
 	// Course structure route (requires auth to check if buyer actually bought it)
 	v1.Get("/products/:id/course", authRequired, banCheck, deps.CourseHandler.GetCourse)
 
+	// Public Testimonials route (called from storefront)
+	v1.Get("/products/:id/testimonials", deps.TestimonialHandler.GetPublic)
+
 	// Product routes (protected)
 	products := v1.Group("/products")
 	products.Use(authRequired, banCheck)
@@ -111,6 +147,12 @@ func SetupRouter(app *fiber.App, deps *RouterDeps) {
 	products.Put("/:id/bump", deps.ProductHandler.UpdateBumpConfig)
 	products.Patch("/reorder", deps.ProductHandler.ReorderProducts)
 
+	// Protected testimonial sub-routes
+	products.Post("/:id/testimonials", deps.TestimonialHandler.Create)
+	products.Put("/:id/testimonials/:tid", deps.TestimonialHandler.Update)
+	products.Delete("/:id/testimonials/:tid", deps.TestimonialHandler.Delete)
+	products.Patch("/:id/testimonials/reorder", deps.TestimonialHandler.Reorder)
+
 	// Course sub-routes (nested under products)
 	// GET course structure is public if checking permissions inside handler, or we can make it public
 	// Actually we should place GET /api/v1/products/:id/course outside auth checks if buyers need to see it,
@@ -118,6 +160,24 @@ func SetupRouter(app *fiber.App, deps *RouterDeps) {
 
 	// Protected Course CRUD routes
 	products.Post("/:id/course/modules", deps.CourseHandler.CreateModule)
+
+	// Integrations (protected)
+	integrations := v1.Group("/integrations")
+	integrations.Get("/instagram/oauth/url", authRequired, banCheck, deps.InstagramHandler.GetOAuthURL)
+	integrations.Get("/instagram/connection", authRequired, banCheck, deps.InstagramHandler.GetConnection)
+	integrations.Delete("/instagram/connection", authRequired, banCheck, deps.InstagramHandler.Disconnect)
+
+	// Integrations (public / callbacks)
+	v1.Get("/integrations/instagram/oauth/callback", deps.InstagramHandler.OAuthCallback)
+	v1.Get("/integrations/instagram/webhook", deps.InstagramHandler.VerifyWebhook)
+	v1.Post("/integrations/instagram/webhook", deps.InstagramHandler.HandleWebhook)
+
+	// Affiliates (public)
+	affiliates := v1.Group("/affiliates")
+	affiliates.Post("/register", deps.AffiliateHandler.RegisterAffiliate)
+	affiliates.Get("/my-stats", deps.AffiliateHandler.GetMyStats)
+	affiliates.Post("/track", deps.AffiliateHandler.TrackClick)
+
 	products.Put("/:id/course/modules/:modId", deps.CourseHandler.UpdateModule)
 	products.Delete("/:id/course/modules/:modId", deps.CourseHandler.DeleteModule)
 	products.Post("/:id/course/modules/:modId/lessons", deps.CourseHandler.CreateLesson)
@@ -170,6 +230,9 @@ func SetupRouter(app *fiber.App, deps *RouterDeps) {
 	admin.Get("/metrics", authRequired, RoleRequired("admin"), deps.AdminHandler.GetMetrics)
 	admin.Post("/creators/:id/ban", authRequired, RoleRequired("admin"), deps.AdminHandler.BanCreator)
 	admin.Post("/creators/:id/unban", authRequired, RoleRequired("admin"), deps.AdminHandler.UnbanCreator)
+	if deps.WorkerService != nil {
+		admin.Get("/jobs/stats", authRequired, RoleRequired("admin"), deps.AdminHandler.GetJobStats)
+	}
 
 	// Protected buyer routes
 	buyers := v1.Group("/buyer", authRequired, banCheck)

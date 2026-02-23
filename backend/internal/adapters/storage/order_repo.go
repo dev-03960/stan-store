@@ -117,3 +117,47 @@ func (r *MongoOrderRepository) FindAllByCustomerEmail(ctx context.Context, email
 func (r *MongoOrderRepository) Count(ctx context.Context) (int64, error) {
 	return r.collection.CountDocuments(ctx, bson.M{})
 }
+
+func (r *MongoOrderRepository) FindAbandonedOrders(ctx context.Context, since time.Time, until time.Time) ([]*domain.Order, error) {
+	// Orders created between until (e.g. 24h ago) and since (e.g. 1h ago)
+	// That are still in "created" status
+	// And have not had a reminder sent yet
+	filter := bson.M{
+		"status": domain.OrderStatusCreated,
+		"created_at": bson.M{
+			"$gte": until,
+			"$lte": since,
+		},
+		"reminder_sent_at": bson.M{"$exists": false}, // Or null
+	}
+
+	cursor, err := r.collection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var orders []*domain.Order
+	if err = cursor.All(ctx, &orders); err != nil {
+		return nil, err
+	}
+	return orders, nil
+}
+
+func (r *MongoOrderRepository) MarkReminderSent(ctx context.Context, orderID primitive.ObjectID) error {
+	filter := bson.M{"_id": orderID}
+	update := bson.M{
+		"$set": bson.M{
+			"reminder_sent_at": time.Now(),
+			"updated_at":       time.Now(),
+		},
+	}
+	res, err := r.collection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return err
+	}
+	if res.MatchedCount == 0 {
+		return errors.New("order not found")
+	}
+	return nil
+}

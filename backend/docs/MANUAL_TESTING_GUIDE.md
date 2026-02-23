@@ -354,6 +354,76 @@ curl -s -X POST http://localhost:8080/api/v1/products \
 
 ---
 
+### Flow 12: Affiliates & Referrals
+
+```bash
+# 1. Register as an affiliate (Public)
+curl -s -X POST http://localhost:8080/api/v1/affiliates/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "creator_id": "'$TARGET_CREATOR_ID'",
+    "email": "affiliate@example.com",
+    "name": "Jane Promoter"
+  }' | jq .
+# returns referral_code
+
+export REF_CODE="paste_referral_code_here"
+
+# 2. Track an affiliate click
+curl -s -X POST http://localhost:8080/api/v1/affiliates/track \
+  -H "Content-Type: application/json" \
+  -d '{"code": "'$REF_CODE'"}' | jq .
+
+# 3. View affiliate stats (Public - using code)
+curl -s "http://localhost:8080/api/v1/affiliates/my-stats?code=$REF_CODE" | jq .
+```
+
+---
+
+### Flow 13: Funnel Analytics Tracking
+
+```bash
+# 1. Track a pageview (Public ingestion)
+curl -s -X POST http://localhost:8080/api/v1/analytics/events \
+  -H "Content-Type: application/json" \
+  -d '{
+    "event_type": "page_view",
+    "creator_id": "'$TARGET_CREATOR_ID'"
+  }' 
+# Should return 204 No Content
+
+# 2. Track a checkout start
+curl -s -X POST http://localhost:8080/api/v1/analytics/events \
+  -H "Content-Type: application/json" \
+  -d '{
+    "event_type": "checkout_start",
+    "creator_id": "'$TARGET_CREATOR_ID'",
+    "product_id": "'$PRODUCT_ID'"
+  }'
+
+# 3. View Analytics Dashboard (Creator)
+curl -s "http://localhost:8080/api/v1/creator/analytics?period=7d" \
+  -H "Authorization: Bearer $CREATOR_TOKEN" | jq .
+```
+
+---
+
+### Flow 14: Marketing & Automations
+
+```bash
+# 1. Create an Email Campaign
+curl -s -X POST http://localhost:8080/api/v1/creator/campaigns \
+  -H "Authorization: Bearer $CREATOR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Summer Sale",
+    "subject": "50% Off Everything!",
+    "content_html": "<h1>Huge Sale</h1><p>Click here to buy.</p>"
+  }' | jq .
+```
+
+---
+
 ## API Quick Reference
 
 | Method | Endpoint | Auth | Description |
@@ -385,5 +455,9 @@ curl -s -X POST http://localhost:8080/api/v1/products \
 | `GET` | `/api/v1/admin/metrics` | 🔒 | Platform metrics |
 | `POST` | `/api/v1/admin/creators/:id/ban` | 🔒 | Ban creator |
 | `POST` | `/api/v1/admin/creators/:id/unban` | 🔒 | Unban creator |
+| `POST` | `/api/v1/creator/campaigns` | ✅ | Create email campaign |
+| `POST` | `/api/v1/affiliates/register` | — | Register affiliate |
+| `POST` | `/api/v1/analytics/events` | — | Track funnel event |
+| `GET` | `/api/v1/creator/analytics` | ✅ | Get creator metrics |
 
 **Legend:** ✅ = Auth required, 🔒 = Admin role required, Sig = Webhook signature, — = Public

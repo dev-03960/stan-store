@@ -24,6 +24,7 @@ func (h *OrderHandler) CreateOrder(c *fiber.Ctx) error {
 		CustomerEmail    string `json:"customer_email" validate:"required,email"`
 		BumpAccepted     bool   `json:"bump_accepted"`
 		BookingSlotStart string `json:"booking_slot_start,omitempty"`
+		ReferralCode     string `json:"referral_code,omitempty"`
 	}
 
 	if err := c.BodyParser(&req); err != nil {
@@ -36,8 +37,13 @@ func (h *OrderHandler) CreateOrder(c *fiber.Ctx) error {
 		return SendError(c, fiber.StatusBadRequest, ErrBadRequest, "Invalid Product ID", nil)
 	}
 
+	referralCode := req.ReferralCode
+	if referralCode == "" {
+		referralCode = c.Cookies("stan_ref")
+	}
+
 	// Create Order
-	order, err := h.service.CreateOrder(c.Context(), productID, req.CustomerName, req.CustomerEmail, req.BumpAccepted, req.BookingSlotStart)
+	order, err := h.service.CreateOrder(c.Context(), productID, req.CustomerName, req.CustomerEmail, req.BumpAccepted, req.BookingSlotStart, referralCode)
 	if err != nil {
 		return SendError(c, fiber.StatusInternalServerError, ErrInternalServer, "Failed to create order", err)
 	}

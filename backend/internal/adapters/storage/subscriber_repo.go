@@ -59,6 +59,30 @@ func (r *MongoSubscriberRepository) Upsert(ctx context.Context, sub *domain.Emai
 	return err
 }
 
+// FindByEmail attempts to find a single active subscriber by their mail and creator.
+func (r *MongoSubscriberRepository) FindByEmail(ctx context.Context, email string, creatorIDStr string) (*domain.EmailSubscriber, error) {
+	creatorID, err := primitive.ObjectIDFromHex(creatorIDStr)
+	if err != nil {
+		return nil, err
+	}
+
+	filter := bson.M{
+		"creator_id":      creatorID,
+		"email":           email,
+		"unsubscribed_at": bson.M{"$exists": false},
+	}
+
+	var sub domain.EmailSubscriber
+	err = r.collection.FindOne(ctx, filter).Decode(&sub)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, nil // Not found
+		}
+		return nil, err
+	}
+	return &sub, nil
+}
+
 // FindAllByCreatorID returns active subscribers, paginated.
 func (r *MongoSubscriberRepository) FindAllByCreatorID(ctx context.Context, creatorID primitive.ObjectID, limit, offset int64) ([]*domain.EmailSubscriber, error) {
 	filter := bson.M{

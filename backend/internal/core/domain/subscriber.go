@@ -24,6 +24,9 @@ type EmailSubscriberRepository interface {
 	// Upsert creates or updates a subscriber (unique on creator_id + email)
 	Upsert(ctx context.Context, sub *EmailSubscriber) error
 
+	// FindByEmail attempts to find a single active subscriber by their mail and creator.
+	FindByEmail(ctx context.Context, email string, creatorID string) (*EmailSubscriber, error)
+
 	// FindAllByCreatorID returns all active subscribers for a creator (paginated)
 	FindAllByCreatorID(ctx context.Context, creatorID primitive.ObjectID, limit, offset int64) ([]*EmailSubscriber, error)
 

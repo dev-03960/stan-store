@@ -3,7 +3,6 @@ package integration
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -65,10 +64,17 @@ func (m *MockFileStorage) Delete(ctx context.Context, key string) error {
 	return nil
 }
 
-type MockEmailService struct{}
+type MockEmailService struct {
+	Called bool
+}
 
 func (m *MockEmailService) SendOrderConfirmation(ctx context.Context, order *domain.Order, product *domain.Product, downloadURL string) error {
-	fmt.Printf("[MockEmailService] Sending confirmation for Order %s. URL: %s\n", order.ID.Hex(), downloadURL)
+	m.Called = true
+	return nil
+}
+
+func (m *MockEmailService) Send(ctx context.Context, recipient string, subject string, body string) error {
+	m.Called = true
 	return nil
 }
 
@@ -151,7 +157,17 @@ func setupTestApp(t *testing.T) (*fiber.App, func()) {
 	orderRepo := storage.NewMongoOrderRepository(testStorageDB.Database)
 	transactionRepo := storage.NewMongoTransactionRepository(testStorageDB.Database)
 	walletSvc := services.NewWalletService(transactionRepo)
-	orderService := services.NewOrderService(orderRepo, productRepo, userRepo, nil, paymentService, uploadSvc, walletSvc, emailSvc, nil, nil)
+	orderService := services.NewOrderService(orderRepo, productRepo, userRepo, nil, paymentService, uploadSvc, walletSvc, emailSvc, nil,
+		nil,
+		nil,
+		nil, // campaignRepo
+		nil, // emailQueueRepo
+		nil, // affiliateSvc
+	)
+
+	testimonialRepo := storage.NewMongoTestimonialRepository(testStorageDB.Database)
+	testimonialService := services.NewTestimonialService(testimonialRepo, productRepo)
+	testimonialHandler := httpAdapter.NewTestimonialHandler(testimonialService)
 
 	authHandler := httpAdapter.NewAuthHandler(authService, "test_client", "test_secret", "http://localhost/callback", "http://localhost:3000")
 	usernameHandler := httpAdapter.NewUsernameHandler(usernameService)
@@ -172,19 +188,20 @@ func setupTestApp(t *testing.T) (*fiber.App, func()) {
 	adminHandler := httpAdapter.NewAdminHandler(adminService)
 
 	httpAdapter.SetupRouter(app, &httpAdapter.RouterDeps{
-		FrontendURL:     "http://localhost:3000",
-		JWTService:      jwtService,
-		UserRepo:        userRepo,
-		AuthHandler:     authHandler,
-		UsernameHandler: usernameHandler,
-		ProfileHandler:  profileHandler,
-		ProductHandler:  productHandler,
-		UploadHandler:   uploadHandler,
-		StoreHandler:    storeHandler,
-		PaymentHandler:  paymentHandler,
-		OrderHandler:    orderHandler,
-		WalletHandler:   httpAdapter.NewWalletHandler(walletSvc),
-		AdminHandler:    adminHandler,
+		FrontendURL:        "http://localhost:3000",
+		JWTService:         jwtService,
+		UserRepo:           userRepo,
+		AuthHandler:        authHandler,
+		UsernameHandler:    usernameHandler,
+		ProfileHandler:     profileHandler,
+		ProductHandler:     productHandler,
+		UploadHandler:      uploadHandler,
+		StoreHandler:       storeHandler,
+		PaymentHandler:     paymentHandler,
+		OrderHandler:       orderHandler,
+		WalletHandler:      httpAdapter.NewWalletHandler(walletSvc),
+		AdminHandler:       adminHandler,
+		TestimonialHandler: testimonialHandler,
 	})
 
 	cleanup := func() {

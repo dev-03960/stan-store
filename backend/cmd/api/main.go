@@ -1,12 +1,15 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/hibiken/asynq"
 	"github.com/redis/go-redis/v9"
 
 	"context"
@@ -18,6 +21,8 @@ import (
 	"github.com/devanshbhargava/stan-store/internal/config"
 	"github.com/devanshbhargava/stan-store/internal/core/services"
 	"github.com/devanshbhargava/stan-store/pkg/logger"
+
+	"github.com/robfig/cron/v3"
 )
 
 func main() {
@@ -96,7 +101,46 @@ func main() {
 
 	subscriberRepo := storage.NewMongoSubscriberRepository(mongoDB.Database)
 	subRepo := storage.NewMongoSubscriptionRepository(mongoDB)
-	orderService := services.NewOrderService(orderRepo, productRepo, userRepo, subscriberRepo, paymentService, uploadService, walletService, emailAdapter, bookingService, subRepo)
+
+	emailTemplateRepo := storage.NewMongoEmailTemplateRepository(mongoDB.Database)
+	emailTemplateService := services.NewEmailTemplateService(emailTemplateRepo)
+	emailTemplateHandler := httpAdapter.NewEmailTemplateHandler(emailTemplateService)
+
+	campaignRepo := storage.NewMongoCampaignRepository(mongoDB.Database)
+	emailQueueRepo := storage.NewMongoEmailQueueRepository(mongoDB.Database)
+
+	// Affiliates
+	affiliateRepo := storage.NewMongoAffiliateRepository(mongoDB.Database)
+	affiliateSaleRepo := storage.NewMongoAffiliateSaleRepository(mongoDB.Database)
+	affiliateSvc := services.NewAffiliateService(affiliateRepo, affiliateSaleRepo, userRepo)
+	campaignService := services.NewCampaignService(campaignRepo)
+	campaignHandler := httpAdapter.NewCampaignHandler(campaignService, emailQueueRepo)
+
+	testimonialRepo := storage.NewMongoTestimonialRepository(mongoDB.Database)
+	testimonialService := services.NewTestimonialService(testimonialRepo, productRepo)
+	testimonialHandler := httpAdapter.NewTestimonialHandler(testimonialService)
+
+	analyticsRepo := storage.NewMongoAnalyticsRepository(mongoDB)
+	analyticsDailyRepo := storage.NewMongoAnalyticsDailyRepository(mongoDB)
+	analyticsService := services.NewAnalyticsService(analyticsRepo, analyticsDailyRepo)
+	analyticsHandler := httpAdapter.NewAnalyticsHandler(analyticsService)
+
+	orderService := services.NewOrderService(
+		orderRepo,
+		productRepo,
+		userRepo,
+		subscriberRepo,
+		paymentService,
+		uploadService,
+		walletService,
+		emailAdapter,
+		bookingService,
+		subRepo,
+		emailTemplateRepo,
+		campaignRepo,
+		emailQueueRepo,
+		affiliateSvc,
+	)
 	uploadHandler := httpAdapter.NewUploadHandler(uploadService)
 
 	// 6. Initialize handlers
@@ -155,6 +199,64 @@ func main() {
 		logger.Warn("AI_API_KEY block missing. AI copy generation disabled.")
 	}
 
+	// Initialize Background Worker
+	workerService := services.NewWorkerService(cfg.RedisURL)
+	go func() {
+		if err := workerService.Start(); err != nil {
+			logger.Error("background worker failed", "error", err.Error())
+		}
+	}()
+
+	// Initialize Instagram Service
+	igConnRepo := storage.NewMongoInstagramConnectionRepository(mongoDB.Database)
+	igAutoRepo := storage.NewMongoInstagramAutomationRepository(mongoDB.Database)
+	// (Using generic app keys mocked from cfg)
+	igAppID := "instagram_mock_app_id"
+	igAppSecret := "instagram_mock_secret"
+	igRedirect := cfg.FrontendURL + "/integrations/instagram/oauth/callback"
+	igVerifyToken := "mock_verify_token"
+
+	igService := services.NewInstagramService(
+		igConnRepo,
+		igAutoRepo,
+		workerService.GetClient(),
+		cfg.JWTSecret, // using standard secret as encryption key hook
+		igAppID,
+		igAppSecret,
+		igRedirect,
+	)
+	igHandler := httpAdapter.NewInstagramHandler(igService, igAppSecret, igVerifyToken)
+
+	// Inject Worker to dependent services
+	orderService.SetWorkerClient(workerService.GetClient())
+	workerService.SetDependencies(orderService, emailAdapter, igConnRepo, igAutoRepo, analyticsService, analyticsDailyRepo, analyticsRepo)
+	adminService.SetWorkerService(workerService)
+
+	// Initialize Cron Scheduling
+	c := cron.New()
+	_, err = c.AddFunc("*/15 * * * *", func() {
+		logger.Info("Cron: Sweeping abandoned carts...")
+		if sweepErr := orderService.ProcessAbandonedCarts(context.Background()); sweepErr != nil {
+			logger.Error("Cron: Failed to process abandoned carts", "error", sweepErr.Error())
+		}
+	})
+	if err != nil {
+		logger.Fatal("Failed to set up cron jobs", "error", err.Error())
+	}
+	_, err = c.AddFunc("0 1 * * *", func() { // Runs at 1 AM UTC
+		logger.Info("Cron: Queuing daily analytics aggregation...")
+		// Enqueue the task for yesterday
+		dateStr := time.Now().AddDate(0, 0, -1).Format("2006-01-02")
+		payload := services.AnalyticsPayload{Date: dateStr}
+		b, _ := json.Marshal(payload)
+		task := asynq.NewTask(services.TypeAnalyticsAggregate, b)
+		workerService.GetClient().Enqueue(task)
+	})
+	if err != nil {
+		logger.Error("Failed to set up analytics cron job", "error", err.Error())
+	}
+	c.Start()
+
 	// 7. Create Fiber app
 	app := fiber.New(fiber.Config{
 		AppName:               "Stan-store API v0.1.0",
@@ -171,20 +273,27 @@ func main() {
 		UsernameHandler: usernameHandler,
 		ProfileHandler:  profileHandler,
 
-		ProductHandler:    productHandler,
-		UploadHandler:     uploadHandler,
-		StoreHandler:      storeHandler,
-		PaymentHandler:    paymentHandler,
-		OrderHandler:      orderHandler,
-		WalletHandler:     walletHandler,
-		AdminHandler:      adminHandler,
-		BuyerHandler:      buyerHandler,
-		PayoutHandler:     payoutHandler,
-		SubscriberHandler: httpAdapter.NewSubscriberHandler(subscriberRepo),
-		CouponHandler:     couponHandler,
-		BookingHandler:    bookingHandler,
-		CourseHandler:     courseHandler,
-		AIHandler:         aiHandler,
+		ProductHandler:       productHandler,
+		UploadHandler:        uploadHandler,
+		StoreHandler:         storeHandler,
+		PaymentHandler:       paymentHandler,
+		OrderHandler:         orderHandler,
+		WalletHandler:        walletHandler,
+		AdminHandler:         adminHandler,
+		BuyerHandler:         buyerHandler,
+		PayoutHandler:        payoutHandler,
+		SubscriberHandler:    httpAdapter.NewSubscriberHandler(subscriberRepo),
+		CouponHandler:        couponHandler,
+		BookingHandler:       bookingHandler,
+		CourseHandler:        courseHandler,
+		AIHandler:            aiHandler,
+		EmailTemplateHandler: emailTemplateHandler,
+		CampaignHandler:      campaignHandler,
+		TestimonialHandler:   testimonialHandler,
+		InstagramHandler:     igHandler,
+		AffiliateHandler:     httpAdapter.NewAffiliateHandler(affiliateSvc, productService),
+		AnalyticsHandler:     analyticsHandler,
+		WorkerService:        workerService,
 	})
 
 	// 9. Graceful shutdown
@@ -198,7 +307,8 @@ func main() {
 		if err := app.Shutdown(); err != nil {
 			logger.Error("fiber shutdown error", "error", err.Error())
 		}
-
+		c.Stop()
+		workerService.Stop()
 		mongoDB.Disconnect()
 		redisClient.Disconnect()
 

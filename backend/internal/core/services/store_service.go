@@ -20,6 +20,7 @@ type PublicProfile struct {
 	DisplayName string              `json:"displayName"`
 	Username    string              `json:"username"`
 	Bio         string              `json:"bio"`
+	Theme       string              `json:"theme"`
 	AvatarURL   string              `json:"avatarUrl"`
 	SocialLinks []domain.SocialLink `json:"socialLinks"`
 }
@@ -90,6 +91,7 @@ func (s *StoreService) GetStoreByUsername(ctx context.Context, username string) 
 		DisplayName: user.DisplayName,
 		Username:    user.Username,
 		Bio:         user.Bio,
+		Theme:       user.Theme,
 		AvatarURL:   user.AvatarURL,
 		SocialLinks: user.SocialLinks,
 	}

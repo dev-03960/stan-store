@@ -8,6 +8,10 @@ import { aiApi } from '../../features/dashboard/aiApi';
 import { CoachingSettings } from './CoachingSettings';
 import { OrderBumpSettings } from './OrderBumpSettings';
 import { CourseBuilder } from './CourseBuilder';
+import { TestimonialsTab } from './TestimonialsTab';
+import { AffiliateSettings } from './AffiliateSettings';
+import type { AffiliateConfig } from './AffiliateSettings';
+import { enableAffiliateProgram } from '../../lib/api/products';
 
 interface ProductFormProps {
     product?: Product;
@@ -35,6 +39,9 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose }) => {
     });
 
     const [bumpConfig, setBumpConfig] = useState<BumpConfig | null>(product?.bump || null);
+    const [affiliateConfig, setAffiliateConfig] = useState<AffiliateConfig | undefined>(
+        product ? { enabled: !!product.affiliate_enabled, commission_rate: product.commission_rate || 10 } : undefined
+    );
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [productFile, setProductFile] = useState<File | null>(null);
     const [uploading, setUploading] = useState(false);
@@ -124,6 +131,13 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose }) => {
                     await updateBumpConfig(savedProduct.id, bumpConfig);
                 } catch (err) {
                     console.error('Failed to save bump config:', err);
+                }
+            }
+            if (savedProduct?.id && affiliateConfig !== undefined) {
+                try {
+                    await enableAffiliateProgram(savedProduct.id, affiliateConfig.enabled, affiliateConfig.commission_rate);
+                } catch (err) {
+                    console.error('Failed to save affiliate settings:', err);
                 }
             }
             queryClient.invalidateQueries({ queryKey: ['my-products'] });
@@ -335,12 +349,27 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose }) => {
                             />
                         )}
 
+                        {/* Affiliate Program Settings — only when editing */}
+                        {isEditing && (
+                            <AffiliateSettings
+                                config={affiliateConfig}
+                                onChange={setAffiliateConfig}
+                            />
+                        )}
+
                         {/* Course Builder UI - Documented in Story 8.5 */}
                         {isEditing && formData.product_type === 'course' && (
                             <div className="pt-6 border-t border-slate-100">
                                 <h3 className="text-lg font-bold font-heading mb-4">Course Curriculum</h3>
                                 <p className="text-sm text-slate-500 mb-4">Manage your course modules and lessons. Drag and drop to reorder.</p>
                                 <CourseBuilder productId={product.id} />
+                            </div>
+                        )}
+
+                        {/* Testimonials Management - Documented in Story 11.4 */}
+                        {isEditing && (
+                            <div className="pt-6 border-t border-slate-200">
+                                <TestimonialsTab productId={product.id} />
                             </div>
                         )}
 

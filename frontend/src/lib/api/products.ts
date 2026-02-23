@@ -55,6 +55,14 @@ export async function updateBumpConfig(id: string, bump: import('./store').BumpC
     return response.data;
 }
 
+export async function enableAffiliateProgram(id: string, enabled: boolean, commissionRate: number) {
+    const response = await api.post<{ message: string; product: Product }>(`/products/${id}/affiliates`, {
+        enabled,
+        commission_rate: commissionRate
+    });
+    return response.data;
+}
+
 export async function reorderProducts(items: ReorderItem[]) {
     await api.patch('/products/reorder', { items });
 }
@@ -114,6 +122,57 @@ export async function getCourse(productId: string) {
     const response = await api.get<Course>(`/products/${productId}/course`);
     if (!response.data) throw new Error('Failed to fetch course');
     return response.data;
+}
+
+export async function reorderCourse(productId: string, items: Array<{ id: string, type: 'module' | 'lesson', parent_id?: string, sort_order: number }>) {
+    const response = await api.put<Course>(`/products/${productId}/course/reorder`, { items });
+    if (!response.data) throw new Error('Failed to reorder course');
+    return response.data;
+}
+
+// --- Testimonial Specific Types & APIs ---
+
+export interface Testimonial {
+    id: string;
+    product_id: string;
+    creator_id: string;
+    customer_name: string;
+    text: string;
+    rating: number;
+    avatar_url?: string;
+    sort_order: number;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface CreateTestimonialDTO {
+    customer_name: string;
+    text: string;
+    rating: number;
+    avatar_url?: string;
+}
+
+export async function getTestimonials(productId: string) {
+    const response = await api.get<{ data: Testimonial[] }>(`/products/${productId}/testimonials`);
+    return response.data?.data || [];
+}
+
+export async function createTestimonial(productId: string, data: CreateTestimonialDTO) {
+    const response = await api.post<{ data: Testimonial }>(`/products/${productId}/testimonials`, data);
+    return response.data?.data;
+}
+
+export async function updateTestimonial(productId: string, testimonialId: string, data: CreateTestimonialDTO) {
+    const response = await api.put<{ data: Testimonial }>(`/products/${productId}/testimonials/${testimonialId}`, data);
+    return response.data?.data;
+}
+
+export async function deleteTestimonial(productId: string, testimonialId: string) {
+    await api.delete(`/products/${productId}/testimonials/${testimonialId}`);
+}
+
+export async function reorderTestimonials(productId: string, testimonialIds: string[]) {
+    await api.patch(`/products/${productId}/testimonials/reorder`, { testimonial_ids: testimonialIds });
 }
 
 export async function createModule(productId: string, title: string, sort_order: number) {

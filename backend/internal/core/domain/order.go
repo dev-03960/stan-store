@@ -42,8 +42,14 @@ type Order struct {
 	RazorpayOrderID   string             `bson:"razorpay_order_id" json:"razorpay_order_id"`
 	RazorpayPaymentID string             `bson:"razorpay_payment_id,omitempty" json:"razorpay_payment_id,omitempty"`
 	Status            OrderStatus        `bson:"status" json:"status"`
-	CreatedAt         time.Time          `bson:"created_at" json:"created_at"`
-	UpdatedAt         time.Time          `bson:"updated_at" json:"updated_at"`
+	ReminderSentAt    *time.Time         `bson:"reminder_sent_at,omitempty" json:"reminder_sent_at,omitempty"`
+
+	// Affiliate Fields
+	AffiliateID  *primitive.ObjectID `bson:"affiliate_id,omitempty" json:"affiliate_id,omitempty"`
+	ReferralCode string              `bson:"referral_code,omitempty" json:"referral_code,omitempty"`
+
+	CreatedAt time.Time `bson:"created_at" json:"created_at"`
+	UpdatedAt time.Time `bson:"updated_at" json:"updated_at"`
 }
 
 // OrderRepository defines the interface for order storage
@@ -55,4 +61,6 @@ type OrderRepository interface {
 	FindByID(ctx context.Context, id primitive.ObjectID) (*Order, error)
 	FindAllByCreatorID(ctx context.Context, creatorID primitive.ObjectID) ([]*Order, error)
 	FindAllByCustomerEmail(ctx context.Context, email string) ([]*Order, error)
+	FindAbandonedOrders(ctx context.Context, since time.Time, until time.Time) ([]*Order, error)
+	MarkReminderSent(ctx context.Context, orderID primitive.ObjectID) error
 }

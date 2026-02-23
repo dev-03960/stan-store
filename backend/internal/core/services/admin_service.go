@@ -15,6 +15,7 @@ type AdminService struct {
 	orderRepo interface {
 		Count(ctx context.Context) (int64, error)
 	}
+	workerService *WorkerService
 }
 
 // NewAdminService creates a new AdminService.
@@ -34,6 +35,11 @@ func NewAdminService(
 		transactionRepo: transactionRepo,
 		orderRepo:       orderRepo,
 	}
+}
+
+// SetWorkerService injects the worker service (optional, needed for job stats)
+func (s *AdminService) SetWorkerService(ws *WorkerService) {
+	s.workerService = ws
 }
 
 // PlatformMetrics represents the high-level metrics of the platform.
@@ -111,4 +117,53 @@ func (s *AdminService) UnbanCreator(ctx context.Context, creatorID string) error
 	}
 
 	return s.userRepo.UpdateStatus(ctx, creatorID, domain.UserStatusActive, "")
+}
+
+// GetJobStats returns metrics about the background job queue
+func (s *AdminService) GetJobStats(ctx context.Context) (map[string]interface{}, error) {
+	if s.workerService == nil {
+		return nil, fmt.Errorf("worker service not configured")
+	}
+
+	inspector := s.workerService.GetInspector()
+	if inspector == nil {
+		return nil, fmt.Errorf("worker inspector unavailable")
+	}
+
+	// Fetch queues (usually just "default")
+	queues, err := inspector.Queues()
+	if err != nil {
+		return nil, err
+	}
+
+	queueStats := make(map[string]interface{})
+	totalActive := 0
+	totalPending := 0
+	totalFailed := 0
+
+	for _, qname := range queues {
+		info, err := inspector.GetQueueInfo(qname)
+		if err != nil {
+			continue
+		}
+
+		totalActive += info.Active
+		totalPending += info.Pending
+		totalFailed += info.Retry + info.Archived // Failed usually implies retrying or dead
+
+		queueStats[qname] = map[string]interface{}{
+			"active":    info.Active,
+			"pending":   info.Pending,
+			"retrying":  info.Retry,
+			"dead":      info.Archived,
+			"scheduled": info.Scheduled,
+		}
+	}
+
+	return map[string]interface{}{
+		"active":  totalActive,
+		"pending": totalPending,
+		"failed":  totalFailed,
+		"queues":  queueStats,
+	}, nil
 }

@@ -1,9 +1,11 @@
+import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { PrivateRoute } from './components/auth/PrivateRoute';
 
 import OnboardingPage from './pages/onboarding/OnboardingPage';
 import StorePage from './pages/StorePage';
+import AffiliateRegistrationPage from './pages/storefront/AffiliateRegistrationPage';
 import CustomerOrderPage from './pages/OrderPage';
 import BuyerAuthPage from './pages/buyer/BuyerAuthPage';
 import MyPurchasesPage from './pages/buyer/MyPurchasesPage';
@@ -14,8 +16,31 @@ import { DashboardLayout } from './components/layout/DashboardLayout';
 import EarningsPage from './pages/dashboard/EarningsPage';
 import OrdersPage from './pages/dashboard/OrdersPage';
 import CouponsPage from './pages/dashboard/CouponsPage';
+import SettingsPage from './pages/dashboard/SettingsPage';
+import IntegrationsPage from './pages/dashboard/IntegrationsPage';
+import { CampaignsPage } from './pages/dashboard/CampaignsPage';
+import AffiliateDashboard from './pages/dashboard/AffiliateDashboard';
+import AnalyticsDashboard from './pages/dashboard/AnalyticsDashboard';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { trackAffiliateClick } from './features/affiliates/api';
+import { CookieConsentBanner } from './components/storefront/CookieConsentBanner';
+import { hasAnalyticsConsent } from './lib/analytics';
+
+function GlobalTracker() {
+  React.useEffect(() => {
+    // Only track if consent has been explicitly granted
+    if (!hasAnalyticsConsent()) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('ref');
+    if (ref) {
+      trackAffiliateClick(ref).catch(err => console.error('Failed to track click:', err));
+    }
+  }, []);
+
+  return null;
+}
 
 function StorefrontPage() {
   return (
@@ -51,12 +76,15 @@ export default function App() {
     <ErrorBoundary>
       <AuthProvider>
         <BrowserRouter>
+          <GlobalTracker />
+          <CookieConsentBanner />
           <Routes>
             <Route element={<RootLayout />}>
               {/* Public Routes */}
               <Route path="/" element={<StorefrontPage />} />
               {/* Storefront / Customer Routes */}
               <Route path="/store/:username" element={<StorePage />} />
+              <Route path="/store/:username/affiliate" element={<AffiliateRegistrationPage />} />
               <Route path="/order/:orderId" element={<CustomerOrderPage />} />
 
               {/* Buyer Auth & Dashboard Routes */}
@@ -71,6 +99,11 @@ export default function App() {
                   <Route path="earnings" element={<EarningsPage />} />
                   <Route path="orders" element={<OrdersPage />} />
                   <Route path="coupons" element={<CouponsPage />} />
+                  <Route path="campaigns" element={<CampaignsPage />} />
+                  <Route path="integrations" element={<IntegrationsPage />} />
+                  <Route path="affiliates" element={<AffiliateDashboard />} />
+                  <Route path="analytics" element={<AnalyticsDashboard />} />
+                  <Route path="settings" element={<SettingsPage />} />
                 </Route>
                 <Route path="/admin" element={<AdminDashboardPage />} />
                 <Route path="/onboarding" element={<OnboardingPage />} />

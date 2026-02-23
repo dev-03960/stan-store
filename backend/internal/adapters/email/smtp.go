@@ -68,3 +68,27 @@ func (s *SMTPEmailAdapter) SendOrderConfirmation(ctx context.Context, order *dom
 
 	return nil
 }
+
+func (s *SMTPEmailAdapter) Send(ctx context.Context, recipient string, subject string, body string) error {
+	addr := fmt.Sprintf("%s:%s", s.host, s.port)
+	auth := smtp.PlainAuth("", s.user, s.pass, s.host)
+
+	msg := []byte(fmt.Sprintf("To: %s\r\n"+
+		"From: %s\r\n"+
+		"Subject: %s\r\n"+
+		"MIME-Version: 1.0\r\n"+
+		"Content-Type: text/html; charset=\"UTF-8\"\r\n"+
+		"\r\n"+
+		"%s", recipient, s.fromAddr, subject, body))
+
+	if s.host == "mock" {
+		fmt.Printf("Mock General Email Sent to %s: %s\n", recipient, subject)
+		return nil
+	}
+
+	if err := smtp.SendMail(addr, auth, s.fromAddr, []string{recipient}, msg); err != nil {
+		return fmt.Errorf("failed to send general email: %w", err)
+	}
+
+	return nil
+}

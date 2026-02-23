@@ -6,6 +6,7 @@ import StoreHeader from '../components/store/StoreHeader';
 import ProductCard from '../components/store/ProductCard';
 import StoreSkeleton from '../components/store/StoreSkeleton';
 import CheckoutModal from '../components/store/CheckoutModal';
+import { PublicTestimonials } from '../components/store/PublicTestimonials';
 import { AlertCircle } from 'lucide-react';
 
 const StorePage: React.FC = () => {
@@ -49,7 +50,14 @@ const StorePage: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 pb-20">
+        <div
+            className={`min-h-screen pb-20 ${store.creator.theme === 'gradient' ? 'bg-gradient-to-br from-purple-100 to-pink-100' : ''}`}
+            data-theme={store.creator.theme || 'minimal'}
+            style={{
+                backgroundColor: store.creator.theme !== 'gradient' ? 'var(--theme-bg)' : undefined,
+                color: 'var(--theme-text-primary)'
+            }}
+        >
             {/* Mobile-optimized Layout */}
             <main className="container mx-auto px-4 max-w-3xl">
                 <StoreHeader profile={store.creator} />
@@ -57,11 +65,13 @@ const StorePage: React.FC = () => {
                 <div className="mt-6 space-y-4">
                     {store.products.length > 0 ? (
                         store.products.map((product) => (
-                            <ProductCard
-                                key={product.id}
-                                product={product}
-                                onBuy={handleBuy}
-                            />
+                            <div key={product.id}>
+                                <ProductCard
+                                    product={product}
+                                    onBuy={handleBuy}
+                                />
+                                <PublicTestimonials productId={product.id} />
+                            </div>
                         ))
                     ) : (
                         <div className="text-center py-12 bg-white rounded-xl border border-slate-100 shadow-sm">

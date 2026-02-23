@@ -10,6 +10,7 @@ export interface CreatorProfile {
     displayName: string;
     username: string;
     bio: string;
+    theme: string;
     avatarUrl: string;
     socialLinks: SocialLink[];
 }
@@ -43,6 +44,8 @@ export interface Product {
     is_visible?: boolean;
     sort_order?: number;
     subscription_interval?: 'monthly' | 'yearly';
+    affiliate_enabled?: boolean;
+    commission_rate?: number;
 }
 
 export interface StoreResponse {
