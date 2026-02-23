@@ -134,13 +134,14 @@ func setupTestApp(t *testing.T) (*fiber.App, func()) {
 	// For testing, `nil` is fine if the methods handled check for it, or we use a mini-redis.
 	// Since `HandleMagicLinkRequest` assumes a valid redis.Client, we will pass `nil` and skip testing magic links
 	// in the old integration tests, or spin up a real test one later.
+	var cache domain.Cache
 	jwtService := services.NewJWTService(testJWTSecret)
 	authService := services.NewAuthService(userRepo, jwtService, nil)
 	usernameService := services.NewUsernameService(userRepo)
-	profileService := services.NewProfileService(userRepo)
-	productService := services.NewProductService(productRepo)
+	profileService := services.NewProfileService(userRepo, cache)
+	productService := services.NewProductService(productRepo, cache)
 
-	storeService := services.NewStoreService(userRepo, productRepo)
+	storeService := services.NewStoreService(userRepo, productRepo, cache)
 
 	// Mock Config for PaymentService
 	mockCfg := &config.Config{
@@ -166,7 +167,7 @@ func setupTestApp(t *testing.T) (*fiber.App, func()) {
 	)
 
 	testimonialRepo := storage.NewMongoTestimonialRepository(testStorageDB.Database)
-	testimonialService := services.NewTestimonialService(testimonialRepo, productRepo)
+	testimonialService := services.NewTestimonialService(testimonialRepo, productRepo, cache)
 	testimonialHandler := httpAdapter.NewTestimonialHandler(testimonialService)
 
 	authHandler := httpAdapter.NewAuthHandler(authService, "test_client", "test_secret", "http://localhost/callback", "http://localhost:3000")
@@ -184,7 +185,7 @@ func setupTestApp(t *testing.T) (*fiber.App, func()) {
 	// We need to set context locals for tests?
 	// AuthRequired middleware is used. We need to generate valid tokens.
 
-	adminService := services.NewAdminService(userRepo, transactionRepo, orderRepo)
+	adminService := services.NewAdminService(userRepo, transactionRepo, orderRepo, cache)
 	adminHandler := httpAdapter.NewAdminHandler(adminService)
 
 	httpAdapter.SetupRouter(app, &httpAdapter.RouterDeps{

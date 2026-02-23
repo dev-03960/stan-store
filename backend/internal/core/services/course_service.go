@@ -2,7 +2,10 @@ package services
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -21,14 +24,23 @@ type CourseService struct {
 	productRepo domain.ProductRepository
 	orderRepo   domain.OrderRepository
 	userRepo    domain.UserRepository // To fetch buyer's email if needed
+	cache       domain.Cache
 }
 
-func NewCourseService(courseRepo domain.CourseRepository, productRepo domain.ProductRepository, orderRepo domain.OrderRepository, userRepo domain.UserRepository) *CourseService {
+func NewCourseService(courseRepo domain.CourseRepository, productRepo domain.ProductRepository, orderRepo domain.OrderRepository, userRepo domain.UserRepository, cache domain.Cache) *CourseService {
 	return &CourseService{
 		courseRepo:  courseRepo,
 		productRepo: productRepo,
 		orderRepo:   orderRepo,
 		userRepo:    userRepo,
+		cache:       cache,
+	}
+}
+
+func (s *CourseService) invalidateCache(ctx context.Context, productID primitive.ObjectID) {
+	if s.cache != nil {
+		cacheKey := fmt.Sprintf("cache:course:preview:%s", productID.Hex())
+		_ = s.cache.Delete(ctx, cacheKey)
 	}
 }
 
@@ -54,6 +66,7 @@ func (s *CourseService) getOrCreateCourse(ctx context.Context, productID primiti
 			if err := s.courseRepo.Create(ctx, course); err != nil {
 				return nil, err
 			}
+			s.invalidateCache(ctx, productID)
 			return course, nil
 		}
 		return nil, err
@@ -105,10 +118,27 @@ func (s *CourseService) GetCourse(ctx context.Context, productID primitive.Objec
 		return nil, errors.New("unauthorized: you have not purchased this course")
 	}
 
+	cacheKey := fmt.Sprintf("cache:course:preview:%s", productID.Hex())
+	if s.cache != nil {
+		if cached, err := s.cache.Get(ctx, cacheKey); err == nil && cached != "" {
+			var course domain.Course
+			if err := json.Unmarshal([]byte(cached), &course); err == nil {
+				return &course, nil
+			}
+		}
+	}
+
 	course, err := s.courseRepo.FindByProductID(ctx, productID)
 	if err != nil {
 		return nil, err
 	}
+
+	if s.cache != nil {
+		if b, err := json.Marshal(course); err == nil {
+			_ = s.cache.Set(ctx, cacheKey, string(b), 10*time.Minute)
+		}
+	}
+
 	return course, nil
 }
 
@@ -130,6 +160,7 @@ func (s *CourseService) CreateModule(ctx context.Context, productID primitive.Ob
 	if err := s.courseRepo.Update(ctx, course); err != nil {
 		return nil, err
 	}
+	s.invalidateCache(ctx, productID)
 
 	return course, nil
 }
@@ -158,6 +189,7 @@ func (s *CourseService) UpdateModule(ctx context.Context, productID primitive.Ob
 	if err := s.courseRepo.Update(ctx, course); err != nil {
 		return nil, err
 	}
+	s.invalidateCache(ctx, productID)
 
 	return course, nil
 }
@@ -187,6 +219,7 @@ func (s *CourseService) DeleteModule(ctx context.Context, productID primitive.Ob
 	if err := s.courseRepo.Update(ctx, course); err != nil {
 		return nil, err
 	}
+	s.invalidateCache(ctx, productID)
 
 	return course, nil
 }
@@ -215,6 +248,7 @@ func (s *CourseService) CreateLesson(ctx context.Context, productID primitive.Ob
 	if err := s.courseRepo.Update(ctx, course); err != nil {
 		return nil, err
 	}
+	s.invalidateCache(ctx, productID)
 
 	return course, nil
 }
@@ -254,6 +288,7 @@ func (s *CourseService) UpdateLesson(ctx context.Context, productID primitive.Ob
 	if err := s.courseRepo.Update(ctx, course); err != nil {
 		return nil, err
 	}
+	s.invalidateCache(ctx, productID)
 
 	return course, nil
 }
@@ -293,6 +328,7 @@ func (s *CourseService) DeleteLesson(ctx context.Context, productID primitive.Ob
 	if err := s.courseRepo.Update(ctx, course); err != nil {
 		return nil, err
 	}
+	s.invalidateCache(ctx, productID)
 
 	return course, nil
 }
@@ -310,6 +346,7 @@ func (s *CourseService) ReorderStructure(ctx context.Context, productID primitiv
 	if err := s.courseRepo.Update(ctx, course); err != nil {
 		return nil, err
 	}
+	s.invalidateCache(ctx, productID)
 
 	return course, nil
 }

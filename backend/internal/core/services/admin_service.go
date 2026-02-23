@@ -16,6 +16,7 @@ type AdminService struct {
 		Count(ctx context.Context) (int64, error)
 	}
 	workerService *WorkerService
+	cache         domain.Cache
 }
 
 // NewAdminService creates a new AdminService.
@@ -29,17 +30,27 @@ func NewAdminService(
 	orderRepo interface {
 		Count(ctx context.Context) (int64, error)
 	},
+	cache domain.Cache,
 ) *AdminService {
 	return &AdminService{
 		userRepo:        userRepo,
 		transactionRepo: transactionRepo,
 		orderRepo:       orderRepo,
+		cache:           cache,
 	}
 }
 
 // SetWorkerService injects the worker service (optional, needed for job stats)
 func (s *AdminService) SetWorkerService(ws *WorkerService) {
 	s.workerService = ws
+}
+
+// GetCacheStats retrieves cache stats (memory usage, keys, connection status).
+func (s *AdminService) GetCacheStats(ctx context.Context) (map[string]interface{}, error) {
+	if s.cache == nil {
+		return map[string]interface{}{"status": "disabled"}, nil
+	}
+	return s.cache.Stats(ctx)
 }
 
 // PlatformMetrics represents the high-level metrics of the platform.

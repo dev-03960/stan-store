@@ -27,4 +27,7 @@ type Cache interface {
 
 	// Expire sets a timeout on key.
 	Expire(ctx context.Context, key string, ttl time.Duration) error
+
+	// Stats returns cache metrics (like memory usage, keys count).
+	Stats(ctx context.Context) (map[string]interface{}, error)
 }

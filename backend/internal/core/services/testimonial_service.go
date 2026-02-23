@@ -2,8 +2,10 @@ package services
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/devanshbhargava/stan-store/internal/core/domain"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -12,12 +14,20 @@ import (
 type TestimonialService struct {
 	repo        domain.TestimonialRepository
 	productRepo domain.ProductRepository
+	cache       domain.Cache
 }
 
-func NewTestimonialService(repo domain.TestimonialRepository, productRepo domain.ProductRepository) *TestimonialService {
+func NewTestimonialService(repo domain.TestimonialRepository, productRepo domain.ProductRepository, cache domain.Cache) *TestimonialService {
 	return &TestimonialService{
 		repo:        repo,
 		productRepo: productRepo,
+		cache:       cache,
+	}
+}
+
+func (s *TestimonialService) invalidateCache(ctx context.Context, productID string) {
+	if s.cache != nil {
+		_ = s.cache.Delete(ctx, fmt.Sprintf("cache:testimonials:%s", productID))
 	}
 }
 
@@ -73,16 +83,39 @@ func (s *TestimonialService) CreateTestimonial(ctx context.Context, creatorID st
 		return nil, fmt.Errorf("failed to create testimonial: %v", err)
 	}
 
+	s.invalidateCache(ctx, productID)
+
 	return testimonial, nil
 }
 
-// GetPublicTestimonials returns all testimonials for a product publicly, sorted by SortOrder
 func (s *TestimonialService) GetPublicTestimonials(ctx context.Context, productID string) ([]*domain.Testimonial, error) {
+	cacheKey := fmt.Sprintf("cache:testimonials:%s", productID)
+	if s.cache != nil {
+		if cached, err := s.cache.Get(ctx, cacheKey); err == nil && cached != "" {
+			var testimonials []*domain.Testimonial
+			if err := json.Unmarshal([]byte(cached), &testimonials); err == nil {
+				return testimonials, nil
+			}
+		}
+	}
+
 	pID, err := primitive.ObjectIDFromHex(productID)
 	if err != nil {
 		return nil, errors.New("invalid product ID")
 	}
-	return s.repo.FindByProductID(ctx, pID)
+
+	testimonials, err := s.repo.FindByProductID(ctx, pID)
+	if err != nil {
+		return nil, err
+	}
+
+	if s.cache != nil {
+		if b, err := json.Marshal(testimonials); err == nil {
+			_ = s.cache.Set(ctx, cacheKey, string(b), 30*time.Minute)
+		}
+	}
+
+	return testimonials, nil
 }
 
 // UpdateTestimonial allows the creator to edit an existing testimonial
@@ -124,6 +157,8 @@ func (s *TestimonialService) UpdateTestimonial(ctx context.Context, creatorID st
 		return nil, err
 	}
 
+	s.invalidateCache(ctx, testimonial.ProductID.Hex())
+
 	return testimonial, nil
 }
 
@@ -148,7 +183,12 @@ func (s *TestimonialService) DeleteTestimonial(ctx context.Context, creatorID st
 		return errors.New("unauthorized: testimonial does not belong to creator")
 	}
 
-	return s.repo.Delete(ctx, tID)
+	if err := s.repo.Delete(ctx, tID); err != nil {
+		return err
+	}
+
+	s.invalidateCache(ctx, testimonial.ProductID.Hex())
+	return nil
 }
 
 // ReorderTestimonials updates the sort_order of testimonials for a specific product
@@ -186,6 +226,8 @@ func (s *TestimonialService) ReorderTestimonials(ctx context.Context, creatorID 
 			_ = s.repo.Update(ctx, t)
 		}
 	}
+
+	s.invalidateCache(ctx, productID)
 
 	return nil
 }

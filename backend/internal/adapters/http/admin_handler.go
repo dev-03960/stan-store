@@ -91,3 +91,14 @@ func (h *AdminHandler) GetJobStats(c *fiber.Ctx) error {
 
 	return SendSuccess(c, fiber.StatusOK, stats, nil)
 }
+
+// GetCacheStats returns Redis cache health metrics
+// GET /api/v1/admin/cache/stats
+func (h *AdminHandler) GetCacheStats(c *fiber.Ctx) error {
+	stats, err := h.adminService.GetCacheStats(c.Context())
+	if err != nil {
+		return SendError(c, fiber.StatusInternalServerError, ErrInternalServer, "Failed to retrieve cache stats", err)
+	}
+
+	return SendSuccess(c, fiber.StatusOK, stats, nil)
+}

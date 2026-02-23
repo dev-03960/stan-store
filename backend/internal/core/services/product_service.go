@@ -13,13 +13,21 @@ import (
 
 // ProductService handles business logic for products.
 type ProductService struct {
-	repo domain.ProductRepository
+	repo  domain.ProductRepository
+	cache domain.Cache
 }
 
 // NewProductService creates a new ProductService.
-func NewProductService(repo domain.ProductRepository) *ProductService {
+func NewProductService(repo domain.ProductRepository, cache domain.Cache) *ProductService {
 	return &ProductService{
-		repo: repo,
+		repo:  repo,
+		cache: cache,
+	}
+}
+
+func (s *ProductService) invalidateStoreCache(ctx context.Context, creatorID string) {
+	if s.cache != nil {
+		_ = s.cache.Delete(ctx, fmt.Sprintf("cache:store:id:%s", creatorID))
 	}
 }
 
@@ -45,6 +53,8 @@ func (s *ProductService) CreateProduct(ctx context.Context, input *domain.Produc
 	if err := s.repo.Create(ctx, input); err != nil {
 		return nil, fmt.Errorf("failed to create product: %w", err)
 	}
+
+	s.invalidateStoreCache(ctx, input.CreatorID.Hex())
 
 	return input, nil
 }
@@ -132,6 +142,8 @@ func (s *ProductService) UpdateProduct(ctx context.Context, id string, creatorID
 		return nil, fmt.Errorf("failed to update product: %w", err)
 	}
 
+	s.invalidateStoreCache(ctx, cID.Hex())
+
 	return existing, nil
 }
 
@@ -145,7 +157,11 @@ func (s *ProductService) UpdateProductRaw(ctx context.Context, id string, produc
 	product.UpdatedAt = time.Now()
 	product.ID = oid
 
-	return s.repo.Update(ctx, product)
+	err = s.repo.Update(ctx, product)
+	if err == nil {
+		s.invalidateStoreCache(ctx, product.CreatorID.Hex())
+	}
+	return err
 }
 
 // DeleteProduct soft-deletes a product with ownership check.
@@ -174,7 +190,11 @@ func (s *ProductService) DeleteProduct(ctx context.Context, id string, creatorID
 		return errors.New("unauthorized: you do not own this product")
 	}
 
-	return s.repo.Delete(ctx, oid)
+	err = s.repo.Delete(ctx, oid)
+	if err == nil {
+		s.invalidateStoreCache(ctx, cID.Hex())
+	}
+	return err
 }
 
 // validateProduct validates product fields.
@@ -224,7 +244,11 @@ func (s *ProductService) ToggleVisibility(ctx context.Context, id string, creato
 	}
 
 	// Repository handles ownership check via filter too, which is fine
-	return s.repo.UpdateVisibility(ctx, oid, cid, isVisible)
+	err = s.repo.UpdateVisibility(ctx, oid, cid, isVisible)
+	if err == nil {
+		s.invalidateStoreCache(ctx, cid.Hex())
+	}
+	return err
 }
 
 // ReorderProducts updates the sort order of products.
@@ -247,7 +271,11 @@ func (s *ProductService) ReorderProducts(ctx context.Context, creatorID string, 
 		return nil
 	}
 
-	return s.repo.ReorderProducts(ctx, cid, oids)
+	err = s.repo.ReorderProducts(ctx, cid, oids)
+	if err == nil {
+		s.invalidateStoreCache(ctx, cid.Hex())
+	}
+	return err
 }
 
 // UpdateBumpConfig updates the bump configuration for a product.

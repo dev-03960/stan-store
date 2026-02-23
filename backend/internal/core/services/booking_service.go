@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -15,18 +16,30 @@ import (
 type BookingService struct {
 	bookingRepo domain.BookingRepository
 	productRepo domain.ProductRepository
+	cache       domain.Cache
 }
 
 // NewBookingService creates a new BookingService.
-func NewBookingService(bookingRepo domain.BookingRepository, productRepo domain.ProductRepository) *BookingService {
+func NewBookingService(bookingRepo domain.BookingRepository, productRepo domain.ProductRepository, cache domain.Cache) *BookingService {
 	return &BookingService{
 		bookingRepo: bookingRepo,
 		productRepo: productRepo,
+		cache:       cache,
 	}
 }
 
 // GetAvailableSlots returns available time slots in UTC for a specific date (YYYY-MM-DD).
 func (s *BookingService) GetAvailableSlots(ctx context.Context, productID primitive.ObjectID, targetDateStr string) ([]time.Time, error) {
+	cacheKey := fmt.Sprintf("cache:slots:%s:%s", productID.Hex(), targetDateStr)
+	if s.cache != nil {
+		if cached, err := s.cache.Get(ctx, cacheKey); err == nil && cached != "" {
+			var slots []time.Time
+			if err := json.Unmarshal([]byte(cached), &slots); err == nil {
+				return slots, nil
+			}
+		}
+	}
+
 	product, err := s.productRepo.FindByID(ctx, productID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get product: %w", err)
@@ -135,6 +148,12 @@ func (s *BookingService) GetAvailableSlots(ctx context.Context, productID primit
 		}
 	}
 
+	if s.cache != nil {
+		if b, err := json.Marshal(filteredSlots); err == nil {
+			_ = s.cache.Set(ctx, cacheKey, string(b), 5*time.Minute)
+		}
+	}
+
 	return filteredSlots, nil
 }
 
@@ -157,7 +176,12 @@ func (s *BookingService) CreateBooking(ctx context.Context, booking *domain.Book
 		booking.MeetingLink = "https://meet.google.com/placeholder-" + booking.ID.Hex()[:6]
 	}
 
-	return s.bookingRepo.Create(ctx, booking)
+	err = s.bookingRepo.Create(ctx, booking)
+	if err == nil && s.cache != nil {
+		dateStr := booking.SlotStart.UTC().Format("2006-01-02")
+		_ = s.cache.Delete(ctx, fmt.Sprintf("cache:slots:%s:%s", booking.ProductID.Hex(), dateStr))
+	}
+	return err
 }
 
 // CancelBooking cancels a booking if within the cancellation window.
@@ -194,5 +218,10 @@ func (s *BookingService) CancelBooking(ctx context.Context, bookingID primitive.
 		return fmt.Errorf("cancellation period has expired (requires %d hours notice)", windowHours)
 	}
 
-	return s.bookingRepo.UpdateStatus(ctx, bookingID, domain.BookingStatusCancelled)
+	err = s.bookingRepo.UpdateStatus(ctx, bookingID, domain.BookingStatusCancelled)
+	if err == nil && s.cache != nil {
+		dateStr := booking.SlotStart.UTC().Format("2006-01-02")
+		_ = s.cache.Delete(ctx, fmt.Sprintf("cache:slots:%s:%s", booking.ProductID.Hex(), dateStr))
+	}
+	return err
 }

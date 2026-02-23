@@ -87,3 +87,26 @@ func (c *RedisCache) Expire(ctx context.Context, key string, ttl time.Duration) 
 
 	return c.client.Expire(ctx, key, ttl).Err()
 }
+
+// Stats returns cache metrics.
+func (c *RedisCache) Stats(ctx context.Context) (map[string]interface{}, error) {
+	if c.client == nil {
+		return map[string]interface{}{"status": "disconnected"}, nil
+	}
+
+	info, err := c.client.Info(ctx, "memory", "stats").Result()
+	if err != nil {
+		return nil, err
+	}
+
+	dbSize, err := c.client.DBSize(ctx).Result()
+	if err != nil {
+		dbSize = -1 // fallback
+	}
+
+	return map[string]interface{}{
+		"status": "connected",
+		"keys":   dbSize,
+		"info":   info,
+	}, nil
+}

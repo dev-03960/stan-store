@@ -591,6 +591,115 @@
                             "raw": "{\n  \"name\": \"Summer Sale\",\n  \"subject\": \"50% Off Everything!\",\n  \"content_html\": \"<h1>Huge Sale</h1><p>Click here to buy.</p>\"\n}"
                         }
                     }
+                },
+                {
+                    "name": "Create Instagram Auto-DM",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{apiBase}}/creator/automations/instagram",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{creatorToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"trigger_word\": \"SENDME\",\n  \"product_id\": \"{{productId}}\",\n  \"message_template\": \"Hey! Here is the link to my product: {{product_link}}\"\n}"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "🎓 Courses & Memberships",
+            "description": "Course structures, subscriptions and modules",
+            "item": [
+                {
+                    "name": "Create Course Module",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{apiBase}}/products/{{productId}}/course/modules",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{creatorToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"title\": \"Week 1: Fundamentals\",\n  \"description\": \"Basics of the program\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Get Course Structure",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{apiBase}}/products/{{productId}}/course",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{creatorToken}}"
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "🎁 Conversion Tools",
+            "description": "Coupons, order bumps, testimonials, AI copy",
+            "item": [
+                {
+                    "name": "Create Coupon",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{apiBase}}/coupons",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{creatorToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"code\": \"SAVE20\",\n  \"discount_type\": \"percentage\",\n  \"discount_value\": 20,\n  \"product_ids\": [\"{{productId}}\"]\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Generate AI Copy",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{apiBase}}/ai/generate-copy",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{creatorToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"prompt\": \"Write an energetic sales pitch for my fitness ebook\",\n  \"tone\": \"motivational\"\n}"
+                        }
+                    }
                 }
             ]
         },

@@ -1,6 +1,8 @@
 package http
 
 import (
+	"encoding/json"
+	"sync"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -63,10 +65,17 @@ func SetupRouter(app *fiber.App, deps *RouterDeps) {
 	v1 := app.Group("/api/v1")
 	v1.Get("/health", HealthHandler())
 
+	// Generalized limit reached handler for 429
+	limitReachedHandler := func(c *fiber.Ctx) error {
+		c.Set("Retry-After", "60")
+		return SendError(c, fiber.StatusTooManyRequests, "ERR_TOO_MANY_REQUESTS", "Rate limit exceeded", nil)
+	}
+
 	// Analytics routes (public, rate limited)
 	v1.Post("/analytics/events", limiter.New(limiter.Config{
-		Max:        100,
-		Expiration: 1 * time.Minute,
+		Max:          100,
+		Expiration:   1 * time.Minute,
+		LimitReached: limitReachedHandler,
 	}), deps.AnalyticsHandler.TrackEvent)
 
 	// Auth routes (public)
@@ -95,7 +104,23 @@ func SetupRouter(app *fiber.App, deps *RouterDeps) {
 	creator.Put("/profile", authRequired, banCheck, deps.ProfileHandler.UpdateProfile)
 	creator.Post("/payout-settings", authRequired, banCheck, deps.PayoutHandler.SavePayoutSettings)
 	creator.Get("/payout-settings", authRequired, banCheck, deps.PayoutHandler.GetPayoutSettings)
-	creator.Post("/payouts/withdraw", authRequired, banCheck, deps.PayoutHandler.WithdrawFunds)
+
+	// Concurrency limiter for withdrawals
+	var withdrawMu sync.Map
+	preventConcurrentWithdrawals := func(c *fiber.Ctx) error {
+		user, ok := c.Locals("user").(*domain.User)
+		if !ok || user == nil {
+			return c.Next()
+		}
+		uid := user.ID.Hex()
+		if _, loaded := withdrawMu.LoadOrStore(uid, true); loaded {
+			return SendError(c, fiber.StatusTooManyRequests, "ERR_CONCURRENT", "Withdrawal already in progress", nil)
+		}
+		defer withdrawMu.Delete(uid)
+		return c.Next()
+	}
+	creator.Post("/payouts/withdraw", authRequired, banCheck, preventConcurrentWithdrawals, deps.PayoutHandler.WithdrawFunds)
+
 	creator.Get("/payouts", authRequired, banCheck, deps.PayoutHandler.GetPayoutHistory)
 	creator.Get("/payouts/balance", authRequired, banCheck, deps.PayoutHandler.GetBalance)
 	creator.Get("/subscribers", authRequired, banCheck, deps.SubscriberHandler.GetSubscribers)
@@ -110,7 +135,17 @@ func SetupRouter(app *fiber.App, deps *RouterDeps) {
 
 	// Instagram Creator Automations (protected)
 	creator.Get("/automations/instagram", authRequired, banCheck, deps.InstagramHandler.GetAutomations)
-	creator.Post("/automations/instagram", authRequired, banCheck, deps.InstagramHandler.CreateAutomation)
+	creator.Post("/automations/instagram", authRequired, banCheck, limiter.New(limiter.Config{
+		Max:          50,
+		Expiration:   24 * time.Hour,
+		LimitReached: limitReachedHandler,
+		KeyGenerator: func(c *fiber.Ctx) string {
+			if user, ok := c.Locals("user").(*domain.User); ok && user != nil {
+				return "ig:" + user.ID.Hex()
+			}
+			return c.IP()
+		},
+	}), deps.InstagramHandler.CreateAutomation)
 	creator.Delete("/automations/instagram/:id", authRequired, banCheck, deps.InstagramHandler.DeleteAutomation)
 
 	// Affiliate Protected Routes
@@ -125,7 +160,11 @@ func SetupRouter(app *fiber.App, deps *RouterDeps) {
 	coupons.Delete("/:id", deps.CouponHandler.DeleteCoupon)
 
 	// Coupon validation (public — called from storefront)
-	v1.Post("/coupons/validate", deps.CouponHandler.ValidateCoupon)
+	v1.Post("/coupons/validate", limiter.New(limiter.Config{
+		Max:          20,
+		Expiration:   1 * time.Minute,
+		LimitReached: limitReachedHandler,
+	}), deps.CouponHandler.ValidateCoupon)
 
 	// Product slots route (public - called from storefront)
 	v1.Get("/products/:id/slots", deps.BookingHandler.GetSlots)
@@ -174,7 +213,11 @@ func SetupRouter(app *fiber.App, deps *RouterDeps) {
 
 	// Affiliates (public)
 	affiliates := v1.Group("/affiliates")
-	affiliates.Post("/register", deps.AffiliateHandler.RegisterAffiliate)
+	affiliates.Post("/register", limiter.New(limiter.Config{
+		Max:          5,
+		Expiration:   1 * time.Minute,
+		LimitReached: limitReachedHandler,
+	}), deps.AffiliateHandler.RegisterAffiliate)
 	affiliates.Get("/my-stats", deps.AffiliateHandler.GetMyStats)
 	affiliates.Post("/track", deps.AffiliateHandler.TrackClick)
 
@@ -204,13 +247,36 @@ func SetupRouter(app *fiber.App, deps *RouterDeps) {
 
 	// Order routes (Public/Customer)
 	orders := v1.Group("/orders")
-	orders.Post("/", deps.OrderHandler.CreateOrder)
+	orders.Post("/", limiter.New(limiter.Config{
+		Max:          10,
+		Expiration:   1 * time.Minute,
+		LimitReached: limitReachedHandler,
+		KeyGenerator: func(c *fiber.Ctx) string {
+			var body struct {
+				CustomerEmail string `json:"customer_email"`
+			}
+			if err := json.Unmarshal(c.Body(), &body); err == nil && body.CustomerEmail != "" {
+				return "order:" + body.CustomerEmail
+			}
+			return "order:" + c.IP()
+		},
+	}), deps.OrderHandler.CreateOrder)
 	orders.Get("/:id", deps.OrderHandler.GetOrder)
 	orders.Get("/:id/download", deps.OrderHandler.DownloadOrder)
 
 	// AI routes (Protected)
 	if deps.AIHandler != nil {
-		v1.Post("/ai/generate-copy", authRequired, banCheck, deps.AIHandler.GenerateCopy)
+		v1.Post("/ai/generate-copy", authRequired, banCheck, limiter.New(limiter.Config{
+			Max:          10,
+			Expiration:   24 * time.Hour,
+			LimitReached: limitReachedHandler,
+			KeyGenerator: func(c *fiber.Ctx) string {
+				if user, ok := c.Locals("user").(*domain.User); ok && user != nil {
+					return "ai:" + user.ID.Hex()
+				}
+				return c.IP()
+			},
+		}), deps.AIHandler.GenerateCopy)
 	}
 
 	// Sales routes (Creator - Protected)
@@ -230,6 +296,7 @@ func SetupRouter(app *fiber.App, deps *RouterDeps) {
 	admin.Get("/metrics", authRequired, RoleRequired("admin"), deps.AdminHandler.GetMetrics)
 	admin.Post("/creators/:id/ban", authRequired, RoleRequired("admin"), deps.AdminHandler.BanCreator)
 	admin.Post("/creators/:id/unban", authRequired, RoleRequired("admin"), deps.AdminHandler.UnbanCreator)
+	admin.Get("/cache/stats", authRequired, RoleRequired("admin"), deps.AdminHandler.GetCacheStats)
 	if deps.WorkerService != nil {
 		admin.Get("/jobs/stats", authRequired, RoleRequired("admin"), deps.AdminHandler.GetJobStats)
 	}

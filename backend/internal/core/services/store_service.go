@@ -2,7 +2,10 @@ package services
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
+	"time"
 
 	"github.com/devanshbhargava/stan-store/internal/core/domain"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -29,13 +32,15 @@ type PublicProfile struct {
 type StoreService struct {
 	userRepo    domain.UserRepository
 	productRepo domain.ProductRepository
+	cache       domain.Cache
 }
 
 // NewStoreService creates a new StoreService.
-func NewStoreService(userRepo domain.UserRepository, productRepo domain.ProductRepository) *StoreService {
+func NewStoreService(userRepo domain.UserRepository, productRepo domain.ProductRepository, cache domain.Cache) *StoreService {
 	return &StoreService{
 		userRepo:    userRepo,
 		productRepo: productRepo,
+		cache:       cache,
 	}
 }
 
@@ -51,6 +56,16 @@ func (s *StoreService) GetStoreByUsername(ctx context.Context, username string) 
 	}
 	if user.Status == domain.UserStatusBanned {
 		return nil, errors.New("store banned")
+	}
+
+	cacheKey := fmt.Sprintf("cache:store:id:%s", user.ID.Hex())
+	if s.cache != nil {
+		if cached, err := s.cache.Get(ctx, cacheKey); err == nil && cached != "" {
+			var resp StoreResponse
+			if err := json.Unmarshal([]byte(cached), &resp); err == nil {
+				return &resp, nil
+			}
+		}
 	}
 
 	// 2. Find Visible Products
@@ -96,8 +111,16 @@ func (s *StoreService) GetStoreByUsername(ctx context.Context, username string) 
 		SocialLinks: user.SocialLinks,
 	}
 
-	return &StoreResponse{
+	resp := &StoreResponse{
 		Creator:  profile,
 		Products: products,
-	}, nil
+	}
+
+	if s.cache != nil {
+		if b, err := json.Marshal(resp); err == nil {
+			_ = s.cache.Set(ctx, cacheKey, string(b), 15*time.Minute)
+		}
+	}
+
+	return resp, nil
 }

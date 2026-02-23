@@ -1,9 +1,12 @@
 package http
 
 import (
+	"html"
+
 	"github.com/devanshbhargava/stan-store/internal/core/domain"
 	"github.com/devanshbhargava/stan-store/internal/core/services"
 	"github.com/gofiber/fiber/v2"
+	"github.com/microcosm-cc/bluemonday"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -25,6 +28,13 @@ func (h *CampaignHandler) CreateCampaign(c *fiber.Ctx) error {
 	var req services.CreateCampaignRequest
 	if err := c.BodyParser(&req); err != nil {
 		return SendError(c, fiber.StatusBadRequest, "INVALID_INPUT", "Failed to parse Request", err)
+	}
+
+	// Sanitize against XSS attacks but allow basic rich HTML formats through bluemonday UGCPolicy
+	p := bluemonday.UGCPolicy()
+	for i := range req.Emails {
+		req.Emails[i].Subject = html.EscapeString(req.Emails[i].Subject)
+		req.Emails[i].BodyHTML = p.Sanitize(req.Emails[i].BodyHTML)
 	}
 
 	campaign, err := h.service.CreateCampaign(c.Context(), creatorID, &req)

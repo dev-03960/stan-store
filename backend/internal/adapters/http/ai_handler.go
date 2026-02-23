@@ -1,6 +1,8 @@
 package http
 
 import (
+	"html"
+
 	"github.com/devanshbhargava/stan-store/internal/core/services"
 	"github.com/gofiber/fiber/v2"
 )
@@ -44,7 +46,9 @@ func (h *AIHandler) GenerateCopy(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Prompt is required"})
 	}
 
-	result, err := h.aiService.GenerateCopy(c.Context(), userID, req.Prompt)
+	sanitizedPrompt := html.EscapeString(req.Prompt)
+
+	result, err := h.aiService.GenerateCopy(c.Context(), userID, sanitizedPrompt)
 	if err != nil {
 		if err.Error() == "rate limit exceeded: maximum 10 generations per day" {
 			return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{"error": err.Error()})

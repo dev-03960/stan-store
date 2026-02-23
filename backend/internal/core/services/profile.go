@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"net/url"
 	"strings"
 	"time"
@@ -27,11 +28,21 @@ type ProfileInput struct {
 // ProfileService handles creator profile operations.
 type ProfileService struct {
 	userRepo domain.UserRepository
+	cache    domain.Cache
 }
 
 // NewProfileService creates a new ProfileService.
-func NewProfileService(userRepo domain.UserRepository) *ProfileService {
-	return &ProfileService{userRepo: userRepo}
+func NewProfileService(userRepo domain.UserRepository, cache domain.Cache) *ProfileService {
+	return &ProfileService{
+		userRepo: userRepo,
+		cache:    cache,
+	}
+}
+
+func (s *ProfileService) invalidateStoreCache(ctx context.Context, userID string) {
+	if s.cache != nil {
+		_ = s.cache.Delete(ctx, fmt.Sprintf("cache:store:id:%s", userID))
+	}
 }
 
 // GetProfile returns a user's profile by ID.
@@ -79,6 +90,8 @@ func (s *ProfileService) UpdateProfile(ctx context.Context, userID string, input
 	if err != nil {
 		return nil, &ValidationErrors{Errors: []FieldError{{Field: "server", Message: "Failed to update profile"}}}
 	}
+
+	s.invalidateStoreCache(ctx, userID)
 
 	return updated, nil
 }

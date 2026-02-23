@@ -424,6 +424,85 @@ curl -s -X POST http://localhost:8080/api/v1/creator/campaigns \
 
 ---
 
+### Flow 15: Buyer Accounts (Magic Links)
+
+```bash
+# 1. Request Login Link
+curl -s -X POST http://localhost:8080/api/v1/auth/buyer/magic-link \
+  -H "Content-Type: application/json" \
+  -d '{"email": "buyer@example.com", "redirect_url": "http://localhost:5173/dashboard"}'
+
+# 2. View Buyer Purchases (After authenticating via the email link)
+# Assume BUYER_TOKEN is acquired via browser
+curl -s http://localhost:8080/api/v1/buyer/purchases \
+  -H "Authorization: Bearer $BUYER_TOKEN" | jq .
+```
+
+---
+
+### Flow 16: Courses & Memberships
+
+```bash
+# 1. Create Course Module (Creator)
+curl -s -X POST http://localhost:8080/api/v1/products/$PRODUCT_ID/course/modules \
+  -H "Authorization: Bearer $CREATOR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"title": "Module 1"}' | jq .
+export MODULE_ID="paste_id_here"
+
+# 2. Create Lesson (Creator)
+curl -s -X POST http://localhost:8080/api/v1/products/$PRODUCT_ID/course/modules/$MODULE_ID/lessons \
+  -H "Authorization: Bearer $CREATOR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"title": "Intro", "content_type": "video", "video_url": "https://vimeo.com/..."}' | jq .
+
+# 3. View Course Contents (Buyer or Creator)
+curl -s http://localhost:8080/api/v1/products/$PRODUCT_ID/course \
+  -H "Authorization: Bearer $BUYER_TOKEN" | jq .
+```
+
+---
+
+### Flow 17: Discount Coupons
+
+```bash
+# 1. Create Coupon
+curl -s -X POST http://localhost:8080/api/v1/coupons \
+  -H "Authorization: Bearer $CREATOR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "code": "SUMMER50",
+    "discount_type": "percentage",
+    "discount_value": 50,
+    "product_ids": ["'$PRODUCT_ID'"]
+  }' | jq .
+
+# 2. Validate Coupon (Public Checkout)
+curl -s -X POST http://localhost:8080/api/v1/coupons/validate \
+  -H "Content-Type: application/json" \
+  -d '{"code": "SUMMER50", "product_ids": ["'$PRODUCT_ID'"]}' | jq .
+```
+
+---
+
+### Flow 18: AI & Testimonials
+
+```bash
+# 1. Generate AI Copy
+curl -s -X POST http://localhost:8080/api/v1/ai/generate-copy \
+  -H "Authorization: Bearer $CREATOR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"prompt": "Write a sales pitch for my workout PDF", "tone": "energetic"}' | jq .
+
+# 2. Add Testimonial
+curl -s -X POST http://localhost:8080/api/v1/products/$PRODUCT_ID/testimonials \
+  -H "Authorization: Bearer $CREATOR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"author_name": "Jane", "content": "Amazing product!", "rating": 5}' | jq .
+```
+
+---
+
 ## API Quick Reference
 
 | Method | Endpoint | Auth | Description |

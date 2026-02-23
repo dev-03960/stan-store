@@ -62,10 +62,10 @@ func main() {
 	}
 	authService := services.NewAuthService(userRepo, jwtService, rawRedisClient)
 	usernameService := services.NewUsernameService(userRepo)
-	profileService := services.NewProfileService(userRepo)
-	productService := services.NewProductService(productRepo)
-	storeService := services.NewStoreService(userRepo, productRepo)
-	bookingService := services.NewBookingService(bookingRepo, productRepo)
+	profileService := services.NewProfileService(userRepo, cache)
+	productService := services.NewProductService(productRepo, cache)
+	storeService := services.NewStoreService(userRepo, productRepo, cache)
+	bookingService := services.NewBookingService(bookingRepo, productRepo, cache)
 
 	// Convert *MongoDB to *mongo.Database if needed, or update repo constructor.
 	paymentRepo := storage.NewMongoPaymentRepository(mongoDB.Database)
@@ -117,12 +117,12 @@ func main() {
 	campaignHandler := httpAdapter.NewCampaignHandler(campaignService, emailQueueRepo)
 
 	testimonialRepo := storage.NewMongoTestimonialRepository(mongoDB.Database)
-	testimonialService := services.NewTestimonialService(testimonialRepo, productRepo)
+	testimonialService := services.NewTestimonialService(testimonialRepo, productRepo, cache)
 	testimonialHandler := httpAdapter.NewTestimonialHandler(testimonialService)
 
 	analyticsRepo := storage.NewMongoAnalyticsRepository(mongoDB)
 	analyticsDailyRepo := storage.NewMongoAnalyticsDailyRepository(mongoDB)
-	analyticsService := services.NewAnalyticsService(analyticsRepo, analyticsDailyRepo)
+	analyticsService := services.NewAnalyticsService(analyticsRepo, analyticsDailyRepo, cache)
 	analyticsHandler := httpAdapter.NewAnalyticsHandler(analyticsService)
 
 	orderService := services.NewOrderService(
@@ -160,7 +160,7 @@ func main() {
 	orderHandler := httpAdapter.NewOrderHandler(orderService)
 	walletHandler := httpAdapter.NewWalletHandler(walletService)
 
-	adminService := services.NewAdminService(userRepo, transactionRepo, orderRepo)
+	adminService := services.NewAdminService(userRepo, transactionRepo, orderRepo, cache)
 	adminHandler := httpAdapter.NewAdminHandler(adminService)
 	buyerHandler := httpAdapter.NewBuyerHandler(orderService, authService)
 	bookingHandler := httpAdapter.NewBookingHandler(bookingService)
@@ -183,7 +183,7 @@ func main() {
 	couponService := services.NewCouponService(couponRepo)
 	couponHandler := httpAdapter.NewCouponHandler(couponService)
 
-	courseService := services.NewCourseService(courseRepo, productRepo, orderRepo, userRepo)
+	courseService := services.NewCourseService(courseRepo, productRepo, orderRepo, userRepo, cache)
 	courseHandler := httpAdapter.NewCourseHandler(courseService)
 
 	var aiHandler *httpAdapter.AIHandler

@@ -1,6 +1,8 @@
 package http
 
 import (
+	"html"
+
 	"github.com/devanshbhargava/stan-store/internal/core/services"
 	"github.com/gofiber/fiber/v2"
 )
@@ -34,7 +36,10 @@ func (h *TestimonialHandler) Create(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
 	}
 
-	testimonial, err := h.service.CreateTestimonial(c.Context(), userID, productID, req.CustomerName, req.Text, req.Rating, req.AvatarURL)
+	sanitizedName := html.EscapeString(req.CustomerName)
+	sanitizedText := html.EscapeString(req.Text)
+
+	testimonial, err := h.service.CreateTestimonial(c.Context(), userID, productID, sanitizedName, sanitizedText, req.Rating, req.AvatarURL)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -70,7 +75,10 @@ func (h *TestimonialHandler) Update(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
 	}
 
-	testimonial, err := h.service.UpdateTestimonial(c.Context(), userID, testimonialID, req.CustomerName, req.Text, req.Rating, req.AvatarURL)
+	sanitizedName := html.EscapeString(req.CustomerName)
+	sanitizedText := html.EscapeString(req.Text)
+
+	testimonial, err := h.service.UpdateTestimonial(c.Context(), userID, testimonialID, sanitizedName, sanitizedText, req.Rating, req.AvatarURL)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}

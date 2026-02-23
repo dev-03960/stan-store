@@ -4,7 +4,9 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/devanshbhargava/stan-store/internal/core/domain"
@@ -14,12 +16,14 @@ import (
 type AnalyticsService struct {
 	repo      domain.AnalyticsRepository
 	dailyRepo domain.AnalyticsDailyRepository
+	cache     domain.Cache
 }
 
-func NewAnalyticsService(repo domain.AnalyticsRepository, dailyRepo domain.AnalyticsDailyRepository) *AnalyticsService {
+func NewAnalyticsService(repo domain.AnalyticsRepository, dailyRepo domain.AnalyticsDailyRepository, cache domain.Cache) *AnalyticsService {
 	return &AnalyticsService{
 		repo:      repo,
 		dailyRepo: dailyRepo,
+		cache:     cache,
 	}
 }
 
@@ -76,6 +80,16 @@ type DashboardMetrics struct {
 // GetDashboardMetrics returns the aggregated metrics for a specified time period.
 // period can be "today", "7d", "30d", or "all".
 func (s *AnalyticsService) GetDashboardMetrics(ctx context.Context, creatorID primitive.ObjectID, period string) (*DashboardMetrics, error) {
+	cacheKey := fmt.Sprintf("cache:analytics:%s:%s", creatorID.Hex(), period)
+	if s.cache != nil {
+		if cached, err := s.cache.Get(ctx, cacheKey); err == nil && cached != "" {
+			var m DashboardMetrics
+			if err := json.Unmarshal([]byte(cached), &m); err == nil {
+				return &m, nil
+			}
+		}
+	}
+
 	now := time.Now().UTC()
 	var startDate time.Time
 
