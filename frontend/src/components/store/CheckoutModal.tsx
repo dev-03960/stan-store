@@ -186,8 +186,8 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, product,
 
                 {/* Product Summary */}
                 <div className="p-4 bg-gray-50 border-b border-gray-100 flex gap-4">
-                    {product.image_url && (
-                        <img src={product.image_url} alt={product.title} className="w-16 h-16 object-cover rounded-lg" />
+                    {product.cover_image_url && (
+                        <img src={product.cover_image_url} alt={product.title} className="w-16 h-16 object-cover rounded-lg" />
                     )}
                     <div>
                         <h3 className="font-medium text-gray-900 line-clamp-1">{product.title}</h3>

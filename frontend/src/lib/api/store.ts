@@ -32,7 +32,7 @@ export interface Product {
     subtitle?: string;
     price: number;
     description?: string;
-    image_url?: string;
+    cover_image_url?: string;
     product_type: string;
     duration_minutes?: number;
     timezone?: string;

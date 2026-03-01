@@ -29,7 +29,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose }) => {
         price: product ? product.price / 100 : 0,
         description: product?.description || '',
         product_type: product?.product_type || 'download',
-        image_url: product?.image_url || '',
+        cover_image_url: product?.cover_image_url || '',
         file_url: product?.file_url || '',
         duration_minutes: product?.duration_minutes || 30,
         timezone: product?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -78,7 +78,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose }) => {
 
     const mutation = useMutation({
         mutationFn: async (data: CreateProductDTO) => {
-            let finalImageUrl = data.image_url;
+            let finalImageUrl = data.cover_image_url;
             let finalFileUrl = data.file_url;
 
             if (imageFile) {
@@ -97,7 +97,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose }) => {
                 // If we want public access, we should probably construct the URL or the backend does.
                 // For now, I'll send the key, and if it breaks, I'll fix it. 
                 // Wait, looking at `GetStoreByUsername` in backend, it just returns product data. 
-                // If `image_url` is a key, frontend might need to append domain.
+                // If `cover_image_url` is a key, frontend might need to append domain.
                 // Let's assume we need to store the FULL URL if possible, or just the key.
                 // Actually, the S3/R2 presigned URL is for uploading. Read access usually requires a public bucket URL.
                 // Let's assume we store the `key` and the frontend or backend prepends the R2 domain.
@@ -117,7 +117,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose }) => {
             const finalPrice = data.product_type === 'lead_magnet' ? 0 : Math.round(data.price * 100);
 
             // Convert rupees to paise before sending to backend
-            const payload = { ...data, price: finalPrice, image_url: finalImageUrl, file_url: finalFileUrl };
+            const payload = { ...data, price: finalPrice, cover_image_url: finalImageUrl, file_url: finalFileUrl };
 
             if (isEditing && product) {
                 return updateProduct(product.id, payload);
@@ -304,7 +304,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose }) => {
                                 <label htmlFor="thumbnail-upload" className="cursor-pointer flex flex-col items-center">
                                     <Upload className="w-8 h-8 text-slate-400 mb-2" />
                                     <span className="text-sm text-slate-600">
-                                        {imageFile ? imageFile.name : (formData.image_url ? 'Change Image' : 'Click to upload thumbnail')}
+                                        {imageFile ? imageFile.name : (formData.cover_image_url ? 'Change Image' : 'Click to upload thumbnail')}
                                     </span>
                                 </label>
                             </div>

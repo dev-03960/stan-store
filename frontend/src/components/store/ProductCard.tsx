@@ -33,9 +33,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onBuy }) => {
             <div className="flex p-4 items-center gap-4">
                 {/* Product Image / Placeholder */}
                 <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden flex-shrink-0 bg-gradient-to-br from-indigo-50 to-purple-50">
-                    {product.image_url ? (
+                    {product.cover_image_url ? (
                         <img
-                            src={product.image_url}
+                            src={product.cover_image_url}
                             alt={product.title}
                             className="w-full h-full object-cover"
                         />

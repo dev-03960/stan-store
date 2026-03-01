@@ -7,7 +7,7 @@ export interface CreateProductDTO {
     price: number;
     description?: string;
     product_type: string;
-    image_url?: string;
+    cover_image_url?: string;
     file_url?: string;
     duration_minutes?: number;
     timezone?: string;
@@ -64,17 +64,18 @@ export async function enableAffiliateProgram(id: string, enabled: boolean, commi
 }
 
 export async function reorderProducts(items: ReorderItem[]) {
-    await api.patch('/products/reorder', { items });
+    // Backend expects { product_ids: ["id1", "id2"] }
+    await api.patch('/products/reorder', { product_ids: items.map(item => item.id) });
 }
 
 export async function getPresignedUrl(filename: string, fileType: string, purpose: 'product_file' | 'cover_image' = 'product_file') {
-    const response = await api.post<{ url: string; key: string }>('/uploads/presigned', {
-        filename,
-        file_type: fileType,
+    const response = await api.post<{ upload_url: string; file_key: string }>('/uploads/presigned', {
+        file_name: filename,
+        content_type: fileType,
         purpose
     });
     if (!response.data) throw new Error('Failed to get upload URL');
-    return response.data;
+    return { url: response.data.upload_url, key: response.data.file_key };
 }
 
 export async function uploadFileToUrl(url: string, file: File) {

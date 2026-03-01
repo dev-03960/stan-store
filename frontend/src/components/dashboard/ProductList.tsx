@@ -54,8 +54,8 @@ const SortableProductItem = ({ product, onEdit, onToggleVisibility, onDelete }: 
             </div>
 
             <div className="w-12 h-12 rounded-lg bg-slate-100 flex-shrink-0 overflow-hidden">
-                {product.image_url ? (
-                    <img src={product.image_url} alt={product.title} className="w-full h-full object-cover" />
+                {product.cover_image_url ? (
+                    <img src={product.cover_image_url} alt={product.title} className="w-full h-full object-cover" />
                 ) : (
                     <div className="w-full h-full bg-indigo-50 flex items-center justify-center text-indigo-500 font-bold">
                         {product.title.charAt(0)}
