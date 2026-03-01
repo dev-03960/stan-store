@@ -301,9 +301,10 @@ func SetupRouter(app *fiber.App, deps *RouterDeps) {
 	if deps.WorkerService != nil {
 		admin.Get("/jobs/stats", authRequired, RoleRequired("admin"), deps.AdminHandler.GetJobStats)
 	}
+	admin.Get("/webhooks/stats", authRequired, RoleRequired("admin"), deps.AdminHandler.GetWebhookStats)
 
-	// Protected buyer routes
-	buyers := v1.Group("/buyer", authRequired, banCheck)
+	// Protected buyer routes (with CSRF protection for state-changing endpoints)
+	buyers := v1.Group("/buyer", authRequired, banCheck, CsrfProtection())
 	buyers.Get("/orders", deps.BuyerHandler.GetPurchases)
 	buyers.Get("/courses/:id", deps.CourseHandler.GetCourse)
 	buyers.Get("/subscriptions", deps.BuyerHandler.GetSubscriptions)

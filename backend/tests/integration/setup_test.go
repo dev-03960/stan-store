@@ -176,7 +176,7 @@ func setupTestApp(t *testing.T) (*fiber.App, func()) {
 	productHandler := httpAdapter.NewProductHandler(productService)
 	uploadHandler := httpAdapter.NewUploadHandler(services.NewUploadService(&MockFileStorage{}))
 	storeHandler := httpAdapter.NewStoreHandler(storeService)
-	paymentHandler := httpAdapter.NewPaymentHandler(paymentService, orderService, mockCfg.RazorpayWebhookSecret)
+	paymentHandler := httpAdapter.NewPaymentHandler(paymentService, orderService, nil, mockCfg.RazorpayWebhookSecret, nil)
 	orderHandler := httpAdapter.NewOrderHandler(orderService)
 
 	// Setup Fiber

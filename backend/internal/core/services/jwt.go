@@ -8,7 +8,8 @@ import (
 )
 
 const (
-	jwtExpiry = 7 * 24 * time.Hour // 7 days
+	jwtExpiry      = 7 * 24 * time.Hour // 7 days (creators)
+	BuyerJWTExpiry = 24 * time.Hour     // 24 hours (buyers)
 )
 
 // Claims represents the JWT payload.
@@ -30,14 +31,19 @@ func NewJWTService(secret string) *JWTService {
 	}
 }
 
-// GenerateToken creates a signed JWT token for the given user.
+// GenerateToken creates a signed JWT token with the default 7-day expiry.
 func (s *JWTService) GenerateToken(userID, role string) (string, error) {
+	return s.GenerateTokenWithExpiry(userID, role, jwtExpiry)
+}
+
+// GenerateTokenWithExpiry creates a signed JWT token with a configurable expiry duration.
+func (s *JWTService) GenerateTokenWithExpiry(userID, role string, expiry time.Duration) (string, error) {
 	now := time.Now()
 	claims := Claims{
 		UserID: userID,
 		Role:   role,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(now.Add(jwtExpiry)),
+			ExpiresAt: jwt.NewNumericDate(now.Add(expiry)),
 			IssuedAt:  jwt.NewNumericDate(now),
 			Issuer:    "mio-store",
 		},

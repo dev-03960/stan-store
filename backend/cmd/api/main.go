@@ -155,8 +155,6 @@ func main() {
 	profileHandler := httpAdapter.NewProfileHandler(profileService)
 	productHandler := httpAdapter.NewProductHandler(productService)
 	storeHandler := httpAdapter.NewStoreHandler(storeService)
-	// Pass OrderService and Webhook Secret
-	paymentHandler := httpAdapter.NewPaymentHandler(paymentService, orderService, cfg.RazorpayWebhookSecret)
 	orderHandler := httpAdapter.NewOrderHandler(orderService)
 	walletHandler := httpAdapter.NewWalletHandler(walletService)
 
@@ -177,6 +175,11 @@ func main() {
 		cfg.RazorpayKeySecret,
 	)
 	payoutHandler := httpAdapter.NewPayoutHandler(payoutService)
+
+	// Initialize Webhook Event Repository for immutable logging & resilience
+	webhookEventRepo := storage.NewMongoWebhookEventRepository(mongoDB.Database)
+	paymentHandler := httpAdapter.NewPaymentHandler(paymentService, orderService, payoutService, cfg.RazorpayWebhookSecret, webhookEventRepo)
+	adminService.SetWebhookRepo(webhookEventRepo)
 
 	// Initialize Coupon Service
 	couponRepo := storage.NewMongoCouponRepository(mongoDB.Database)

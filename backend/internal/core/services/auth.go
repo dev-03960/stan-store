@@ -80,8 +80,13 @@ func (s *AuthService) HandleGoogleCallback(ctx context.Context, gUser *GoogleUse
 		logger.Info("new user created via google oauth", "email", email, "role", user.Role)
 	}
 
-	// Generate JWT
-	token, err := s.jwtService.GenerateToken(user.ID.Hex(), user.Role)
+	// Generate JWT (buyers get 24h expiry, creators get 7 days)
+	var token string
+	if user.Role == domain.RoleBuyer {
+		token, err = s.jwtService.GenerateTokenWithExpiry(user.ID.Hex(), user.Role, BuyerJWTExpiry)
+	} else {
+		token, err = s.jwtService.GenerateToken(user.ID.Hex(), user.Role)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("generate token: %w", err)
 	}
@@ -186,8 +191,8 @@ func (s *AuthService) HandleMagicLinkVerify(ctx context.Context, token string) (
 		logger.Info("new buyer created via magic link", "email", email)
 	}
 
-	// Generate JWT
-	jwtToken, err := s.jwtService.GenerateToken(user.ID.Hex(), user.Role)
+	// Generate JWT (buyers get 24h expiry)
+	jwtToken, err := s.jwtService.GenerateTokenWithExpiry(user.ID.Hex(), user.Role, BuyerJWTExpiry)
 	if err != nil {
 		return nil, fmt.Errorf("generate token: %w", err)
 	}

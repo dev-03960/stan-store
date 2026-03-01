@@ -17,6 +17,7 @@ type AdminService struct {
 	}
 	workerService *WorkerService
 	cache         domain.Cache
+	webhookRepo   domain.WebhookEventRepository
 }
 
 // NewAdminService creates a new AdminService.
@@ -177,4 +178,17 @@ func (s *AdminService) GetJobStats(ctx context.Context) (map[string]interface{},
 		"failed":  totalFailed,
 		"queues":  queueStats,
 	}, nil
+}
+
+// SetWebhookRepo injects the webhook event repository (optional, needed for webhook stats)
+func (s *AdminService) SetWebhookRepo(repo domain.WebhookEventRepository) {
+	s.webhookRepo = repo
+}
+
+// GetWebhookStats returns aggregated webhook event statistics.
+func (s *AdminService) GetWebhookStats(ctx context.Context) (map[string]interface{}, error) {
+	if s.webhookRepo == nil {
+		return map[string]interface{}{"status": "not_configured"}, nil
+	}
+	return s.webhookRepo.GetStats(ctx)
 }

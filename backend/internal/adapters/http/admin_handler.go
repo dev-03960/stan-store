@@ -102,3 +102,14 @@ func (h *AdminHandler) GetCacheStats(c *fiber.Ctx) error {
 
 	return SendSuccess(c, fiber.StatusOK, stats, nil)
 }
+
+// GetWebhookStats returns webhook event processing metrics
+// GET /api/v1/admin/webhooks/stats
+func (h *AdminHandler) GetWebhookStats(c *fiber.Ctx) error {
+	stats, err := h.adminService.GetWebhookStats(c.Context())
+	if err != nil {
+		return SendError(c, fiber.StatusInternalServerError, ErrInternalServer, "Failed to retrieve webhook stats", err)
+	}
+
+	return SendSuccess(c, fiber.StatusOK, stats, nil)
+}

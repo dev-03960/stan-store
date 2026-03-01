@@ -15,9 +15,10 @@ import (
 )
 
 const (
-	cookieName    = "stan_token"
-	cookieMaxAge  = 7 * 24 * 60 * 60 // 7 days in seconds
-	googleUserURL = "https://www.googleapis.com/oauth2/v2/userinfo"
+	cookieName        = "stan_token"
+	cookieMaxAge      = 7 * 24 * 60 * 60 // 7 days in seconds (creators)
+	buyerCookieMaxAge = 24 * 60 * 60     // 24 hours in seconds (buyers)
+	googleUserURL     = "https://www.googleapis.com/oauth2/v2/userinfo"
 )
 
 // AuthHandler handles authentication HTTP endpoints.
@@ -114,13 +115,17 @@ func (h *AuthHandler) GoogleCallback(c *fiber.Ctx) error {
 		return SendError(c, fiber.StatusInternalServerError, ErrInternalServer, "Authentication failed", nil)
 	}
 
-	// Set JWT as HTTP-Only cookie
+	// Set JWT as HTTP-Only cookie (buyer gets 24h, creator gets 7d)
+	maxAge := cookieMaxAge
+	if result.User != nil && result.User.Role == "buyer" {
+		maxAge = buyerCookieMaxAge
+	}
 	c.Cookie(&fiber.Cookie{
 		Name:     cookieName,
 		Value:    result.Token,
-		MaxAge:   cookieMaxAge,
+		MaxAge:   maxAge,
 		HTTPOnly: true,
-		Secure:   c.Protocol() == "https",
+		Secure:   true,
 		SameSite: "Strict",
 		Path:     "/",
 	})
@@ -163,7 +168,7 @@ func (h *AuthHandler) Logout(c *fiber.Ctx) error {
 		Value:    "",
 		MaxAge:   -1,
 		HTTPOnly: true,
-		Secure:   c.Protocol() == "https",
+		Secure:   true,
 		SameSite: "Strict",
 		Path:     "/",
 	})
@@ -215,13 +220,13 @@ func (h *AuthHandler) BuyerMagicLinkVerify(c *fiber.Ctx) error {
 		return c.Redirect(h.frontendURL+"/login?error=invalid_token", fiber.StatusTemporaryRedirect)
 	}
 
-	// Set JWT as HTTP-Only cookie
+	// Set JWT as HTTP-Only cookie (buyers get 24h expiry)
 	c.Cookie(&fiber.Cookie{
 		Name:     cookieName,
 		Value:    result.Token,
-		MaxAge:   cookieMaxAge,
+		MaxAge:   buyerCookieMaxAge,
 		HTTPOnly: true,
-		Secure:   c.Protocol() == "https",
+		Secure:   true,
 		SameSite: "Strict",
 		Path:     "/",
 	})
