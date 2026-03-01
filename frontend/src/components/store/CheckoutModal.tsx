@@ -99,7 +99,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, product,
                 key: import.meta.env.VITE_RAZORPAY_KEY_ID, // Ensure env var is set
                 amount: orderData.amount,
                 currency: orderData.currency,
-                name: "Stan Store Clone",
+                name: "Mio Store",
                 description: `Purchase: ${product.title}`,
                 handler: async function (response: any) {
                     try {

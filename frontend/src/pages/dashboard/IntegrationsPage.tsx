@@ -29,11 +29,11 @@ export default function IntegrationsPage() {
         try {
             const [connRes, authsRes] = await Promise.all([
                 integrationsApi.getInstagramConnection(),
-                integrationsApi.getInstagramAutomations().catch(() => ({ data: [] }))
+                integrationsApi.getInstagramAutomations().catch(() => [] as InstagramAutomation[])
             ]);
 
-            if (connRes?.data) setConnection(connRes.data);
-            if (authsRes?.data) setAutomations(authsRes.data);
+            if (connRes) setConnection(connRes);
+            if (authsRes) setAutomations(authsRes);
         } catch (err: any) {
             console.error("Failed to load integrations", err);
         } finally {
@@ -44,11 +44,11 @@ export default function IntegrationsPage() {
     const handleConnectInstagram = async () => {
         try {
             const res = await integrationsApi.getInstagramOAuthUrl();
-            if (res?.data?.url) {
-                window.location.href = res.data.url;
+            if (res?.url) {
+                window.location.href = res.url;
             }
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to initiate Instagram connection.');
+            setError(err.message || 'Failed to initiate Instagram connection.');
         }
     };
 
@@ -77,8 +77,8 @@ export default function IntegrationsPage() {
                 keyword: newKeyword.trim(),
                 responseText: newResponse.trim()
             });
-            if (res?.data) {
-                setAutomations(prev => [...prev, res.data!]);
+            if (res) {
+                setAutomations(prev => [...prev, res]);
                 setNewKeyword('');
                 setNewResponse('');
                 setSuccess('Automation rule created!');

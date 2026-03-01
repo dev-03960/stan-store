@@ -84,7 +84,7 @@ func (h *AnalyticsHandler) TrackEvent(c *fiber.Ctx) error {
 // GetDashboardMetrics handles GET /api/v1/creator/analytics?period=...
 func (h *AnalyticsHandler) GetDashboardMetrics(c *fiber.Ctx) error {
 	// 1. Get user ID from context (set by AuthRequired middleware)
-	userIDHex, ok := c.Locals("user_id").(string)
+	userIDHex, ok := c.Locals("userId").(string)
 	if !ok {
 		return SendError(c, fiber.StatusUnauthorized, ErrUnauthorized, "User ID not found in context", nil)
 	}
@@ -103,5 +103,5 @@ func (h *AnalyticsHandler) GetDashboardMetrics(c *fiber.Ctx) error {
 		return SendError(c, fiber.StatusInternalServerError, ErrInternalServer, "Failed to fetch analytics metrics", err)
 	}
 
-	return SendSuccess(c, fiber.StatusOK, "Metrics retrieved successfully", metrics)
+	return SendOK(c, metrics)
 }

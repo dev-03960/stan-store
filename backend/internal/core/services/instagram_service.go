@@ -95,8 +95,9 @@ func (s *InstagramService) decrypt(cryptoText string) (string, error) {
 
 // GetOAuthURL generates the URL to redirect the user to for Instagram authentication.
 func (s *InstagramService) GetOAuthURL(state string) string {
-	// Requirements: instagram_basic, instagram_manage_messages, pages_show_list, pages_manage_metadata (for webhooks if needed)
-	scopes := "instagram_basic,instagram_manage_messages,pages_show_list"
+	// Updated scopes: instagram_basic and instagram_manage_messages were deprecated.
+	// Using the new instagram_business_* scopes (effective Jan 2025).
+	scopes := "instagram_business_basic,instagram_business_manage_messages,pages_show_list,pages_read_engagement"
 	return fmt.Sprintf("https://www.facebook.com/v18.0/dialog/oauth?client_id=%s&redirect_uri=%s&state=%s&scope=%s&response_type=code", s.appID, s.redirectURI, state, scopes)
 }
 

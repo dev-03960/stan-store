@@ -41,7 +41,7 @@ func (s *SMTPEmailAdapter) SendOrderConfirmation(ctx context.Context, order *dom
 		<h3><a href="%s">Download your product here</a></h3>
 		<p>If the link above doesn't work, verify your order details on our website.</p>
 		<br/>
-		<p>Best,<br/>Stan Store Team</p>
+		<p>Best,<br/>Mio Store Team</p>
 	`, order.CustomerName, product.Title, order.ID.Hex(), order.Currency, float64(order.Amount)/100, downloadURL)
 
 	msg := []byte(fmt.Sprintf("To: %s\r\n"+

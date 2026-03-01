@@ -47,7 +47,7 @@ func NewAuthService(userRepo domain.UserRepository, jwtService *JWTService, redi
 
 // HandleGoogleCallback processes the Google OAuth callback.
 // It finds or creates a user, generates a JWT, and determines the redirect URL.
-func (s *AuthService) HandleGoogleCallback(ctx context.Context, gUser *GoogleUser) (*AuthResult, error) {
+func (s *AuthService) HandleGoogleCallback(ctx context.Context, gUser *GoogleUser, requestedRole string) (*AuthResult, error) {
 	email := strings.ToLower(gUser.Email)
 
 	// Check if user exists by Google ID first, then by email
@@ -69,12 +69,15 @@ func (s *AuthService) HandleGoogleCallback(ctx context.Context, gUser *GoogleUse
 	if user == nil {
 		// Create new user
 		newUser := domain.NewUserFromGoogle(email, gUser.Name, gUser.Picture, gUser.ID)
+		if requestedRole != "" {
+			newUser.Role = requestedRole
+		}
 		user, err = s.userRepo.Create(ctx, newUser)
 		if err != nil {
 			return nil, fmt.Errorf("create user: %w", err)
 		}
 		isNewUser = true
-		logger.Info("new user created via google oauth", "email", email)
+		logger.Info("new user created via google oauth", "email", email, "role", user.Role)
 	}
 
 	// Generate JWT
@@ -85,7 +88,9 @@ func (s *AuthService) HandleGoogleCallback(ctx context.Context, gUser *GoogleUse
 
 	// Determine redirect
 	redirectURL := "/onboarding"
-	if user.HasUsername() {
+	if user.Role == domain.RoleBuyer {
+		redirectURL = "/my-purchases"
+	} else if user.HasUsername() {
 		redirectURL = "/dashboard"
 	}
 

@@ -39,7 +39,7 @@ func (s *JWTService) GenerateToken(userID, role string) (string, error) {
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(now.Add(jwtExpiry)),
 			IssuedAt:  jwt.NewNumericDate(now),
-			Issuer:    "stan-store",
+			Issuer:    "mio-store",
 		},
 	}
 

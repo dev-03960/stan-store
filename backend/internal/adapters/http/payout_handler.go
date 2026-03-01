@@ -61,7 +61,15 @@ func (h *PayoutHandler) GetPayoutSettings(c *fiber.Ctx) error {
 		})
 	}
 
-	return SendOK(c, config)
+	// Map domain fields to frontend-expected field names
+	return SendOK(c, map[string]interface{}{
+		"configured":          true,
+		"account_holder_name": config.AccountHolderName,
+		"account_number":      config.AccountNumberMasked,
+		"ifsc_code":           config.IFSC,
+		"account_type":        "savings",
+		"is_verified":         config.IsVerified,
+	})
 }
 
 // WithdrawFunds handles POST /api/v1/creator/payouts/withdraw

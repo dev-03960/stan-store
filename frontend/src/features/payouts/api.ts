@@ -44,8 +44,7 @@ export interface Payout {
 
 export const getPayoutSettings = async (): Promise<PayoutSettingsResponse> => {
     const response = await api.get<PayoutSettingsResponse>('/creator/payout-settings');
-    if (!response.data) throw new Error('Failed to fetch payout settings');
-    return response.data;
+    return response.data || { configured: false, message: 'No payout settings configured yet' };
 };
 
 export const savePayoutSettings = async (data: {
@@ -61,8 +60,7 @@ export const savePayoutSettings = async (data: {
 
 export const getBalanceSummary = async (): Promise<BalanceSummary> => {
     const response = await api.get<BalanceSummary>('/creator/payouts/balance');
-    if (!response.data) throw new Error('Failed to fetch balance summary');
-    return response.data;
+    return response.data || { available_balance: 0, pending_balance: 0, total_earnings: 0, total_withdrawn: 0 };
 };
 
 export const withdrawFunds = async (amountInPaise: number): Promise<Payout> => {
@@ -73,6 +71,5 @@ export const withdrawFunds = async (amountInPaise: number): Promise<Payout> => {
 
 export const getPayoutHistory = async (): Promise<Payout[]> => {
     const response = await api.get<Payout[]>('/creator/payouts');
-    if (!response.data) throw new Error('Failed to fetch payout history');
-    return response.data;
+    return response.data || [];
 };

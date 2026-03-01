@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../../lib/api';
-import { Loader2, Save } from 'lucide-react';
+import { Loader2, Save, Plus, Trash2, User, Image } from 'lucide-react';
+
+interface SocialLink {
+    platform: string;
+    url: string;
+}
 
 interface ProfileResponse {
     displayName: string;
@@ -8,6 +13,7 @@ interface ProfileResponse {
     avatarUrl: string;
     theme: string;
     abandonedCartEnabled: boolean;
+    socialLinks: SocialLink[];
 }
 
 interface EmailTemplateResponse {
@@ -16,6 +22,14 @@ interface EmailTemplateResponse {
     delayDays: number;
     isActive: boolean;
 }
+
+const PLATFORMS = [
+    { id: 'instagram', label: 'Instagram' },
+    { id: 'youtube', label: 'YouTube' },
+    { id: 'twitter', label: 'Twitter / X' },
+    { id: 'linkedin', label: 'LinkedIn' },
+    { id: 'tiktok', label: 'TikTok' },
+];
 
 const SettingsPage = () => {
     const [isLoading, setIsLoading] = useState(true);
@@ -29,22 +43,23 @@ const SettingsPage = () => {
         const fetchSettings = async () => {
             try {
                 const [profileRes, templateRes] = await Promise.all([
-                    api.get<{ data: ProfileResponse }>('/creator/profile'),
-                    api.get<{ data: EmailTemplateResponse }>('/creator/email-templates/post_purchase').catch(() => ({ data: { data: null } }))
+                    api.get<ProfileResponse>('/creator/profile'),
+                    api.get<EmailTemplateResponse>('/creator/email-templates/post_purchase').catch(() => ({ data: null }))
                 ]);
 
-                if (profileRes?.data?.data) {
+                if (profileRes?.data) {
                     setProfile({
-                        displayName: profileRes.data.data.displayName || '',
-                        bio: profileRes.data.data.bio || '',
-                        avatarUrl: profileRes.data.data.avatarUrl || '',
-                        theme: profileRes.data.data.theme || 'minimal',
-                        abandonedCartEnabled: profileRes.data.data.abandonedCartEnabled !== false // defaults to true if omitted
+                        displayName: profileRes.data.displayName || '',
+                        bio: profileRes.data.bio || '',
+                        avatarUrl: profileRes.data.avatarUrl || '',
+                        theme: profileRes.data.theme || 'minimal',
+                        abandonedCartEnabled: profileRes.data.abandonedCartEnabled !== false,
+                        socialLinks: profileRes.data.socialLinks || []
                     });
                 }
 
-                if (templateRes?.data?.data) {
-                    setPostPurchaseTemplate(templateRes.data.data);
+                if (templateRes?.data) {
+                    setPostPurchaseTemplate(templateRes.data);
                 }
             } catch (err: any) {
                 setError('Failed to load settings. Please try again.');
@@ -69,10 +84,34 @@ const SettingsPage = () => {
             ]);
             setSuccess('Settings saved successfully.');
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to save settings.');
+            setError(err.message || 'Failed to save settings.');
         } finally {
             setIsSaving(false);
         }
+    };
+
+    const addSocialLink = () => {
+        if (!profile) return;
+        if (profile.socialLinks.length >= 5) return;
+        setProfile({
+            ...profile,
+            socialLinks: [...profile.socialLinks, { platform: 'instagram', url: '' }]
+        });
+    };
+
+    const removeSocialLink = (index: number) => {
+        if (!profile) return;
+        setProfile({
+            ...profile,
+            socialLinks: profile.socialLinks.filter((_, i) => i !== index)
+        });
+    };
+
+    const updateSocialLink = (index: number, field: 'platform' | 'url', value: string) => {
+        if (!profile) return;
+        const updated = [...profile.socialLinks];
+        updated[index] = { ...updated[index], [field]: value };
+        setProfile({ ...profile, socialLinks: updated });
     };
 
     if (isLoading) {
@@ -99,12 +138,133 @@ const SettingsPage = () => {
                 </div>
             )}
 
-            <form onSubmit={handleSave} className="space-y-6 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <form onSubmit={handleSave} className="space-y-6">
 
-                {/* Theme & Design section */}
-                <div className="space-y-4 pb-6 border-b border-gray-200">
+                {/* ── Profile Section ── */}
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-6">
+                    <div>
+                        <h2 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
+                            <User className="w-5 h-5 text-purple-600" />
+                            Profile
+                        </h2>
+                        <p className="text-sm text-gray-500 mt-1">
+                            Your public profile information shown on your storefront.
+                        </p>
+                    </div>
+
+                    {/* Avatar */}
+                    <div className="flex items-start gap-6">
+                        <div className="shrink-0">
+                            {profile?.avatarUrl ? (
+                                <img
+                                    src={profile.avatarUrl}
+                                    alt="Avatar"
+                                    className="w-20 h-20 rounded-full object-cover border-2 border-gray-200"
+                                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                />
+                            ) : (
+                                <div className="w-20 h-20 rounded-full bg-purple-100 flex items-center justify-center">
+                                    <Image className="w-8 h-8 text-purple-400" />
+                                </div>
+                            )}
+                        </div>
+                        <div className="flex-1">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Avatar URL</label>
+                            <input
+                                type="url"
+                                value={profile?.avatarUrl || ''}
+                                onChange={(e) => setProfile(prev => prev ? { ...prev, avatarUrl: e.target.value } : null)}
+                                className="block w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                                placeholder="https://example.com/your-photo.jpg"
+                            />
+                            <p className="mt-1 text-xs text-gray-400">Enter a URL to your profile photo (HTTPS preferred)</p>
+                        </div>
+                    </div>
+
+                    {/* Display Name */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Display Name</label>
+                        <input
+                            type="text"
+                            required
+                            maxLength={100}
+                            value={profile?.displayName || ''}
+                            onChange={(e) => setProfile(prev => prev ? { ...prev, displayName: e.target.value } : null)}
+                            className="block w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                            placeholder="Your creator name"
+                        />
+                    </div>
+
+                    {/* Bio */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
+                        <textarea
+                            rows={3}
+                            maxLength={160}
+                            value={profile?.bio || ''}
+                            onChange={(e) => setProfile(prev => prev ? { ...prev, bio: e.target.value } : null)}
+                            className="block w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                            placeholder="A short bio about you and what you create..."
+                        />
+                        <p className="mt-1 text-xs text-gray-400 text-right">{profile?.bio?.length || 0}/160</p>
+                    </div>
+
+                    {/* Social Links */}
+                    <div>
+                        <div className="flex items-center justify-between mb-3">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Social Links</label>
+                                <p className="text-xs text-gray-400">Add up to 5 social media links to your store</p>
+                            </div>
+                            {(profile?.socialLinks?.length || 0) < 5 && (
+                                <button
+                                    type="button"
+                                    onClick={addSocialLink}
+                                    className="inline-flex items-center gap-1 text-sm text-purple-600 hover:text-purple-700 font-medium"
+                                >
+                                    <Plus className="w-4 h-4" /> Add Link
+                                </button>
+                            )}
+                        </div>
+                        <div className="space-y-3">
+                            {profile?.socialLinks?.map((link, index) => (
+                                <div key={index} className="flex items-center gap-3">
+                                    <select
+                                        value={link.platform}
+                                        onChange={(e) => updateSocialLink(index, 'platform', e.target.value)}
+                                        className="w-40 rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 bg-white"
+                                    >
+                                        {PLATFORMS.map((p) => (
+                                            <option key={p.id} value={p.id}>{p.label}</option>
+                                        ))}
+                                    </select>
+                                    <input
+                                        type="url"
+                                        value={link.url}
+                                        onChange={(e) => updateSocialLink(index, 'url', e.target.value)}
+                                        className="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                                        placeholder="https://instagram.com/yourhandle"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => removeSocialLink(index)}
+                                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            ))}
+                            {(!profile?.socialLinks || profile.socialLinks.length === 0) && (
+                                <p className="text-sm text-gray-400 italic py-2">No social links added yet.</p>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* ── Storefront Design Section ── */}
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-4">
                     <h2 className="text-xl font-semibold text-gray-800">Storefront Design</h2>
-                    <p className="text-sm text-gray-500 mb-4">
+                    <p className="text-sm text-gray-500">
                         Personalize the look and feel of your public store page.
                     </p>
 
@@ -133,10 +293,10 @@ const SettingsPage = () => {
                     </div>
                 </div>
 
-                {/* General Settings section */}
-                <div className="space-y-4 pb-6 border-b border-gray-200">
+                {/* ── Email Automations Section ── */}
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-4">
                     <h2 className="text-xl font-semibold text-gray-800">Email Automations</h2>
-                    <p className="text-sm text-gray-500 mb-4">
+                    <p className="text-sm text-gray-500">
                         Configure automated marketing emails to boost your conversions.
                     </p>
 
@@ -231,18 +391,19 @@ const SettingsPage = () => {
                     </div>
                 </div>
 
-                <div className="flex justify-end pt-4">
+                {/* Save Button */}
+                <div className="flex justify-end">
                     <button
                         type="submit"
                         disabled={isSaving}
-                        className="flex items-center px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 transition-colors"
+                        className="flex items-center px-6 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 transition-colors shadow-sm font-medium"
                     >
                         {isSaving ? (
                             <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                         ) : (
                             <Save className="w-5 h-5 mr-2" />
                         )}
-                        Save Settings
+                        Save All Settings
                     </button>
                 </div>
             </form>
@@ -251,3 +412,4 @@ const SettingsPage = () => {
 };
 
 export default SettingsPage;
+

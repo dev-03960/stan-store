@@ -210,17 +210,20 @@ func main() {
 	// Initialize Instagram Service
 	igConnRepo := storage.NewMongoInstagramConnectionRepository(mongoDB.Database)
 	igAutoRepo := storage.NewMongoInstagramAutomationRepository(mongoDB.Database)
-	// (Using generic app keys mocked from cfg)
-	igAppID := "instagram_mock_app_id"
-	igAppSecret := "instagram_mock_secret"
-	igRedirect := cfg.FrontendURL + "/integrations/instagram/oauth/callback"
-	igVerifyToken := "mock_verify_token"
+	igAppID := cfg.InstagramAppID
+	igAppSecret := cfg.InstagramAppSecret
+	// Use INSTAGRAM_REDIRECT_URI if set (for ngrok), otherwise default to backend callback
+	igRedirect := cfg.InstagramRedirectURI
+	if igRedirect == "" {
+		igRedirect = "http://localhost:" + cfg.Port + "/api/v1/integrations/instagram/oauth/callback"
+	}
+	igVerifyToken := cfg.InstagramVerifyToken
 
 	igService := services.NewInstagramService(
 		igConnRepo,
 		igAutoRepo,
 		workerService.GetClient(),
-		cfg.JWTSecret, // using standard secret as encryption key hook
+		cfg.JWTSecret,
 		igAppID,
 		igAppSecret,
 		igRedirect,

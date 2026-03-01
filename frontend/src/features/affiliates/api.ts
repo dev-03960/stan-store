@@ -36,8 +36,7 @@ export interface RegisterAffiliateResponse {
 // Protected: Creator views their affiliates
 export async function getCreatorAffiliates() {
     const response = await api.get<Affiliate[]>('/creator/affiliates');
-    if (!response.data) throw new Error('Failed to fetch affiliates');
-    return response.data;
+    return response.data || [];
 }
 
 // Public: Register as an affiliate

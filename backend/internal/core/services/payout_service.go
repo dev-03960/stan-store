@@ -135,7 +135,7 @@ func (s *PayoutService) GetPayoutConfig(ctx context.Context, creatorID primitive
 // BalanceSummary represents a creator's financial summary.
 type BalanceSummary struct {
 	AvailableBalance int64 `json:"available_balance"`
-	PendingPayout    int64 `json:"pending_payout"`
+	PendingPayout    int64 `json:"pending_balance"`
 	TotalEarned      int64 `json:"total_earned"`
 	TotalWithdrawn   int64 `json:"total_withdrawn"`
 }
@@ -302,7 +302,7 @@ func (s *PayoutService) createRazorpayPayout(fundAccountID string, amount int64,
 		"mode":            "IMPS",
 		"purpose":         "payout",
 		"reference_id":    "payout_" + refID,
-		"narration":       "Stan Store Payout",
+		"narration":       "Mio Store Payout",
 	}
 	return s.razorpayPost("/payouts", payload)
 }

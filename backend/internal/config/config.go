@@ -32,6 +32,10 @@ type Config struct {
 	SMTPPass              string `json:"smtpPass"`
 	SMTPFrom              string `json:"smtpFrom"`
 	AIApiKey              string `json:"aiApiKey"`
+	InstagramAppID        string `json:"instagramAppId"`
+	InstagramAppSecret    string `json:"instagramAppSecret"`
+	InstagramVerifyToken  string `json:"instagramVerifyToken"`
+	InstagramRedirectURI  string `json:"instagramRedirectUri"`
 }
 
 // Load reads configuration from environment variables with sensible defaults.
@@ -42,7 +46,7 @@ func Load() (*Config, error) {
 
 	cfg := &Config{
 		Port:                  getEnv("PORT", "8080"),
-		MongoURI:              getEnv("MONGO_URI", "mongodb://localhost:27017/stanstore"),
+		MongoURI:              getEnv("MONGO_URI", "mongodb://localhost:27017/miostore"),
 		RedisURL:              getEnv("REDIS_URL", "redis://localhost:6379"),
 		JWTSecret:             os.Getenv("JWT_SECRET"),
 		FrontendURL:           getEnv("FRONTEND_URL", "http://localhost:5173"),
@@ -62,8 +66,12 @@ func Load() (*Config, error) {
 		SMTPPort:              getEnv("SMTP_PORT", "587"),
 		SMTPUser:              os.Getenv("SMTP_USER"),
 		SMTPPass:              os.Getenv("SMTP_PASS"),
-		SMTPFrom:              getEnv("SMTP_FROM", "noreply@stanstore.com"),
+		SMTPFrom:              getEnv("SMTP_FROM", "noreply@miostore.com"),
 		AIApiKey:              os.Getenv("AI_API_KEY"),
+		InstagramAppID:        os.Getenv("INSTAGRAM_APP_ID"),
+		InstagramAppSecret:    os.Getenv("INSTAGRAM_APP_SECRET"),
+		InstagramVerifyToken:  getEnv("INSTAGRAM_VERIFY_TOKEN", "mio_store_ig_verify"),
+		InstagramRedirectURI:  os.Getenv("INSTAGRAM_REDIRECT_URI"),
 	}
 
 	if cfg.JWTSecret == "" {

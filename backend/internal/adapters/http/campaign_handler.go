@@ -42,7 +42,7 @@ func (h *CampaignHandler) CreateCampaign(c *fiber.Ctx) error {
 		return SendError(c, fiber.StatusInternalServerError, "CREATE_FAILED", "Failed creating sequence", err)
 	}
 
-	return SendSuccess(c, fiber.StatusCreated, "Sequence successfully established", map[string]interface{}{
+	return SendCreated(c, map[string]interface{}{
 		"campaign":   campaign,
 		"sent_total": 0,
 	})
@@ -69,7 +69,7 @@ func (h *CampaignHandler) GetCampaigns(c *fiber.Ctx) error {
 		})
 	}
 
-	return SendSuccess(c, fiber.StatusOK, "Fetched Sequences", response)
+	return SendOK(c, response)
 }
 
 func (h *CampaignHandler) UpdateCampaignStatus(c *fiber.Ctx) error {
@@ -96,11 +96,11 @@ func (h *CampaignHandler) UpdateCampaignStatus(c *fiber.Ctx) error {
 		return SendError(c, fiber.StatusInternalServerError, "UPDATE_FAILED", "Update denied", err)
 	}
 
-	return SendSuccess(c, fiber.StatusOK, "Sequence explicitly modified", nil)
+	return SendOK(c, map[string]string{"message": "Campaign status updated"})
 }
 
 // Helper function logic typically found in other handlers to extract creator ID
 func (h *CampaignHandler) getCreatorID(c *fiber.Ctx) (primitive.ObjectID, error) {
-	creatorIDStr := c.Locals("user_id").(string)
+	creatorIDStr := c.Locals("userId").(string)
 	return primitive.ObjectIDFromHex(creatorIDStr)
 }

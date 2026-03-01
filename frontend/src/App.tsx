@@ -8,6 +8,8 @@ import StorePage from './pages/StorePage';
 import AffiliateRegistrationPage from './pages/storefront/AffiliateRegistrationPage';
 import CustomerOrderPage from './pages/OrderPage';
 import BuyerAuthPage from './pages/buyer/BuyerAuthPage';
+import LoginPage from './pages/auth/LoginPage';
+import LandingPage from './pages/LandingPage';
 import MyPurchasesPage from './pages/buyer/MyPurchasesPage';
 import { CoursePlayer } from './pages/buyer/CoursePlayer';
 import DashboardPage from './pages/DashboardPage';
@@ -42,33 +44,6 @@ function GlobalTracker() {
   return null;
 }
 
-function StorefrontPage() {
-  return (
-    <div className="flex flex-col items-center justify-center py-20 text-center">
-      <h1 className="mb-4 font-heading text-5xl font-bold text-gray-900">
-        Welcome to Stan Store
-      </h1>
-      <p className="mb-8 max-w-2xl text-xl text-gray-600">
-        The all-in-one creator store. Sell digital products, courses, and coaching directly to your audience.
-      </p>
-      <div className="flex gap-4">
-        <a
-          href="/login"
-          className="rounded-full bg-purple-600 px-8 py-3 text-lg font-medium text-white transition-colors hover:bg-purple-700"
-        >
-          Start for Free
-        </a>
-        <a
-          href="/login"
-          className="rounded-full border border-gray-300 bg-white px-8 py-3 text-lg font-medium text-gray-700 transition-colors hover:bg-gray-50"
-        >
-          Login
-        </a>
-      </div>
-    </div>
-  );
-}
-
 
 
 export default function App() {
@@ -79,35 +54,35 @@ export default function App() {
           <GlobalTracker />
           <CookieConsentBanner />
           <Routes>
+            {/* Public pages with header/footer */}
             <Route element={<RootLayout />}>
-              {/* Public Routes */}
-              <Route path="/" element={<StorefrontPage />} />
-              {/* Storefront / Customer Routes */}
+              <Route path="/" element={<LandingPage />} />
               <Route path="/store/:username" element={<StorePage />} />
               <Route path="/store/:username/affiliate" element={<AffiliateRegistrationPage />} />
               <Route path="/order/:orderId" element={<CustomerOrderPage />} />
+            </Route>
 
-              {/* Buyer Auth & Dashboard Routes */}
-              <Route path="/login" element={<BuyerAuthPage />} />
-              <Route path="/my-purchases" element={<MyPurchasesPage />} />
-              <Route path="/course-player/:productId" element={<CoursePlayer />} />
+            {/* Auth pages (standalone, no header/footer) */}
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/buyer/login" element={<BuyerAuthPage />} />
+            <Route path="/my-purchases" element={<MyPurchasesPage />} />
+            <Route path="/course-player/:productId" element={<CoursePlayer />} />
 
-              {/* Creator Protected Routes */}
-              <Route element={<PrivateRoute />}>
-                <Route path="/dashboard" element={<DashboardLayout />}>
-                  <Route index element={<DashboardPage />} />
-                  <Route path="earnings" element={<EarningsPage />} />
-                  <Route path="orders" element={<OrdersPage />} />
-                  <Route path="coupons" element={<CouponsPage />} />
-                  <Route path="campaigns" element={<CampaignsPage />} />
-                  <Route path="integrations" element={<IntegrationsPage />} />
-                  <Route path="affiliates" element={<AffiliateDashboard />} />
-                  <Route path="analytics" element={<AnalyticsDashboard />} />
-                  <Route path="settings" element={<SettingsPage />} />
-                </Route>
-                <Route path="/admin" element={<AdminDashboardPage />} />
-                <Route path="/onboarding" element={<OnboardingPage />} />
+            {/* Creator Protected Routes (own layout with sidebar) */}
+            <Route element={<PrivateRoute />}>
+              <Route path="/dashboard" element={<DashboardLayout />}>
+                <Route index element={<DashboardPage />} />
+                <Route path="earnings" element={<EarningsPage />} />
+                <Route path="orders" element={<OrdersPage />} />
+                <Route path="coupons" element={<CouponsPage />} />
+                <Route path="campaigns" element={<CampaignsPage />} />
+                <Route path="integrations" element={<IntegrationsPage />} />
+                <Route path="affiliates" element={<AffiliateDashboard />} />
+                <Route path="analytics" element={<AnalyticsDashboard />} />
+                <Route path="settings" element={<SettingsPage />} />
               </Route>
+              <Route path="/admin" element={<AdminDashboardPage />} />
+              <Route path="/onboarding" element={<OnboardingPage />} />
             </Route>
           </Routes>
         </BrowserRouter>

@@ -1,5 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { MioLogo } from '../../components/brand/MioLogo';
 
 export default function LoginPage() {
     const { isAuthenticated, user } = useAuth();
@@ -19,11 +20,11 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
-            <div className="w-full max-w-md space-y-8 rounded-2xl bg-white p-10 shadow-xl">
-                <div className="text-center">
-                    <h1 className="font-heading text-4xl font-bold text-gray-900">Stan Store</h1>
-                    <h2 className="mt-4 text-lg text-gray-600">
+        <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-pink-50 via-white to-orange-50 px-4 py-12 sm:px-6 lg:px-8">
+            <div className="w-full max-w-md space-y-8 rounded-2xl bg-white p-10 shadow-xl border border-gray-100">
+                <div className="text-center flex flex-col items-center gap-3">
+                    <MioLogo size="lg" />
+                    <h2 className="mt-2 text-lg text-gray-600">
                         Sign in to manage your creator store
                     </h2>
                 </div>

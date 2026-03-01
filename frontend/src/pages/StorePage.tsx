@@ -84,7 +84,7 @@ const StorePage: React.FC = () => {
             {/* Powered By Footer */}
             <footer className="mt-12 text-center pb-8">
                 <p className="text-xs text-slate-400">
-                    Powered by <span className="font-bold text-slate-600">Stan Store Clone</span>
+                    Powered by <span className="font-bold text-slate-600">Mio Store</span>
                 </p>
             </footer>
 

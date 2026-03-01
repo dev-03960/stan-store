@@ -71,8 +71,8 @@ const SortableProductItem = ({ product, onEdit, onToggleVisibility, onDelete }: 
                     </p>
                     <span
                         className={`text-xs px-2 py-0.5 rounded-full font-medium ${product.product_type === 'lead_magnet'
-                                ? 'bg-green-100 text-green-700'
-                                : 'bg-blue-100 text-blue-700'
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-blue-100 text-blue-700'
                             }`}
                     >
                         {product.product_type === 'lead_magnet' ? 'Lead Magnet' : 'Digital Download'}
@@ -167,7 +167,7 @@ const ProductList: React.FC = () => {
     }
 
     return (
-        <div className="max-w-4xl mx-auto">
+        <div className="">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
                 <div>
                     <h1 className="text-2xl font-bold font-heading text-slate-900">Products</h1>

@@ -44,11 +44,21 @@ func NewAuthHandler(authService *services.AuthService, clientID, clientSecret, r
 	}
 }
 
-// GoogleLogin redirects the user to Google's consent screen.
+// GoogleLogin redirects the user to Google's consent screen for creators.
 // GET /api/v1/auth/google
 func (h *AuthHandler) GoogleLogin(c *fiber.Ctx) error {
-	// Use a state parameter for CSRF protection
+	// Use a state parameter for CSRF protection and to pass redirect info
+	// For creators, state is just the redirect path
 	state := c.Query("redirect", "/dashboard")
+	url := h.oauthConfig.AuthCodeURL(state, oauth2.AccessTypeOffline)
+	return c.Redirect(url, fiber.StatusTemporaryRedirect)
+}
+
+// BuyerGoogleLogin redirects the user to Google's consent screen for buyers.
+// GET /api/v1/auth/buyer/google
+func (h *AuthHandler) BuyerGoogleLogin(c *fiber.Ctx) error {
+	// For buyers, we use a special state to identify the role
+	state := "role=buyer"
 	url := h.oauthConfig.AuthCodeURL(state, oauth2.AccessTypeOffline)
 	return c.Redirect(url, fiber.StatusTemporaryRedirect)
 }
@@ -90,8 +100,15 @@ func (h *AuthHandler) GoogleCallback(c *fiber.Ctx) error {
 		return SendError(c, fiber.StatusInternalServerError, ErrInternalServer, "Failed to parse user info", nil)
 	}
 
+	// Determine role from state
+	state := c.Query("state")
+	requestedRole := ""
+	if state == "role=buyer" {
+		requestedRole = "buyer"
+	}
+
 	// Process auth (find or create user, generate JWT)
-	result, err := h.authService.HandleGoogleCallback(ctx, &gUser)
+	result, err := h.authService.HandleGoogleCallback(ctx, &gUser, requestedRole)
 	if err != nil {
 		logger.Error("auth callback failed", "error", err.Error(), "email", gUser.Email)
 		return SendError(c, fiber.StatusInternalServerError, ErrInternalServer, "Authentication failed", nil)
@@ -112,8 +129,7 @@ func (h *AuthHandler) GoogleCallback(c *fiber.Ctx) error {
 	finalPath := result.RedirectURL // Default from service (handles onboarding check)
 
 	// If the user is active (service allows dashboard), check if a specific return path was requested via state
-	state := c.Query("state")
-	if finalPath == "/dashboard" && state != "" && state != "/dashboard" {
+	if finalPath == "/dashboard" && state != "" && state != "/dashboard" && state != "role=buyer" {
 		finalPath = state
 	}
 

@@ -14,7 +14,7 @@ func NewEmailTemplateHandler(service *services.EmailTemplateService) *EmailTempl
 }
 
 func (h *EmailTemplateHandler) GetTemplate(c *fiber.Ctx) error {
-	userID := c.Locals("userID").(string)
+	userID := c.Locals("userId").(string)
 	templateType := c.Params("type")
 
 	if templateType == "" {
@@ -26,11 +26,11 @@ func (h *EmailTemplateHandler) GetTemplate(c *fiber.Ctx) error {
 		return SendError(c, fiber.StatusInternalServerError, "INTERNAL_ERROR", "Failed to get template", nil)
 	}
 
-	return SendSuccess(c, fiber.StatusOK, "Template retrieved successfully", template)
+	return SendOK(c, template)
 }
 
 func (h *EmailTemplateHandler) UpdateTemplate(c *fiber.Ctx) error {
-	userID := c.Locals("userID").(string)
+	userID := c.Locals("userId").(string)
 	templateType := c.Params("type")
 
 	if templateType == "" {
@@ -49,5 +49,5 @@ func (h *EmailTemplateHandler) UpdateTemplate(c *fiber.Ctx) error {
 	// Fetch the updated template to return it
 	updatedTemplate, _ := h.service.GetTemplate(c.Context(), userID, templateType)
 
-	return SendSuccess(c, fiber.StatusOK, "Template updated successfully", updatedTemplate)
+	return SendOK(c, updatedTemplate)
 }

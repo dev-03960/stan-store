@@ -3,10 +3,9 @@ import ProductList from '../components/dashboard/ProductList';
 
 const DashboardPage: React.FC = () => {
     return (
-        <div className="min-h-screen bg-slate-50">
-            <div className="container mx-auto py-8">
-                <ProductList />
-            </div>
+        <div className="space-y-6">
+
+            <ProductList />
         </div>
     );
 };

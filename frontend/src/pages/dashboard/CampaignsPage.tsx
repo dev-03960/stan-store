@@ -27,7 +27,7 @@ export const CampaignsPage: React.FC = () => {
                 api.get('/creator/products')
             ]);
             setCampaigns(campRes || []);
-            setProducts((prodRes.data as any).data || []);
+            setProducts((prodRes.data as any) || []);
         } catch (err) {
             console.error(err);
         } finally {

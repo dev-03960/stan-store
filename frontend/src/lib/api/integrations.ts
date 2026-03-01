@@ -20,11 +20,11 @@ export interface InstagramAutomation {
 export const integrationsApi = {
     // Connection
     getInstagramOAuthUrl: async () => {
-        const response = await api.get<{ data: { url: string } }>('/integrations/instagram/oauth/url');
+        const response = await api.get<{ url: string }>('/integrations/instagram/oauth/url');
         return response.data;
     },
     getInstagramConnection: async () => {
-        const response = await api.get<{ data: InstagramConnection }>('/integrations/instagram/connection');
+        const response = await api.get<InstagramConnection>('/integrations/instagram/connection');
         return response.data;
     },
     disconnectInstagram: async () => {
@@ -34,11 +34,11 @@ export const integrationsApi = {
 
     // Automations
     getInstagramAutomations: async () => {
-        const response = await api.get<{ data: InstagramAutomation[] }>('/creator/automations/instagram');
+        const response = await api.get<InstagramAutomation[]>('/creator/automations/instagram');
         return response.data;
     },
     createInstagramAutomation: async (data: { keyword: string; responseText: string; productId?: string }) => {
-        const response = await api.post<{ data: InstagramAutomation }>('/creator/automations/instagram', data);
+        const response = await api.post<InstagramAutomation>('/creator/automations/instagram', data);
         return response.data;
     },
     deleteInstagramAutomation: async (id: string) => {

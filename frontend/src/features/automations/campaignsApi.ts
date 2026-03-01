@@ -25,13 +25,13 @@ export interface CampaignListResponse {
 
 export const campaignsApi = {
     getCampaigns: async () => {
-        const response = await api.get<{ data: CampaignListResponse[] }>('/creator/campaigns');
-        return response.data?.data || [];
+        const response = await api.get<CampaignListResponse[]>('/creator/campaigns');
+        return response.data || [];
     },
 
     createCampaign: async (payload: { name: string; trigger_product_id: string; emails: CampaignEmail[] }) => {
-        const response = await api.post<{ data: { campaign: Campaign; sent_total: number } }>('/creator/campaigns', payload);
-        return response.data?.data;
+        const response = await api.post<{ campaign: Campaign; sent_total: number }>('/creator/campaigns', payload);
+        return response.data;
     },
 
     updateCampaignStatus: async (id: string, status: 'active' | 'paused') => {

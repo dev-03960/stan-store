@@ -86,6 +86,7 @@ func SetupRouter(app *fiber.App, deps *RouterDeps) {
 
 	// Buyer auth routes (public)
 	buyerAuth := auth.Group("/buyer")
+	buyerAuth.Get("/google", deps.AuthHandler.BuyerGoogleLogin)
 	buyerAuth.Post("/magic-link", deps.AuthHandler.BuyerMagicLinkRequest)
 	buyerAuth.Get("/verify", deps.AuthHandler.BuyerMagicLinkVerify)
 
