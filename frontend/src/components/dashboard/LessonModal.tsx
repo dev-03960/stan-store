@@ -34,7 +34,8 @@ export const LessonModal: React.FC<LessonModalProps> = ({ productId, moduleId, l
                 // Upload mechanism similar to product forms
                 const presigned = await getPresignedUrl(file.name, file.type, 'product_file');
                 await uploadFileToUrl(presigned.url, file);
-                finalContent = `https://pub-your-r2-domain.r2.dev/${presigned.key}`;
+                const r2PublicUrl = import.meta.env.VITE_R2_PUBLIC_URL || 'https://pub-your-r2-domain.r2.dev';
+                finalContent = `${r2PublicUrl}/${presigned.key}`;
             }
 
             const payload = { ...data, content: finalContent };

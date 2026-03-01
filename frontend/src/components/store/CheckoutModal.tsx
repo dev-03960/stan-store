@@ -111,7 +111,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, product,
                     } catch (err) {
                         console.error('Payment verification failed:', err);
                     }
-                    window.location.href = `/orders/${orderData.id}`;
+                    window.location.href = `/order/${orderData.id}`;
                 },
                 prefill: {
                     name: name,

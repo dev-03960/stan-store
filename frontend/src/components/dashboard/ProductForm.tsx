@@ -104,13 +104,15 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose }) => {
                 // For simplicity in this step, I'll just pass the key.
                 finalImageUrl = presigned.url.split('?')[0]; // HACK: Using the upload URL without query params as the public URL? No, that's not right for S3 presigned.
                 // Let's stick to the key for now and see.
-                finalImageUrl = `https://pub-your-r2-domain.r2.dev/${presigned.key}`; // Placeholder
+                const r2PublicUrl = import.meta.env.VITE_R2_PUBLIC_URL || 'https://pub-your-r2-domain.r2.dev';
+                finalImageUrl = `${r2PublicUrl}/${presigned.key}`; // Placeholder
             }
 
             if (productFile) {
                 const presigned = await getPresignedUrl(productFile.name, productFile.type, 'product_file');
                 await uploadFileToUrl(presigned.url, productFile);
-                finalFileUrl = `https://pub-your-r2-domain.r2.dev/${presigned.key}`; // Placeholder
+                const r2PublicUrl = import.meta.env.VITE_R2_PUBLIC_URL || 'https://pub-your-r2-domain.r2.dev';
+                finalFileUrl = `${r2PublicUrl}/${presigned.key}`; // Placeholder
             }
 
             // Force price to 0 if it's a lead magnet
