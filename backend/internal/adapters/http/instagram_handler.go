@@ -16,13 +16,15 @@ type InstagramHandler struct {
 	instagramService *services.InstagramService
 	appSecret        string
 	verifyToken      string
+	frontendURL      string
 }
 
-func NewInstagramHandler(service *services.InstagramService, appSecret string, verifyToken string) *InstagramHandler {
+func NewInstagramHandler(service *services.InstagramService, appSecret string, verifyToken string, frontendURL string) *InstagramHandler {
 	return &InstagramHandler{
 		instagramService: service,
 		appSecret:        appSecret,
 		verifyToken:      verifyToken,
+		frontendURL:      frontendURL,
 	}
 }
 
@@ -62,7 +64,7 @@ func (h *InstagramHandler) OAuthCallback(c *fiber.Ctx) error {
 	}
 
 	// Redirect back to frontend dashboard integrations
-	return c.Redirect("http://localhost:5173/dashboard/integrations?ig_success=true")
+	return c.Redirect(h.frontendURL + "/dashboard/integrations?ig_success=true")
 }
 
 func (h *InstagramHandler) GetConnection(c *fiber.Ctx) error {

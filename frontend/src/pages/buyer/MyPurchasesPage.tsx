@@ -151,7 +151,7 @@ export default function MyPurchasesPage() {
                                 <div className="bg-gray-50 px-6 py-4 border-t border-gray-100">
                                     {order.line_items && order.line_items.length > 0 && (order.line_items[0].product_type === 'download' || order.line_items[0].product_type === 'lead_magnet') && (
                                         <a
-                                            href={`http://localhost:8080/api/v1/orders/${order.id}/download`}
+                                            href={`/api/v1/orders/${order.id}/download`}
                                             target="_blank"
                                             rel="noreferrer"
                                             className="w-full flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition"

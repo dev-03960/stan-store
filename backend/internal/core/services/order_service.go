@@ -28,6 +28,7 @@ type OrderService struct {
 	emailQueueRepo    domain.EmailQueueRepository
 	affiliateSvc      *AffiliateService // New tracking dependency
 	workerClient      *asynq.Client
+	frontendURL       string
 }
 
 // NewOrderService creates a new OrderService
@@ -68,6 +69,11 @@ func NewOrderService(
 // SetWorkerClient attaches the enqueue bus to the order service
 func (s *OrderService) SetWorkerClient(client *asynq.Client) {
 	s.workerClient = client
+}
+
+// SetFrontendURL sets the frontend base URL for email links
+func (s *OrderService) SetFrontendURL(url string) {
+	s.frontendURL = url
 }
 
 // CreateOrder initiates a purchase for a product
@@ -632,8 +638,8 @@ func (s *OrderService) ExecuteAbandonedCartReminder(ctx context.Context, orderID
 		<p>Hi %s,</p>
 		<p>We noticed you started checking out but didn't finish.</p>
 		<p>Complete your purchase of <strong>%s</strong> for %s!</p>
-		<p><a href="http://localhost:5173/store/checkout-recovery/%s">Click here to resume your checkout</a></p>
-	`, order.CustomerName, productTitle, price, order.ID.Hex())
+		<p><a href="%s/store/checkout-recovery/%s">Click here to resume your checkout</a></p>
+	`, order.CustomerName, productTitle, price, s.frontendURL, order.ID.Hex())
 
 	err = emailSvc.Send(ctx, order.CustomerEmail, subject, body)
 	if err != nil {

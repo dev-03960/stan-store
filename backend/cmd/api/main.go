@@ -231,10 +231,11 @@ func main() {
 		igAppSecret,
 		igRedirect,
 	)
-	igHandler := httpAdapter.NewInstagramHandler(igService, igAppSecret, igVerifyToken)
+	igHandler := httpAdapter.NewInstagramHandler(igService, igAppSecret, igVerifyToken, cfg.FrontendURL)
 
 	// Inject Worker to dependent services
 	orderService.SetWorkerClient(workerService.GetClient())
+	orderService.SetFrontendURL(cfg.FrontendURL)
 	workerService.SetDependencies(orderService, emailAdapter, igConnRepo, igAutoRepo, analyticsService, analyticsDailyRepo, analyticsRepo)
 	adminService.SetWorkerService(workerService)
 

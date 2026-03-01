@@ -26,7 +26,7 @@ export default function BuyerAuthPage() {
         // Same Google OAuth as creators, but state sets "role=buyer" automatically since we will add a buyer Google route next (if we decide to split Google routing).
         // Since we didn't add the /auth/buyer/google route on backend, we will just use magic links for now as the primary method, and optionally hook Google up if needed.
         // Actually, the plan mentions we want to add /api/v1/auth/buyer/google. We can add that in a minute.
-        window.location.href = 'http://localhost:8080/api/v1/auth/buyer/google';
+        window.location.href = '/api/v1/auth/buyer/google';
     };
 
     const handleMagicLinkSubmit = async (e: React.FormEvent) => {
