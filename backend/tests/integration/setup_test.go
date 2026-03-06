@@ -136,7 +136,7 @@ func setupTestApp(t *testing.T) (*fiber.App, func()) {
 	// in the old integration tests, or spin up a real test one later.
 	var cache domain.Cache
 	jwtService := services.NewJWTService(testJWTSecret)
-	authService := services.NewAuthService(userRepo, jwtService, nil)
+	authService := services.NewAuthService(userRepo, jwtService, nil, nil)
 	usernameService := services.NewUsernameService(userRepo)
 	profileService := services.NewProfileService(userRepo, cache)
 	productService := services.NewProductService(productRepo, cache)

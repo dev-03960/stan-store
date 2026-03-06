@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createProduct, updateProduct, getPresignedUrl, uploadFileToUrl, updateBumpConfig } from '../../lib/api/products';
 import type { CreateProductDTO } from '../../lib/api/products';
 import type { Product, BumpConfig } from '../../lib/api/store';
-import { Loader2, Upload, X, Sparkles } from 'lucide-react';
+import { Loader2, Upload, X, Sparkles, FileText, Mail, Video, BookOpen, Users } from 'lucide-react';
 import { aiApi } from '../../features/dashboard/aiApi';
 import { CoachingSettings } from './CoachingSettings';
 import { OrderBumpSettings } from './OrderBumpSettings';
@@ -13,6 +13,49 @@ import { AffiliateSettings } from './AffiliateSettings';
 import type { AffiliateConfig } from './AffiliateSettings';
 import { enableAffiliateProgram } from '../../lib/api/products';
 
+const PRODUCT_TYPES = [
+    {
+        id: 'lead_magnet',
+        name: 'Collect Emails / Lead Magnet',
+        description: "Collect your audience's info with a free resource",
+        icon: Mail,
+        color: 'from-rose-400 to-orange-400',
+        bgColor: 'bg-rose-50',
+    },
+    {
+        id: 'download',
+        name: 'Digital Product',
+        description: 'PDFs, Guides, Templates, eBooks, etc.',
+        icon: FileText,
+        color: 'from-blue-400 to-indigo-500',
+        bgColor: 'bg-blue-50',
+    },
+    {
+        id: 'booking',
+        name: 'Coaching Call',
+        description: 'Book Discovery Calls, Paid Coaching',
+        icon: Video,
+        color: 'from-green-400 to-emerald-500',
+        bgColor: 'bg-green-50',
+    },
+    {
+        id: 'course',
+        name: 'eCourse',
+        description: 'Create, Host, and Sell your Course',
+        icon: BookOpen,
+        color: 'from-purple-400 to-violet-500',
+        bgColor: 'bg-[#6786f50d]',
+    },
+    {
+        id: 'membership',
+        name: 'Recurring Membership',
+        description: 'Charge Recurring Subscriptions',
+        icon: Users,
+        color: 'from-cyan-400 to-teal-500',
+        bgColor: 'bg-cyan-50',
+    },
+];
+
 interface ProductFormProps {
     product?: Product;
     onClose: () => void;
@@ -21,6 +64,7 @@ interface ProductFormProps {
 const ProductForm: React.FC<ProductFormProps> = ({ product, onClose }) => {
     const queryClient = useQueryClient();
     const isEditing = !!product;
+    const [step, setStep] = useState<'choose_type' | 'form'>(isEditing ? 'form' : 'choose_type');
 
     // Price is stored in paise in the backend — convert to rupees for the form
     const [formData, setFormData] = useState<CreateProductDTO>({
@@ -37,6 +81,58 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose }) => {
         availability: product?.availability || [],
         subscription_interval: product?.subscription_interval || 'monthly',
     });
+
+    const handleSelectType = (typeId: string) => {
+        setFormData({ ...formData, product_type: typeId });
+        setStep('form');
+    };
+
+
+
+    // ── Choose Product Type Step ──
+    if (step === 'choose_type') {
+        return (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+                <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                    <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-white sticky top-0 z-10">
+                        <h2 className="text-xl font-bold font-heading">Choose Product Type</h2>
+                        <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+                            <X className="w-5 h-5" />
+                        </button>
+                    </div>
+                    <div className="p-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {PRODUCT_TYPES.map((type) => {
+                                const Icon = type.icon;
+                                return (
+                                    <button
+                                        key={type.id}
+                                        type="button"
+                                        onClick={() => handleSelectType(type.id)}
+                                        className="flex items-start gap-4 p-4 rounded-xl border-2 border-gray-100 hover:border-indigo-300 hover:shadow-md transition-all text-left group"
+                                    >
+                                        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${type.color} flex items-center justify-center flex-shrink-0 shadow-sm`}>
+                                            <Icon className="w-6 h-6 text-white" />
+                                        </div>
+                                        <div>
+                                            <h3 className="font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">
+                                                {type.name}
+                                            </h3>
+                                            <p className="text-sm text-gray-500 mt-0.5">
+                                                {type.description}
+                                            </p>
+                                        </div>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // ── Rest of the form (existing behavior) ──
 
     const [bumpConfig, setBumpConfig] = useState<BumpConfig | null>(product?.bump || null);
     const [affiliateConfig, setAffiliateConfig] = useState<AffiliateConfig | undefined>(

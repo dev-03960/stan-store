@@ -11,6 +11,9 @@ export interface CreatorProfile {
     username: string;
     bio: string;
     theme: string;
+    brandColor?: string;
+    fontFamily?: string;
+    coverPhotoUrl?: string;
     avatarUrl: string;
     socialLinks: SocialLink[];
 }

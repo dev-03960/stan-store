@@ -93,7 +93,7 @@ const AdminDashboardPage: React.FC = () => {
                             title="Total Orders"
                             value={metrics.total_orders}
                             icon={ShoppingBag}
-                            color="bg-purple-500"
+                            color="bg-[#6786f5]"
                         />
                         <StatCard
                             title="Active Creators"

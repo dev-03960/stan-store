@@ -47,14 +47,14 @@ export const PayoutSettingsModal: React.FC<PayoutSettingsModalProps> = ({ isOpen
             <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
                 <div className="flex items-center justify-between p-4 border-b border-gray-100">
                     <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                        <Landmark className="w-5 h-5 text-purple-600" /> Bank Account Details
+                        <Landmark className="w-5 h-5 text-[#6786f5]" /> Bank Account Details
                     </h2>
                     <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-100 transition-colors">
                         <X className="w-5 h-5 text-gray-500" />
                     </button>
                 </div>
 
-                <div className="p-4 bg-purple-50 flex gap-4">
+                <div className="p-4 bg-[#6786f50d] flex gap-4">
                     <p className="text-xs text-purple-800">
                         This account will be used to transfer your earnings. Please ensure the details match your bank records exactly. Payments are routed via RazorpayX.
                     </p>
@@ -75,7 +75,7 @@ export const PayoutSettingsModal: React.FC<PayoutSettingsModalProps> = ({ isOpen
                             required
                             value={formData.account_holder_name}
                             onChange={(e) => setFormData({ ...formData, account_holder_name: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6786f5] focus:border-[#6786f5] outline-none"
                             placeholder="John Doe"
                         />
                     </div>
@@ -88,7 +88,7 @@ export const PayoutSettingsModal: React.FC<PayoutSettingsModalProps> = ({ isOpen
                             required
                             value={formData.account_number}
                             onChange={(e) => setFormData({ ...formData, account_number: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none font-mono"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6786f5] focus:border-[#6786f5] outline-none font-mono"
                             placeholder="*************"
                         />
                     </div>
@@ -101,7 +101,7 @@ export const PayoutSettingsModal: React.FC<PayoutSettingsModalProps> = ({ isOpen
                             required
                             value={formData.ifsc_code}
                             onChange={(e) => setFormData({ ...formData, ifsc_code: e.target.value.toUpperCase() })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none font-mono uppercase"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6786f5] focus:border-[#6786f5] outline-none font-mono uppercase"
                             placeholder="HDFC0001234"
                             maxLength={11}
                         />
@@ -113,7 +113,7 @@ export const PayoutSettingsModal: React.FC<PayoutSettingsModalProps> = ({ isOpen
                             id="account_type"
                             value={formData.account_type}
                             onChange={(e) => setFormData({ ...formData, account_type: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6786f5] focus:border-[#6786f5] outline-none"
                         >
                             <option value="savings">Savings Account</option>
                             <option value="current">Current Account</option>
@@ -124,7 +124,7 @@ export const PayoutSettingsModal: React.FC<PayoutSettingsModalProps> = ({ isOpen
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2.5 rounded-lg transition-colors disabled:opacity-50"
+                            className="w-full flex items-center justify-center gap-2 bg-[#6786f5] hover:bg-[#5570e0] text-white font-medium py-2.5 rounded-lg transition-colors disabled:opacity-50"
                         >
                             {loading && <Loader2 className="w-4 h-4 animate-spin" />}
                             {loading ? 'Saving details...' : 'Save Bank Details'}

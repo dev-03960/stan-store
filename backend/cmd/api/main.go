@@ -55,12 +55,21 @@ func main() {
 	// 5. Initialize services
 	jwtService := services.NewJWTService(cfg.JWTSecret)
 
+	// Initialize Email Service (needed by AuthService for OTP)
+	emailAdapter := email.NewSMTPEmailAdapter(
+		cfg.SMTPHost,
+		cfg.SMTPPort,
+		cfg.SMTPUser,
+		cfg.SMTPPass,
+		cfg.SMTPFrom,
+	)
+
 	// RedisClient holds a raw *redis.Client. Pull it out for the AuthService interface
 	var rawRedisClient *redis.Client
 	if redisClient != nil {
 		rawRedisClient = redisClient.Client
 	}
-	authService := services.NewAuthService(userRepo, jwtService, rawRedisClient)
+	authService := services.NewAuthService(userRepo, jwtService, rawRedisClient, emailAdapter)
 	usernameService := services.NewUsernameService(userRepo)
 	profileService := services.NewProfileService(userRepo, cache)
 	productService := services.NewProductService(productRepo, cache)
@@ -85,15 +94,6 @@ func main() {
 	}
 
 	uploadService := services.NewUploadService(fileStorage)
-
-	// Initialize Email Service
-	emailAdapter := email.NewSMTPEmailAdapter(
-		cfg.SMTPHost,
-		cfg.SMTPPort,
-		cfg.SMTPUser,
-		cfg.SMTPPass,
-		cfg.SMTPFrom,
-	)
 
 	// Initialize Wallet Service
 	transactionRepo := storage.NewMongoTransactionRepository(mongoDB.Database)
@@ -233,6 +233,18 @@ func main() {
 	)
 	igHandler := httpAdapter.NewInstagramHandler(igService, igAppSecret, igVerifyToken, cfg.FrontendURL)
 
+	// Initialize Google Calendar Service
+	gcalConnRepo := storage.NewMongoGoogleCalendarConnectionRepository(mongoDB.Database)
+	gcalService := services.NewGoogleCalendarService(
+		gcalConnRepo,
+		cfg.GoogleClientID,
+		cfg.GoogleClientSecret,
+		cfg.GoogleCalendarRedirectURL,
+		cfg.JWTSecret,
+	)
+	gcalHandler := httpAdapter.NewGoogleCalendarHandler(gcalService, cfg.FrontendURL)
+	bookingService.SetGoogleCalendarService(gcalService)
+
 	// Inject Worker to dependent services
 	orderService.SetWorkerClient(workerService.GetClient())
 	orderService.SetFrontendURL(cfg.FrontendURL)
@@ -280,27 +292,28 @@ func main() {
 		UsernameHandler: usernameHandler,
 		ProfileHandler:  profileHandler,
 
-		ProductHandler:       productHandler,
-		UploadHandler:        uploadHandler,
-		StoreHandler:         storeHandler,
-		PaymentHandler:       paymentHandler,
-		OrderHandler:         orderHandler,
-		WalletHandler:        walletHandler,
-		AdminHandler:         adminHandler,
-		BuyerHandler:         buyerHandler,
-		PayoutHandler:        payoutHandler,
-		SubscriberHandler:    httpAdapter.NewSubscriberHandler(subscriberRepo),
-		CouponHandler:        couponHandler,
-		BookingHandler:       bookingHandler,
-		CourseHandler:        courseHandler,
-		AIHandler:            aiHandler,
-		EmailTemplateHandler: emailTemplateHandler,
-		CampaignHandler:      campaignHandler,
-		TestimonialHandler:   testimonialHandler,
-		InstagramHandler:     igHandler,
-		AffiliateHandler:     httpAdapter.NewAffiliateHandler(affiliateSvc, productService),
-		AnalyticsHandler:     analyticsHandler,
-		WorkerService:        workerService,
+		ProductHandler:        productHandler,
+		UploadHandler:         uploadHandler,
+		StoreHandler:          storeHandler,
+		PaymentHandler:        paymentHandler,
+		OrderHandler:          orderHandler,
+		WalletHandler:         walletHandler,
+		AdminHandler:          adminHandler,
+		BuyerHandler:          buyerHandler,
+		PayoutHandler:         payoutHandler,
+		SubscriberHandler:     httpAdapter.NewSubscriberHandler(subscriberRepo),
+		CouponHandler:         couponHandler,
+		BookingHandler:        bookingHandler,
+		CourseHandler:         courseHandler,
+		AIHandler:             aiHandler,
+		EmailTemplateHandler:  emailTemplateHandler,
+		CampaignHandler:       campaignHandler,
+		TestimonialHandler:    testimonialHandler,
+		InstagramHandler:      igHandler,
+		GoogleCalendarHandler: gcalHandler,
+		AffiliateHandler:      httpAdapter.NewAffiliateHandler(affiliateSvc, productService),
+		AnalyticsHandler:      analyticsHandler,
+		WorkerService:         workerService,
 	})
 
 	// 9. Graceful shutdown

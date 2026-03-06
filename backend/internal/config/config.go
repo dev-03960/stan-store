@@ -9,33 +9,34 @@ import (
 
 // Config holds all application configuration loaded from environment variables.
 type Config struct {
-	Port                  string `json:"port"`
-	MongoURI              string `json:"mongoUri"`
-	RedisURL              string `json:"redisUrl"`
-	JWTSecret             string `json:"jwtSecret"`
-	FrontendURL           string `json:"frontendUrl"`
-	GoogleClientID        string `json:"googleClientId"`
-	GoogleClientSecret    string `json:"googleClientSecret"`
-	GoogleRedirectURL     string `json:"googleRedirectUrl"`
-	R2AccountID           string `json:"r2AccountId"`
-	R2AccessKeyID         string `json:"r2AccessKeyId"`
-	R2SecretAccessKey     string `json:"r2SecretAccessKey"`
-	R2BucketName          string `json:"r2BucketName"`
-	R2Endpoint            string `json:"r2Endpoint"`
-	RazorpayKeyID         string `json:"razorpayKeyId"`
-	RazorpayKeySecret     string `json:"razorpayKeySecret"`
-	RazorpayWebhookSecret string `json:"razorpayWebhookSecret"`
-	RazorpayAccountNumber string `json:"razorpayAccountNumber"` // RazorpayX business account for payouts
-	SMTPHost              string `json:"smtpHost"`
-	SMTPPort              string `json:"smtpPort"`
-	SMTPUser              string `json:"smtpUser"`
-	SMTPPass              string `json:"smtpPass"`
-	SMTPFrom              string `json:"smtpFrom"`
-	AIApiKey              string `json:"aiApiKey"`
-	InstagramAppID        string `json:"instagramAppId"`
-	InstagramAppSecret    string `json:"instagramAppSecret"`
-	InstagramVerifyToken  string `json:"instagramVerifyToken"`
-	InstagramRedirectURI  string `json:"instagramRedirectUri"`
+	Port                      string `json:"port"`
+	MongoURI                  string `json:"mongoUri"`
+	RedisURL                  string `json:"redisUrl"`
+	JWTSecret                 string `json:"jwtSecret"`
+	FrontendURL               string `json:"frontendUrl"`
+	GoogleClientID            string `json:"googleClientId"`
+	GoogleClientSecret        string `json:"googleClientSecret"`
+	GoogleRedirectURL         string `json:"googleRedirectUrl"`
+	R2AccountID               string `json:"r2AccountId"`
+	R2AccessKeyID             string `json:"r2AccessKeyId"`
+	R2SecretAccessKey         string `json:"r2SecretAccessKey"`
+	R2BucketName              string `json:"r2BucketName"`
+	R2Endpoint                string `json:"r2Endpoint"`
+	RazorpayKeyID             string `json:"razorpayKeyId"`
+	RazorpayKeySecret         string `json:"razorpayKeySecret"`
+	RazorpayWebhookSecret     string `json:"razorpayWebhookSecret"`
+	RazorpayAccountNumber     string `json:"razorpayAccountNumber"` // RazorpayX business account for payouts
+	SMTPHost                  string `json:"smtpHost"`
+	SMTPPort                  string `json:"smtpPort"`
+	SMTPUser                  string `json:"smtpUser"`
+	SMTPPass                  string `json:"smtpPass"`
+	SMTPFrom                  string `json:"smtpFrom"`
+	AIApiKey                  string `json:"aiApiKey"`
+	InstagramAppID            string `json:"instagramAppId"`
+	InstagramAppSecret        string `json:"instagramAppSecret"`
+	InstagramVerifyToken      string `json:"instagramVerifyToken"`
+	InstagramRedirectURI      string `json:"instagramRedirectUri"`
+	GoogleCalendarRedirectURL string `json:"googleCalendarRedirectUrl"`
 }
 
 // Load reads configuration from environment variables with sensible defaults.
@@ -45,33 +46,34 @@ func Load() (*Config, error) {
 	_ = godotenv.Load()
 
 	cfg := &Config{
-		Port:                  getEnv("PORT", "8080"),
-		MongoURI:              getEnv("MONGO_URI", "mongodb://localhost:27017/miostore"),
-		RedisURL:              getEnv("REDIS_URL", "redis://localhost:6379"),
-		JWTSecret:             os.Getenv("JWT_SECRET"),
-		FrontendURL:           getEnv("FRONTEND_URL", "http://localhost:5173"),
-		GoogleClientID:        os.Getenv("GOOGLE_CLIENT_ID"),
-		GoogleClientSecret:    os.Getenv("GOOGLE_CLIENT_SECRET"),
-		GoogleRedirectURL:     getEnv("GOOGLE_REDIRECT_URL", "http://localhost:8080/api/v1/auth/google/callback"),
-		R2AccountID:           os.Getenv("R2_ACCOUNT_ID"),
-		R2AccessKeyID:         os.Getenv("R2_ACCESS_KEY_ID"),
-		R2SecretAccessKey:     os.Getenv("R2_SECRET_ACCESS_KEY"),
-		R2BucketName:          os.Getenv("R2_BUCKET_NAME"),
-		R2Endpoint:            os.Getenv("R2_ENDPOINT"),
-		RazorpayKeyID:         os.Getenv("RAZORPAY_KEY_ID"),
-		RazorpayKeySecret:     os.Getenv("RAZORPAY_KEY_SECRET"),
-		RazorpayWebhookSecret: os.Getenv("RAZORPAY_WEBHOOK_SECRET"),
-		RazorpayAccountNumber: os.Getenv("RAZORPAY_ACCOUNT_NUMBER"),
-		SMTPHost:              os.Getenv("SMTP_HOST"),
-		SMTPPort:              getEnv("SMTP_PORT", "587"),
-		SMTPUser:              os.Getenv("SMTP_USER"),
-		SMTPPass:              os.Getenv("SMTP_PASS"),
-		SMTPFrom:              getEnv("SMTP_FROM", "noreply@miostore.com"),
-		AIApiKey:              os.Getenv("AI_API_KEY"),
-		InstagramAppID:        os.Getenv("INSTAGRAM_APP_ID"),
-		InstagramAppSecret:    os.Getenv("INSTAGRAM_APP_SECRET"),
-		InstagramVerifyToken:  getEnv("INSTAGRAM_VERIFY_TOKEN", "mio_store_ig_verify"),
-		InstagramRedirectURI:  os.Getenv("INSTAGRAM_REDIRECT_URI"),
+		Port:                      getEnv("PORT", "8080"),
+		MongoURI:                  getEnv("MONGO_URI", "mongodb://localhost:27017/miostore"),
+		RedisURL:                  getEnv("REDIS_URL", "redis://localhost:6379"),
+		JWTSecret:                 os.Getenv("JWT_SECRET"),
+		FrontendURL:               getEnv("FRONTEND_URL", "http://localhost:5173"),
+		GoogleClientID:            os.Getenv("GOOGLE_CLIENT_ID"),
+		GoogleClientSecret:        os.Getenv("GOOGLE_CLIENT_SECRET"),
+		GoogleRedirectURL:         getEnv("GOOGLE_REDIRECT_URL", "http://localhost:8080/api/v1/auth/google/callback"),
+		R2AccountID:               os.Getenv("R2_ACCOUNT_ID"),
+		R2AccessKeyID:             os.Getenv("R2_ACCESS_KEY_ID"),
+		R2SecretAccessKey:         os.Getenv("R2_SECRET_ACCESS_KEY"),
+		R2BucketName:              os.Getenv("R2_BUCKET_NAME"),
+		R2Endpoint:                os.Getenv("R2_ENDPOINT"),
+		RazorpayKeyID:             os.Getenv("RAZORPAY_KEY_ID"),
+		RazorpayKeySecret:         os.Getenv("RAZORPAY_KEY_SECRET"),
+		RazorpayWebhookSecret:     os.Getenv("RAZORPAY_WEBHOOK_SECRET"),
+		RazorpayAccountNumber:     os.Getenv("RAZORPAY_ACCOUNT_NUMBER"),
+		SMTPHost:                  os.Getenv("SMTP_HOST"),
+		SMTPPort:                  getEnv("SMTP_PORT", "587"),
+		SMTPUser:                  os.Getenv("SMTP_USER"),
+		SMTPPass:                  os.Getenv("SMTP_PASS"),
+		SMTPFrom:                  getEnv("SMTP_FROM", "noreply@miostore.com"),
+		AIApiKey:                  os.Getenv("AI_API_KEY"),
+		InstagramAppID:            os.Getenv("INSTAGRAM_APP_ID"),
+		InstagramAppSecret:        os.Getenv("INSTAGRAM_APP_SECRET"),
+		InstagramVerifyToken:      getEnv("INSTAGRAM_VERIFY_TOKEN", "mio_store_ig_verify"),
+		InstagramRedirectURI:      os.Getenv("INSTAGRAM_REDIRECT_URI"),
+		GoogleCalendarRedirectURL: getEnv("GOOGLE_CALENDAR_REDIRECT_URL", "http://localhost:8080/api/v1/integrations/google-calendar/oauth/callback"),
 	}
 
 	if cfg.JWTSecret == "" {

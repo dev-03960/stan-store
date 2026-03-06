@@ -14,6 +14,9 @@ export interface Order {
     amount: number;
     status: string;
     created_at: string;
+    booking_slot_start?: string;
+    booking_slot_end?: string;
+    meeting_link?: string;
     line_items?: LineItem[];
 }
 

@@ -234,3 +234,102 @@ func (h *AuthHandler) BuyerMagicLinkVerify(c *fiber.Ctx) error {
 	// Redirect to the frontend dashboard for buyers
 	return c.Redirect(h.frontendURL+"/my-purchases", fiber.StatusTemporaryRedirect)
 }
+
+// CreatorSignup handles email/password signup with OTP verification.
+// POST /api/v1/auth/creator/signup
+func (h *AuthHandler) CreatorSignup(c *fiber.Ctx) error {
+	var req struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+
+	if err := c.BodyParser(&req); err != nil {
+		return SendError(c, fiber.StatusBadRequest, ErrBadRequest, "Invalid request body", nil)
+	}
+
+	if req.Email == "" || req.Password == "" {
+		return SendError(c, fiber.StatusBadRequest, ErrBadRequest, "Email and password are required", nil)
+	}
+
+	err := h.authService.HandleCreatorSignup(c.Context(), req.Email, req.Password)
+	if err != nil {
+		logger.Error("creator signup failed", "error", err, "email", req.Email)
+		return SendError(c, fiber.StatusBadRequest, ErrBadRequest, err.Error(), nil)
+	}
+
+	return SendSuccess(c, fiber.StatusOK, map[string]string{
+		"message": "OTP sent to your email. Please verify to complete signup.",
+	}, nil)
+}
+
+// CreatorVerifyOTP handles OTP verification for email signup.
+// POST /api/v1/auth/creator/verify-otp
+func (h *AuthHandler) CreatorVerifyOTP(c *fiber.Ctx) error {
+	var req struct {
+		Email string `json:"email"`
+		OTP   string `json:"otp"`
+	}
+
+	if err := c.BodyParser(&req); err != nil {
+		return SendError(c, fiber.StatusBadRequest, ErrBadRequest, "Invalid request body", nil)
+	}
+
+	if req.Email == "" || req.OTP == "" {
+		return SendError(c, fiber.StatusBadRequest, ErrBadRequest, "Email and OTP are required", nil)
+	}
+
+	result, err := h.authService.HandleCreatorVerifyOTP(c.Context(), req.Email, req.OTP)
+	if err != nil {
+		logger.Error("OTP verification failed", "error", err, "email", req.Email)
+		return SendError(c, fiber.StatusBadRequest, ErrBadRequest, err.Error(), nil)
+	}
+
+	// Set JWT as HTTP-Only cookie
+	c.Cookie(&fiber.Cookie{
+		Name:     cookieName,
+		Value:    result.Token,
+		MaxAge:   cookieMaxAge,
+		HTTPOnly: true,
+		Secure:   true,
+		SameSite: "Strict",
+		Path:     "/",
+	})
+
+	return SendSuccess(c, fiber.StatusOK, result, nil)
+}
+
+// CreatorLogin handles email/password login for creators.
+// POST /api/v1/auth/creator/login
+func (h *AuthHandler) CreatorLogin(c *fiber.Ctx) error {
+	var req struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+
+	if err := c.BodyParser(&req); err != nil {
+		return SendError(c, fiber.StatusBadRequest, ErrBadRequest, "Invalid request body", nil)
+	}
+
+	if req.Email == "" || req.Password == "" {
+		return SendError(c, fiber.StatusBadRequest, ErrBadRequest, "Email and password are required", nil)
+	}
+
+	result, err := h.authService.HandleCreatorLogin(c.Context(), req.Email, req.Password)
+	if err != nil {
+		logger.Error("creator login failed", "error", err, "email", req.Email)
+		return SendError(c, fiber.StatusBadRequest, ErrBadRequest, err.Error(), nil)
+	}
+
+	// Set JWT as HTTP-Only cookie
+	c.Cookie(&fiber.Cookie{
+		Name:     cookieName,
+		Value:    result.Token,
+		MaxAge:   cookieMaxAge,
+		HTTPOnly: true,
+		Secure:   true,
+		SameSite: "Strict",
+		Path:     "/",
+	})
+
+	return SendSuccess(c, fiber.StatusOK, result, nil)
+}

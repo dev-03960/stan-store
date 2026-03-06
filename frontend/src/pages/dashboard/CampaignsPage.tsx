@@ -69,7 +69,7 @@ export const CampaignsPage: React.FC = () => {
     if (loading) {
         return (
             <div className="flex justify-center items-center h-64">
-                <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+                <Loader2 className="w-8 h-8 animate-spin text-[#6786f5]" />
             </div>
         );
     }
@@ -78,13 +78,13 @@ export const CampaignsPage: React.FC = () => {
         <div className="max-w-4xl mx-auto space-y-8 p-6">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">Drip Campaigns</h1>
+                    <h1 className="text-3xl font-bold bg-gradient-to-r from-[#6786f5] to-blue-600 bg-clip-text text-transparent">Drip Campaigns</h1>
                     <p className="text-gray-500 mt-2">Automate your email sequences when fans subscribe.</p>
                 </div>
                 {!isCreating && (
                     <button
                         onClick={() => setIsCreating(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
+                        className="flex items-center gap-2 px-4 py-2 bg-[#6786f5] text-white rounded-lg hover:bg-[#5570e0] transition"
                     >
                         <Plus className="w-5 h-5" /> Create Campaign
                     </button>
@@ -101,7 +101,7 @@ export const CampaignsPage: React.FC = () => {
                             type="text"
                             value={newName}
                             onChange={(e) => setNewName(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-200 focus:border-purple-600 outline-none"
+                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-200 focus:border-[#6786f5] outline-none"
                             placeholder="e.g. 5-Day Free Course Nurture"
                         />
                     </div>
@@ -111,7 +111,7 @@ export const CampaignsPage: React.FC = () => {
                         <select
                             value={newTriggerProduct}
                             onChange={(e) => setNewTriggerProduct(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-200 focus:border-purple-600 outline-none"
+                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-200 focus:border-[#6786f5] outline-none"
                         >
                             <option value="">Select a product...</option>
                             {products.filter(p => p.type === 'lead_magnet').map(p => (
@@ -170,7 +170,7 @@ export const CampaignsPage: React.FC = () => {
                         {emails.length < 5 && (
                             <button
                                 onClick={() => setEmails([...emails, { subject: '', body_html: '', delay_minutes: 1440 }])}
-                                className="text-sm font-medium text-purple-600 hover:text-purple-700"
+                                className="text-sm font-medium text-[#6786f5] hover:text-[#5570e0]"
                             >
                                 + Add another email (Max 5)
                             </button>
@@ -180,7 +180,7 @@ export const CampaignsPage: React.FC = () => {
                     <div className="flex gap-4 pt-4 border-t">
                         <button
                             onClick={handleCreate}
-                            className="flex items-center gap-2 px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
+                            className="flex items-center gap-2 px-6 py-2 bg-[#6786f5] text-white rounded-lg hover:bg-[#5570e0] transition"
                         >
                             <Save className="w-4 h-4" /> Save Campaign
                         </button>

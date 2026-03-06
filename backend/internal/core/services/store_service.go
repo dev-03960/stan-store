@@ -19,13 +19,16 @@ type StoreResponse struct {
 
 // PublicProfile represents a sanitized user profile.
 type PublicProfile struct {
-	ID          string              `json:"id"`
-	DisplayName string              `json:"displayName"`
-	Username    string              `json:"username"`
-	Bio         string              `json:"bio"`
-	Theme       string              `json:"theme"`
-	AvatarURL   string              `json:"avatarUrl"`
-	SocialLinks []domain.SocialLink `json:"socialLinks"`
+	ID            string              `json:"id"`
+	DisplayName   string              `json:"displayName"`
+	Username      string              `json:"username"`
+	Bio           string              `json:"bio"`
+	Theme         string              `json:"theme"`
+	BrandColor    string              `json:"brandColor,omitempty"`
+	FontFamily    string              `json:"fontFamily,omitempty"`
+	CoverPhotoURL string              `json:"coverPhotoUrl,omitempty"`
+	AvatarURL     string              `json:"avatarUrl"`
+	SocialLinks   []domain.SocialLink `json:"socialLinks"`
 }
 
 // StoreService handles business logic for the public storefront.
@@ -102,13 +105,16 @@ func (s *StoreService) GetStoreByUsername(ctx context.Context, username string) 
 
 	// 3. Construct Response (Sanitize User Data)
 	profile := &PublicProfile{
-		ID:          user.ID.Hex(),
-		DisplayName: user.DisplayName,
-		Username:    user.Username,
-		Bio:         user.Bio,
-		Theme:       user.Theme,
-		AvatarURL:   user.AvatarURL,
-		SocialLinks: user.SocialLinks,
+		ID:            user.ID.Hex(),
+		DisplayName:   user.DisplayName,
+		Username:      user.Username,
+		Bio:           user.Bio,
+		Theme:         user.Theme,
+		BrandColor:    user.BrandColor,
+		FontFamily:    user.FontFamily,
+		CoverPhotoURL: user.CoverPhotoURL,
+		AvatarURL:     user.AvatarURL,
+		SocialLinks:   user.SocialLinks,
 	}
 
 	resp := &StoreResponse{

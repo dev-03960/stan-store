@@ -18,9 +18,33 @@ const StoreHeader: React.FC<StoreHeaderProps> = ({ profile }) => {
         }
     };
 
+    const brandColor = profile.brandColor || 'var(--theme-accent, #6C5CE7)';
+
     return (
-        <div className="flex flex-col items-center text-center py-8 px-4 max-w-2xl mx-auto">
-            <div className="w-24 h-24 rounded-full overflow-hidden mb-4 border-2 border-slate-100 shadow-sm">
+        <div className="flex flex-col items-center text-center max-w-2xl mx-auto">
+            {/* Cover Photo / Banner */}
+            {profile.coverPhotoUrl ? (
+                <div className="w-full h-40 sm:h-48 rounded-xl overflow-hidden mb-4 shadow-sm">
+                    <img
+                        src={profile.coverPhotoUrl}
+                        alt="Store banner"
+                        className="w-full h-full object-cover"
+                    />
+                </div>
+            ) : (
+                <div
+                    className="w-full h-24 sm:h-32 rounded-xl mb-4"
+                    style={{
+                        background: `linear-gradient(135deg, ${brandColor}22, ${brandColor}08)`,
+                    }}
+                />
+            )}
+
+            {/* Avatar */}
+            <div
+                className="w-24 h-24 rounded-full overflow-hidden -mt-16 mb-4 border-4 shadow-lg relative z-10"
+                style={{ borderColor: 'var(--theme-surface, #fff)' }}
+            >
                 {profile.avatarUrl ? (
                     <img
                         src={profile.avatarUrl}
@@ -28,16 +52,27 @@ const StoreHeader: React.FC<StoreHeaderProps> = ({ profile }) => {
                         className="w-full h-full object-cover"
                     />
                 ) : (
-                    <div className="w-full h-full bg-slate-200 flex items-center justify-center text-slate-400">
-                        <span className="text-3xl font-bold">{profile.displayName.charAt(0)}</span>
+                    <div
+                        className="w-full h-full flex items-center justify-center text-white text-3xl font-bold"
+                        style={{ backgroundColor: brandColor }}
+                    >
+                        {profile.displayName.charAt(0)}
                     </div>
                 )}
             </div>
 
-            <h1 className="text-2xl font-bold text-slate-900 mb-2">{profile.displayName}</h1>
+            <h1
+                className="text-2xl font-bold mb-2"
+                style={{ color: 'var(--theme-text-primary)', fontFamily: profile.fontFamily || 'inherit' }}
+            >
+                {profile.displayName}
+            </h1>
 
             {profile.bio && (
-                <p className="text-slate-600 mb-6 max-w-md leading-relaxed">
+                <p
+                    className="mb-6 max-w-md leading-relaxed"
+                    style={{ color: 'var(--theme-text-secondary)' }}
+                >
                     {profile.bio}
                 </p>
             )}
@@ -50,7 +85,11 @@ const StoreHeader: React.FC<StoreHeaderProps> = ({ profile }) => {
                             href={link.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="p-2 rounded-full bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-indigo-600 transition-colors"
+                            className="p-2 rounded-full transition-colors"
+                            style={{
+                                backgroundColor: 'var(--theme-surface, #f8fafc)',
+                                color: 'var(--theme-text-secondary, #64748b)',
+                            }}
                             aria-label={link.platform}
                         >
                             {getSocialIcon(link.platform)}

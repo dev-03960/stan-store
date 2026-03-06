@@ -17,8 +17,14 @@ export interface InstagramAutomation {
     createdAt: string;
 }
 
+export interface GoogleCalendarConnection {
+    connected: boolean;
+    email?: string;
+    createdAt?: string;
+}
+
 export const integrationsApi = {
-    // Connection
+    // Instagram Connection
     getInstagramOAuthUrl: async () => {
         const response = await api.get<{ url: string }>('/integrations/instagram/oauth/url');
         return response.data;
@@ -32,7 +38,7 @@ export const integrationsApi = {
         return response.data;
     },
 
-    // Automations
+    // Instagram Automations
     getInstagramAutomations: async () => {
         const response = await api.get<InstagramAutomation[]>('/creator/automations/instagram');
         return response.data;
@@ -44,5 +50,20 @@ export const integrationsApi = {
     deleteInstagramAutomation: async (id: string) => {
         const response = await api.delete(`/creator/automations/instagram/${id}`);
         return response.data;
-    }
+    },
+
+    // Google Calendar Connection
+    getGoogleCalendarOAuthUrl: async () => {
+        const response = await api.get<{ url: string }>('/integrations/google-calendar/oauth/url');
+        return response.data;
+    },
+    getGoogleCalendarConnection: async () => {
+        const response = await api.get<GoogleCalendarConnection>('/integrations/google-calendar/connection');
+        return response.data;
+    },
+    disconnectGoogleCalendar: async () => {
+        const response = await api.delete('/integrations/google-calendar/connection');
+        return response.data;
+    },
 };
+

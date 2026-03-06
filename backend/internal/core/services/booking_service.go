@@ -14,9 +14,10 @@ import (
 
 // BookingService handles the business logic for bookings and availability.
 type BookingService struct {
-	bookingRepo domain.BookingRepository
-	productRepo domain.ProductRepository
-	cache       domain.Cache
+	bookingRepo  domain.BookingRepository
+	productRepo  domain.ProductRepository
+	cache        domain.Cache
+	googleCalSvc *GoogleCalendarService
 }
 
 // NewBookingService creates a new BookingService.
@@ -26,6 +27,11 @@ func NewBookingService(bookingRepo domain.BookingRepository, productRepo domain.
 		productRepo: productRepo,
 		cache:       cache,
 	}
+}
+
+// SetGoogleCalendarService injects the Google Calendar service for Meet link generation.
+func (s *BookingService) SetGoogleCalendarService(svc *GoogleCalendarService) {
+	s.googleCalSvc = svc
 }
 
 // GetAvailableSlots returns available time slots in UTC for a specific date (YYYY-MM-DD).
@@ -171,7 +177,36 @@ func (s *BookingService) CreateBooking(ctx context.Context, booking *domain.Book
 
 	booking.Status = domain.BookingStatusConfirmed
 
-	// Create placeholder meeting link if none provided
+	// Try to create a Google Calendar event with Meet link if creator has connected Google Calendar
+	if s.googleCalSvc != nil && booking.MeetingLink == "" {
+		product, prodErr := s.productRepo.FindByID(ctx, booking.ProductID)
+		summary := "1:1 Coaching Session"
+		if prodErr == nil && product != nil {
+			summary = product.Title + " — 1:1 Session"
+		}
+
+		description := fmt.Sprintf("Booking with %s\nBooked by: %s (%s)", summary, booking.BuyerName, booking.BuyerEmail)
+
+		meetLink, calErr := s.googleCalSvc.CreateEventWithMeet(
+			ctx,
+			booking.CreatorID.Hex(),
+			summary,
+			description,
+			booking.SlotStart,
+			booking.SlotEnd,
+			booking.BuyerEmail,
+		)
+		if calErr != nil {
+			logger.Error("failed to create Google Calendar event, using placeholder",
+				"error", calErr,
+				"creator_id", booking.CreatorID.Hex(),
+			)
+		} else if meetLink != "" {
+			booking.MeetingLink = meetLink
+		}
+	}
+
+	// Fallback to placeholder if no real Meet link was generated
 	if booking.MeetingLink == "" {
 		booking.MeetingLink = "https://meet.google.com/placeholder-" + booking.ID.Hex()[:6]
 	}

@@ -42,6 +42,7 @@ export interface Order {
     razorpay_payment_id?: string;
     booking_slot_start?: string;
     booking_slot_end?: string;
+    meeting_link?: string;
     created_at: string;
     product?: {
         title: string;

@@ -2,7 +2,7 @@ import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getOrder, getOrderDownloadUrl } from '../features/orders/api';
-import { CheckCircle, Download, FileText, Loader2, AlertCircle, Calendar } from 'lucide-react';
+import { CheckCircle, Download, FileText, Loader2, AlertCircle, Calendar, Video } from 'lucide-react';
 
 const OrderPage: React.FC = () => {
     const { orderId } = useParams<{ orderId: string }>();
@@ -95,6 +95,17 @@ const OrderPage: React.FC = () => {
                                                             <span className="block text-xs mt-1 text-green-600 font-medium">
                                                                 {new Date(order.booking_slot_start).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
                                                             </span>
+                                                        )}
+                                                        {order.meeting_link && (
+                                                            <a
+                                                                href={order.meeting_link}
+                                                                target="_blank"
+                                                                rel="noreferrer"
+                                                                className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-md hover:bg-blue-700 transition-colors"
+                                                            >
+                                                                <Video className="w-3.5 h-3.5" />
+                                                                Join Google Meet
+                                                            </a>
                                                         )}
                                                     </div>
                                                 ) : (

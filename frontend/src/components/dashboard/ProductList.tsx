@@ -70,12 +70,18 @@ const SortableProductItem = ({ product, onEdit, onToggleVisibility, onDelete }: 
                         {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(product.price / 100)}
                     </p>
                     <span
-                        className={`text-xs px-2 py-0.5 rounded-full font-medium ${product.product_type === 'lead_magnet'
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-blue-100 text-blue-700'
+                        className={`text-xs px-2 py-0.5 rounded-full font-medium ${product.product_type === 'lead_magnet' ? 'bg-green-100 text-green-700' :
+                                product.product_type === 'course' ? 'bg-[#6786f51a] text-[#5570e0]' :
+                                    product.product_type === 'booking' ? 'bg-orange-100 text-orange-700' :
+                                        product.product_type === 'membership' ? 'bg-cyan-100 text-cyan-700' :
+                                            'bg-blue-100 text-blue-700'
                             }`}
                     >
-                        {product.product_type === 'lead_magnet' ? 'Lead Magnet' : 'Digital Download'}
+                        {product.product_type === 'lead_magnet' ? 'Lead Magnet' :
+                            product.product_type === 'course' ? 'Course' :
+                                product.product_type === 'booking' ? 'Coaching' :
+                                    product.product_type === 'membership' ? 'Membership' :
+                                        'Digital Download'}
                     </span>
                 </div>
             </div>

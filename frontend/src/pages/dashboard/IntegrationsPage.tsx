@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Instagram, Plug, Plus, Trash2, CheckCircle2, AlertCircle } from 'lucide-react';
-import { integrationsApi, type InstagramConnection, type InstagramAutomation } from '../../lib/api/integrations';
+import { Instagram, Plug, Plus, Trash2, CheckCircle2, AlertCircle, Calendar, Video } from 'lucide-react';
+import { integrationsApi, type InstagramConnection, type InstagramAutomation, type GoogleCalendarConnection } from '../../lib/api/integrations';
 
 export default function IntegrationsPage() {
     const [searchParams, setSearchParams] = useSearchParams();
     const [isLoading, setIsLoading] = useState(true);
     const [connection, setConnection] = useState<InstagramConnection | null>(null);
     const [automations, setAutomations] = useState<InstagramAutomation[]>([]);
+    const [gcalConnection, setGcalConnection] = useState<GoogleCalendarConnection | null>(null);
 
     const [newKeyword, setNewKeyword] = useState('');
     const [newResponse, setNewResponse] = useState('');
@@ -17,8 +18,17 @@ export default function IntegrationsPage() {
     useEffect(() => {
         if (searchParams.get('ig_success') === 'true') {
             setSuccess('Instagram connected successfully!');
-            // Clean up URL
             searchParams.delete('ig_success');
+            setSearchParams(searchParams);
+        }
+        if (searchParams.get('gcal_success') === 'true') {
+            setSuccess('Google Calendar connected successfully! Meet links will now be generated automatically for bookings.');
+            searchParams.delete('gcal_success');
+            setSearchParams(searchParams);
+        }
+        if (searchParams.get('gcal_error')) {
+            setError('Failed to connect Google Calendar. Please try again.');
+            searchParams.delete('gcal_error');
             setSearchParams(searchParams);
         }
         fetchData();
@@ -27,13 +37,15 @@ export default function IntegrationsPage() {
     const fetchData = async () => {
         setIsLoading(true);
         try {
-            const [connRes, authsRes] = await Promise.all([
+            const [connRes, authsRes, gcalRes] = await Promise.all([
                 integrationsApi.getInstagramConnection(),
-                integrationsApi.getInstagramAutomations().catch(() => [] as InstagramAutomation[])
+                integrationsApi.getInstagramAutomations().catch(() => [] as InstagramAutomation[]),
+                integrationsApi.getGoogleCalendarConnection().catch(() => null),
             ]);
 
             if (connRes) setConnection(connRes);
             if (authsRes) setAutomations(authsRes);
+            if (gcalRes) setGcalConnection(gcalRes);
         } catch (err: any) {
             console.error("Failed to load integrations", err);
         } finally {
@@ -61,6 +73,28 @@ export default function IntegrationsPage() {
             setSuccess('Instagram disconnected.');
         } catch (err: any) {
             setError('Failed to disconnect Instagram.');
+        }
+    };
+
+    const handleConnectGoogleCalendar = async () => {
+        try {
+            const res = await integrationsApi.getGoogleCalendarOAuthUrl();
+            if (res?.url) {
+                window.location.href = res.url;
+            }
+        } catch (err: any) {
+            setError(err.message || 'Failed to initiate Google Calendar connection.');
+        }
+    };
+
+    const handleDisconnectGoogleCalendar = async () => {
+        if (!confirm('Are you sure you want to disconnect Google Calendar? New bookings will use placeholder meeting links instead of real Google Meet links.')) return;
+        try {
+            await integrationsApi.disconnectGoogleCalendar();
+            setGcalConnection({ connected: false });
+            setSuccess('Google Calendar disconnected.');
+        } catch (err: any) {
+            setError('Failed to disconnect Google Calendar.');
         }
     };
 
@@ -101,7 +135,7 @@ export default function IntegrationsPage() {
     if (isLoading) {
         return (
             <div className="flex justify-center items-center h-64">
-                <div className="w-8 h-8 border-4 border-purple-600 border-t-transparent rounded-full animate-spin" />
+                <div className="w-8 h-8 border-4 border-[#6786f5] border-t-transparent rounded-full animate-spin" />
             </div>
         );
     }
@@ -126,6 +160,61 @@ export default function IntegrationsPage() {
                     {success}
                 </div>
             )}
+
+            {/* Google Calendar Card */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="p-6 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-gradient-to-tr from-blue-500 to-cyan-400 rounded-xl flex items-center justify-center shadow-inner">
+                            <Calendar className="w-6 h-6 text-white" />
+                        </div>
+                        <div>
+                            <h2 className="text-lg font-semibold text-gray-900">Google Calendar</h2>
+                            <p className="text-sm text-gray-500">Auto-create calendar events with Google Meet links for bookings</p>
+                        </div>
+                    </div>
+                    <div>
+                        {gcalConnection?.connected ? (
+                            <div className="flex items-center gap-3">
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium bg-green-50 text-green-700 border border-green-200">
+                                    <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                                    Connected: {gcalConnection.email}
+                                </span>
+                                <button
+                                    onClick={handleDisconnectGoogleCalendar}
+                                    className="text-sm font-medium text-gray-500 hover:text-red-600 transition-colors"
+                                >
+                                    Disconnect
+                                </button>
+                            </div>
+                        ) : (
+                            <button
+                                onClick={handleConnectGoogleCalendar}
+                                className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-lg hover:from-blue-700 hover:to-cyan-600 focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all shadow-sm font-medium"
+                            >
+                                <Plug className="w-4 h-4" />
+                                Connect Google Calendar
+                            </button>
+                        )}
+                    </div>
+                </div>
+
+                {gcalConnection?.connected && (
+                    <div className="p-6 bg-slate-50">
+                        <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-100 rounded-lg">
+                            <Video className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" />
+                            <div>
+                                <p className="text-sm font-medium text-blue-900">Auto Meet Links Active</p>
+                                <p className="text-sm text-blue-700 mt-1">
+                                    When a buyer purchases a 1:1 coaching session, a Google Calendar event with a unique
+                                    Google Meet link will be created automatically on your calendar. Both you and the buyer
+                                    will receive an invite email from Google.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
 
             {/* Instagram Card */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -156,7 +245,7 @@ export default function IntegrationsPage() {
                         ) : (
                             <button
                                 onClick={handleConnectInstagram}
-                                className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-500 text-white rounded-lg hover:from-purple-700 hover:to-pink-600 focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all shadow-sm font-medium"
+                                className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#6786f5] to-pink-500 text-white rounded-lg hover:from-purple-700 hover:to-pink-600 focus:ring-2 focus:ring-offset-2 focus:ring-[#6786f5] transition-all shadow-sm font-medium"
                             >
                                 <Plug className="w-4 h-4" />
                                 Connect Instagram
@@ -180,7 +269,7 @@ export default function IntegrationsPage() {
                                 required
                                 value={newKeyword}
                                 onChange={e => setNewKeyword(e.target.value)}
-                                className="w-1/4 rounded-lg border-gray-300 border px-4 py-2 text-sm focus:ring-purple-500 focus:border-purple-500"
+                                className="w-1/4 rounded-lg border-gray-300 border px-4 py-2 text-sm focus:ring-[#6786f5] focus:border-[#6786f5]"
                             />
                             <input
                                 type="text"
@@ -188,7 +277,7 @@ export default function IntegrationsPage() {
                                 required
                                 value={newResponse}
                                 onChange={e => setNewResponse(e.target.value)}
-                                className="w-full rounded-lg border-gray-300 border px-4 py-2 text-sm focus:ring-purple-500 focus:border-purple-500"
+                                className="w-full rounded-lg border-gray-300 border px-4 py-2 text-sm focus:ring-[#6786f5] focus:border-[#6786f5]"
                             />
                             <button
                                 type="submit"
@@ -203,7 +292,7 @@ export default function IntegrationsPage() {
                             {automations.map((auto) => (
                                 <div key={auto.id} className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
                                     <div className="flex items-center gap-4 flex-1">
-                                        <div className="shrink-0 bg-purple-50 text-purple-700 px-3 py-1 rounded-md text-sm font-bold border border-purple-100">
+                                        <div className="shrink-0 bg-[#6786f50d] text-[#5570e0] px-3 py-1 rounded-md text-sm font-bold border border-purple-100">
                                             {auto.keyword.toUpperCase()}
                                         </div>
                                         <div className="flex-1">

@@ -118,7 +118,7 @@ export const TestimonialsTab: React.FC<TestimonialsTabProps> = ({ productId }) =
     };
 
     if (loading) {
-        return <div className="flex justify-center p-8"><Loader2 className="w-6 h-6 animate-spin text-purple-600" /></div>;
+        return <div className="flex justify-center p-8"><Loader2 className="w-6 h-6 animate-spin text-[#6786f5]" /></div>;
     }
 
     return (
@@ -134,7 +134,7 @@ export const TestimonialsTab: React.FC<TestimonialsTabProps> = ({ productId }) =
                             setImageFile(null);
                             setIsFormVisible(true);
                         }}
-                        className="flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 text-sm font-medium transition"
+                        className="flex items-center gap-2 px-4 py-2 bg-[#6786f51a] text-[#5570e0] rounded-lg hover:bg-purple-200 text-sm font-medium transition"
                     >
                         <Plus className="w-4 h-4" /> Add Testimonial
                     </button>
@@ -207,7 +207,7 @@ export const TestimonialsTab: React.FC<TestimonialsTabProps> = ({ productId }) =
 
                     <div className="flex gap-3 justify-end pt-2">
                         <button type="button" onClick={() => setIsFormVisible(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition">Cancel</button>
-                        <button type="button" onClick={handleSave} disabled={uploading} className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition flex items-center gap-2">
+                        <button type="button" onClick={handleSave} disabled={uploading} className="px-4 py-2 bg-[#6786f5] text-white rounded-lg hover:bg-[#5570e0] transition flex items-center gap-2">
                             {uploading && <Loader2 className="w-4 h-4 animate-spin" />} Save Review
                         </button>
                     </div>
@@ -231,7 +231,7 @@ export const TestimonialsTab: React.FC<TestimonialsTabProps> = ({ productId }) =
                                             <div
                                                 ref={provided.innerRef}
                                                 {...provided.draggableProps}
-                                                className="bg-white border border-gray-200 p-4 rounded-xl flex gap-4 items-center group shadow-sm hover:border-purple-200 transition"
+                                                className="bg-white border border-gray-200 p-4 rounded-xl flex gap-4 items-center group shadow-sm hover:border-[#6786f540] transition"
                                             >
                                                 <div {...provided.dragHandleProps} className="text-gray-300 hover:text-gray-500">
                                                     <GripVertical className="w-5 h-5" />
@@ -240,7 +240,7 @@ export const TestimonialsTab: React.FC<TestimonialsTabProps> = ({ productId }) =
                                                 {t.avatar_url ? (
                                                     <img src={t.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover bg-gray-100 border border-gray-200" />
                                                 ) : (
-                                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-100 to-purple-200 text-purple-700 flex items-center justify-center font-bold">
+                                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-100 to-purple-200 text-[#5570e0] flex items-center justify-center font-bold">
                                                         {t.customer_name.charAt(0).toUpperCase()}
                                                     </div>
                                                 )}

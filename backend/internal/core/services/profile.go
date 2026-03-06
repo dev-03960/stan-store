@@ -21,6 +21,9 @@ type ProfileInput struct {
 	Bio                  string              `json:"bio"`
 	AvatarURL            string              `json:"avatarUrl"`
 	Theme                string              `json:"theme"`
+	BrandColor           string              `json:"brandColor"`
+	FontFamily           string              `json:"fontFamily"`
+	CoverPhotoURL        string              `json:"coverPhotoUrl"`
 	SocialLinks          []domain.SocialLink `json:"socialLinks"`
 	AbandonedCartEnabled *bool               `json:"abandonedCartEnabled"`
 }
@@ -74,11 +77,26 @@ func (s *ProfileService) UpdateProfile(ctx context.Context, userID string, input
 	}
 
 	if input.Theme != "" {
-		if input.Theme == "minimal" || input.Theme == "bold" || input.Theme == "gradient" || input.Theme == "warm" {
+		allowedThemes := map[string]bool{
+			"minimal": true, "bold": true, "gradient": true,
+			"warm": true, "ocean": true, "neon": true,
+		}
+		if allowedThemes[input.Theme] {
 			user.Theme = input.Theme
 		} else {
-			return nil, &ValidationErrors{Errors: []FieldError{{Field: "theme", Message: "Invalid theme type: must be minimal, bold, gradient, or warm"}}}
+			return nil, &ValidationErrors{Errors: []FieldError{{Field: "theme", Message: "Invalid theme type"}}}
 		}
+	}
+
+	// Apply customization fields
+	if input.BrandColor != "" {
+		user.BrandColor = strings.TrimSpace(input.BrandColor)
+	}
+	if input.FontFamily != "" {
+		user.FontFamily = strings.TrimSpace(input.FontFamily)
+	}
+	if input.CoverPhotoURL != "" {
+		user.CoverPhotoURL = strings.TrimSpace(input.CoverPhotoURL)
 	}
 
 	if input.AbandonedCartEnabled != nil {

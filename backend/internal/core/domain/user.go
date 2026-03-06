@@ -40,11 +40,16 @@ type User struct {
 	DisplayName          string             `bson:"display_name" json:"displayName"`
 	Username             string             `bson:"username,omitempty" json:"username,omitempty"`
 	AvatarURL            string             `bson:"avatar_url" json:"avatarUrl"`
+	PasswordHash         string             `bson:"password_hash,omitempty" json:"-"`
+	EmailVerified        bool               `bson:"email_verified" json:"emailVerified"`
 	GoogleID             string             `bson:"google_id" json:"googleId"`
 	SubscriptionTier     string             `bson:"subscription_tier" json:"subscriptionTier"`
 	Role                 string             `bson:"role" json:"role"` // "creator" or "admin"
 	Bio                  string             `bson:"bio,omitempty" json:"bio,omitempty"`
 	Theme                string             `bson:"theme" json:"theme"`
+	BrandColor           string             `bson:"brand_color,omitempty" json:"brandColor,omitempty"`
+	FontFamily           string             `bson:"font_family,omitempty" json:"fontFamily,omitempty"`
+	CoverPhotoURL        string             `bson:"cover_photo_url,omitempty" json:"coverPhotoUrl,omitempty"`
 	SocialLinks          []SocialLink       `bson:"social_links,omitempty" json:"socialLinks,omitempty"`
 	PayoutConfig         *PayoutConfig      `bson:"payout_config,omitempty" json:"payoutConfig,omitempty"`
 	PlatformFeeRate      float64            `bson:"platform_fee_rate" json:"platformFeeRate"` // Percentage (e.g., 5.0 = 5%); default 5

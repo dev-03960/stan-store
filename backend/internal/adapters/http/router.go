@@ -15,33 +15,34 @@ import (
 
 // RouterDeps holds dependencies needed by the router.
 type RouterDeps struct {
-	FrontendURL          string
-	JWTService           *services.JWTService
-	UserRepo             domain.UserRepository
-	AuthHandler          *AuthHandler
-	UsernameHandler      *UsernameHandler
-	ProfileHandler       *ProfileHandler
-	ProductHandler       *ProductHandler
-	UploadHandler        *UploadHandler
-	StoreHandler         *StoreHandler
-	PaymentHandler       *PaymentHandler
-	OrderHandler         *OrderHandler
-	WalletHandler        *WalletHandler
-	AdminHandler         *AdminHandler
-	BuyerHandler         *BuyerHandler
-	PayoutHandler        *PayoutHandler
-	SubscriberHandler    *SubscriberHandler
-	CouponHandler        *CouponHandler
-	BookingHandler       *BookingHandler
-	CourseHandler        *CourseHandler
-	AIHandler            *AIHandler
-	EmailTemplateHandler *EmailTemplateHandler
-	CampaignHandler      *CampaignHandler
-	TestimonialHandler   *TestimonialHandler
-	InstagramHandler     *InstagramHandler
-	AffiliateHandler     *AffiliateHandler
-	AnalyticsHandler     *AnalyticsHandler
-	WorkerService        *services.WorkerService
+	FrontendURL           string
+	JWTService            *services.JWTService
+	UserRepo              domain.UserRepository
+	AuthHandler           *AuthHandler
+	UsernameHandler       *UsernameHandler
+	ProfileHandler        *ProfileHandler
+	ProductHandler        *ProductHandler
+	UploadHandler         *UploadHandler
+	StoreHandler          *StoreHandler
+	PaymentHandler        *PaymentHandler
+	OrderHandler          *OrderHandler
+	WalletHandler         *WalletHandler
+	AdminHandler          *AdminHandler
+	BuyerHandler          *BuyerHandler
+	PayoutHandler         *PayoutHandler
+	SubscriberHandler     *SubscriberHandler
+	CouponHandler         *CouponHandler
+	BookingHandler        *BookingHandler
+	CourseHandler         *CourseHandler
+	AIHandler             *AIHandler
+	EmailTemplateHandler  *EmailTemplateHandler
+	CampaignHandler       *CampaignHandler
+	TestimonialHandler    *TestimonialHandler
+	InstagramHandler      *InstagramHandler
+	GoogleCalendarHandler *GoogleCalendarHandler
+	AffiliateHandler      *AffiliateHandler
+	AnalyticsHandler      *AnalyticsHandler
+	WorkerService         *services.WorkerService
 }
 
 // SetupRouter configures all routes and middleware on the Fiber app.
@@ -89,6 +90,24 @@ func SetupRouter(app *fiber.App, deps *RouterDeps) {
 	buyerAuth.Get("/google", deps.AuthHandler.BuyerGoogleLogin)
 	buyerAuth.Post("/magic-link", deps.AuthHandler.BuyerMagicLinkRequest)
 	buyerAuth.Get("/verify", deps.AuthHandler.BuyerMagicLinkVerify)
+
+	// Creator email/password auth routes (public, rate limited)
+	creatorAuth := auth.Group("/creator")
+	creatorAuth.Post("/signup", limiter.New(limiter.Config{
+		Max:          5,
+		Expiration:   1 * time.Minute,
+		LimitReached: limitReachedHandler,
+	}), deps.AuthHandler.CreatorSignup)
+	creatorAuth.Post("/verify-otp", limiter.New(limiter.Config{
+		Max:          10,
+		Expiration:   1 * time.Minute,
+		LimitReached: limitReachedHandler,
+	}), deps.AuthHandler.CreatorVerifyOTP)
+	creatorAuth.Post("/login", limiter.New(limiter.Config{
+		Max:          10,
+		Expiration:   1 * time.Minute,
+		LimitReached: limitReachedHandler,
+	}), deps.AuthHandler.CreatorLogin)
 
 	// Buyer functionality routes (protected)
 	buyer := v1.Group("/buyer")
@@ -211,6 +230,14 @@ func SetupRouter(app *fiber.App, deps *RouterDeps) {
 	v1.Get("/integrations/instagram/oauth/callback", deps.InstagramHandler.OAuthCallback)
 	v1.Get("/integrations/instagram/webhook", deps.InstagramHandler.VerifyWebhook)
 	v1.Post("/integrations/instagram/webhook", deps.InstagramHandler.HandleWebhook)
+
+	// Google Calendar Integration (protected)
+	if deps.GoogleCalendarHandler != nil {
+		integrations.Get("/google-calendar/oauth/url", authRequired, banCheck, deps.GoogleCalendarHandler.GetOAuthURL)
+		integrations.Get("/google-calendar/connection", authRequired, banCheck, deps.GoogleCalendarHandler.GetConnection)
+		integrations.Delete("/google-calendar/connection", authRequired, banCheck, deps.GoogleCalendarHandler.Disconnect)
+		v1.Get("/integrations/google-calendar/oauth/callback", deps.GoogleCalendarHandler.OAuthCallback)
+	}
 
 	// Affiliates (public)
 	affiliates := v1.Group("/affiliates")

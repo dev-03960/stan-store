@@ -49,18 +49,39 @@ const StorePage: React.FC = () => {
         );
     }
 
+    // Apply brand color as CSS custom property override
+    const brandColor = store.creator.brandColor;
+    const fontFamily = store.creator.fontFamily;
+    const styleOverrides: React.CSSProperties = {
+        color: 'var(--theme-text-primary)',
+    };
+
+    if (store.creator.theme !== 'gradient') {
+        styleOverrides.backgroundColor = 'var(--theme-bg)';
+    }
+
+    if (fontFamily) {
+        styleOverrides.fontFamily = fontFamily;
+    }
+
     return (
         <div
             className={`min-h-screen pb-20 ${store.creator.theme === 'gradient' ? 'bg-gradient-to-br from-purple-100 to-pink-100' : ''}`}
             data-theme={store.creator.theme || 'minimal'}
             style={{
-                backgroundColor: store.creator.theme !== 'gradient' ? 'var(--theme-bg)' : undefined,
-                color: 'var(--theme-text-primary)'
+                ...styleOverrides,
+                // Override accent color if brand color is set
+                ...(brandColor ? {
+                    '--theme-accent': brandColor,
+                    '--theme-accent-hover': brandColor,
+                } as React.CSSProperties : {}),
             }}
         >
             {/* Mobile-optimized Layout */}
             <main className="container mx-auto px-4 max-w-3xl">
-                <StoreHeader profile={store.creator} />
+                <div className="pt-4">
+                    <StoreHeader profile={store.creator} />
+                </div>
 
                 <div className="mt-6 space-y-4">
                     {store.products.length > 0 ? (
@@ -74,8 +95,11 @@ const StorePage: React.FC = () => {
                             </div>
                         ))
                     ) : (
-                        <div className="text-center py-12 bg-white rounded-xl border border-slate-100 shadow-sm">
-                            <p className="text-slate-500">No products available yet.</p>
+                        <div className="text-center py-12 rounded-xl border shadow-sm" style={{
+                            backgroundColor: 'var(--theme-surface, #fff)',
+                            borderColor: 'var(--theme-border, #e2e8f0)',
+                        }}>
+                            <p style={{ color: 'var(--theme-text-secondary, #64748b)' }}>No products available yet.</p>
                         </div>
                     )}
                 </div>
@@ -83,8 +107,8 @@ const StorePage: React.FC = () => {
 
             {/* Powered By Footer */}
             <footer className="mt-12 text-center pb-8">
-                <p className="text-xs text-slate-400">
-                    Powered by <span className="font-bold text-slate-600">Mio Store</span>
+                <p className="text-xs" style={{ color: 'var(--theme-text-secondary, #94a3b8)' }}>
+                    Powered by <span className="font-bold" style={{ color: 'var(--theme-text-primary, #475569)' }}>Mio Store</span>
                 </p>
             </footer>
 

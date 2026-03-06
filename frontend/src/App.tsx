@@ -9,6 +9,7 @@ import AffiliateRegistrationPage from './pages/storefront/AffiliateRegistrationP
 import CustomerOrderPage from './pages/OrderPage';
 import BuyerAuthPage from './pages/buyer/BuyerAuthPage';
 import LoginPage from './pages/auth/LoginPage';
+import VerifyOTPPage from './pages/auth/VerifyOTPPage';
 import LandingPage from './pages/LandingPage';
 import MyPurchasesPage from './pages/buyer/MyPurchasesPage';
 import { CoursePlayer } from './pages/buyer/CoursePlayer';
@@ -64,6 +65,7 @@ export default function App() {
 
             {/* Auth pages (standalone, no header/footer) */}
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/verify-otp" element={<VerifyOTPPage />} />
             <Route path="/buyer/login" element={<BuyerAuthPage />} />
             <Route path="/my-purchases" element={<MyPurchasesPage />} />
             <Route path="/course-player/:productId" element={<CoursePlayer />} />

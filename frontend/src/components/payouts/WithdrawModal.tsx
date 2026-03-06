@@ -90,7 +90,7 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({
                                 step="any"
                                 value={amountRupees}
                                 onChange={(e) => setAmountRupees(e.target.value)}
-                                className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none text-lg font-medium"
+                                className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6786f5] focus:border-[#6786f5] outline-none text-lg font-medium"
                             />
                         </div>
                     </div>
@@ -106,7 +106,7 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({
                         <button
                             type="submit"
                             disabled={loading || !amountRupees || parseFloat(amountRupees) <= 0}
-                            className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2.5 rounded-lg transition-colors disabled:opacity-50"
+                            className="w-full flex items-center justify-center gap-2 bg-[#6786f5] hover:bg-[#5570e0] text-white font-medium py-2.5 rounded-lg transition-colors disabled:opacity-50"
                         >
                             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                             {loading ? 'Processing...' : 'Confirm Withdrawal'}

@@ -137,12 +137,16 @@ export default function MyPurchasesPage() {
                                                 Digital Download
                                             </span>
                                         ) : order.line_items && order.line_items.length > 0 && order.line_items[0].product_type === 'course' ? (
-                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#6786f51a] text-purple-800">
                                                 Course / Membership
                                             </span>
                                         ) : order.line_items && order.line_items.length > 0 && order.line_items[0].product_type === 'lead_magnet' ? (
                                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                                 Lead Magnet
+                                            </span>
+                                        ) : order.line_items && order.line_items.length > 0 && order.line_items[0].product_type === 'booking' ? (
+                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-cyan-100 text-cyan-800">
+                                                1:1 Booking
                                             </span>
                                         ) : null}
                                     </div>
@@ -162,10 +166,31 @@ export default function MyPurchasesPage() {
                                     {order.line_items && order.line_items.length > 0 && order.line_items[0].product_type === 'course' && (
                                         <Link
                                             to={`/course-player/${order.line_items[0].product_id}`}
-                                            className="w-full flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 transition"
+                                            className="w-full flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#6786f5] hover:bg-[#5570e0] transition"
                                         >
                                             Open Course
                                         </Link>
+                                    )}
+                                    {order.line_items && order.line_items.length > 0 && order.line_items[0].product_type === 'booking' && (
+                                        <div className="space-y-2">
+                                            {order.booking_slot_start && (
+                                                <p className="text-xs text-gray-500 text-center">
+                                                    📅 {new Date(order.booking_slot_start).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
+                                                </p>
+                                            )}
+                                            {order.meeting_link ? (
+                                                <a
+                                                    href={order.meeting_link}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="w-full flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition"
+                                                >
+                                                    Join Google Meet
+                                                </a>
+                                            ) : (
+                                                <p className="text-xs text-green-600 text-center font-medium">✅ Session Booked</p>
+                                            )}
+                                        </div>
                                     )}
                                 </div>
                             </div>
