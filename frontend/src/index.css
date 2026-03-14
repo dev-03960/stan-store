@@ -1,8 +1,10 @@
 @import "tailwindcss";
 
+@variant dark (&:where(.dark, .dark *));
+
 
 /* ============================================
-   Mio Store Design Tokens — Blue/White Theme
+   Miostore Design Tokens — Blue/White Theme
    Aligned with Stitch Design Reference
    ============================================ */
 
@@ -18,7 +20,7 @@
   --color-success-soft: #E6F9F3;
   --color-danger: #FF6B6B;
   --color-danger-soft: #FFF0F0;
-  --color-warning: #FDCB6E;
+  --color-warning: #6786f5; /* Changed from orange to primary blue */
   --color-info: #74B9FF;
 
   /* ── Neutral Scale (Light Mode) ── */

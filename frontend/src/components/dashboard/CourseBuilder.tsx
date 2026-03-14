@@ -161,7 +161,7 @@ export const CourseBuilder: React.FC<CourseBuilderProps> = ({ productId }) => {
                                                                                 <div className="text-slate-400 mr-3">
                                                                                     {les.type === 'video' && <PlayCircle className="w-4 h-4 text-indigo-500" />}
                                                                                     {les.type === 'text' && <FileText className="w-4 h-4 text-emerald-500" />}
-                                                                                    {les.type === 'attachment' && <Paperclip className="w-4 h-4 text-orange-400" />}
+                                                                                    {les.type === 'attachment' && <Paperclip className="w-4 h-4 text-blue-400" />}
                                                                                 </div>
                                                                                 <div className="flex-1 font-medium text-sm text-slate-700">{les.title}</div>
                                                                                 <div className="text-xs text-slate-400 mr-4 font-medium uppercase tracking-wider">{les.type}</div>

@@ -51,6 +51,7 @@ func main() {
 	orderRepo := storage.NewMongoOrderRepository(mongoDB.Database)
 	bookingRepo := storage.NewMongoBookingRepository(mongoDB)
 	courseRepo := storage.NewMongoCourseRepository(mongoDB)
+	blogRepo := storage.NewMongoBlogRepository(mongoDB)
 
 	// 5. Initialize services
 	jwtService := services.NewJWTService(cfg.JWTSecret)
@@ -189,6 +190,9 @@ func main() {
 	courseService := services.NewCourseService(courseRepo, productRepo, orderRepo, userRepo, cache)
 	courseHandler := httpAdapter.NewCourseHandler(courseService)
 
+	blogService := services.NewBlogService(blogRepo)
+	blogHandler := httpAdapter.NewBlogHandler(blogService)
+
 	var aiHandler *httpAdapter.AIHandler
 	if cfg.AIApiKey != "" {
 		geminiGen, err := ai.NewGeminiGenerator(context.Background(), cfg.AIApiKey)
@@ -302,6 +306,7 @@ func main() {
 		BuyerHandler:          buyerHandler,
 		PayoutHandler:         payoutHandler,
 		SubscriberHandler:     httpAdapter.NewSubscriberHandler(subscriberRepo),
+		NewsletterHandler:     httpAdapter.NewNewsletterHandler(subscriberRepo, emailAdapter),
 		CouponHandler:         couponHandler,
 		BookingHandler:        bookingHandler,
 		CourseHandler:         courseHandler,
@@ -313,6 +318,7 @@ func main() {
 		GoogleCalendarHandler: gcalHandler,
 		AffiliateHandler:      httpAdapter.NewAffiliateHandler(affiliateSvc, productService),
 		AnalyticsHandler:      analyticsHandler,
+		BlogHandler:           blogHandler,
 		WorkerService:         workerService,
 	})
 

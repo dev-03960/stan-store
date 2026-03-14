@@ -96,7 +96,7 @@ const AffiliateDashboard: React.FC = () => {
                             <p className="text-sm font-medium text-gray-500">Commissions Paid</p>
                             <h3 className="text-2xl font-bold text-gray-900 mt-1">{formatPrice(totalCommissions)}</h3>
                         </div>
-                        <div className="p-3 bg-orange-50 rounded-lg text-orange-600">
+                        <div className="p-3 bg-blue-50 rounded-lg text-blue-600">
                             <Banknote size={20} />
                         </div>
                     </div>

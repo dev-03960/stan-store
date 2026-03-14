@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { api } from '../../lib/api';
 import { getPresignedUrl, uploadFileToUrl } from '../../lib/api/products';
 import { Loader2, Save, Plus, Trash2, User, Image, Palette, Type, Layout, Upload, Smartphone } from 'lucide-react';
+import ImageCropperModal from '../../components/dashboard/ImageCropperModal';
 
 interface SocialLink {
     platform: string;
@@ -150,6 +151,21 @@ const SettingsPage = () => {
     const [coverFile, setCoverFile] = useState<File | null>(null);
     const [coverPreview, setCoverPreview] = useState<string | null>(null);
 
+    // Cropper states
+    const [cropperConfig, setCropperConfig] = useState<{
+        isOpen: boolean;
+        image: string;
+        aspect: number;
+        shape: 'rect' | 'round';
+        type: 'avatar' | 'cover';
+    }>({
+        isOpen: false,
+        image: '',
+        aspect: 1,
+        shape: 'round',
+        type: 'avatar'
+    });
+
     useEffect(() => {
         const fetchSettings = async () => {
             try {
@@ -188,17 +204,45 @@ const SettingsPage = () => {
     const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            setAvatarFile(file);
-            setAvatarPreview(URL.createObjectURL(file));
+            const imageUrl = URL.createObjectURL(file);
+            setCropperConfig({
+                isOpen: true,
+                image: imageUrl,
+                aspect: 1,
+                shape: 'round',
+                type: 'avatar'
+            });
         }
     };
 
     const handleCoverFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            setCoverFile(file);
-            setCoverPreview(URL.createObjectURL(file));
+            const imageUrl = URL.createObjectURL(file);
+            setCropperConfig({
+                isOpen: true,
+                image: imageUrl,
+                aspect: 4 / 1.5, // Standard banner aspect
+                shape: 'rect',
+                type: 'cover'
+            });
         }
+    };
+
+    const handleCropComplete = (croppedBlob: Blob) => {
+        const fileName = cropperConfig.type === 'avatar' ? 'avatar.jpg' : 'cover.jpg';
+        const file = new File([croppedBlob], fileName, { type: 'image/jpeg' });
+        const previewUrl = URL.createObjectURL(croppedBlob);
+
+        if (cropperConfig.type === 'avatar') {
+            setAvatarFile(file);
+            setAvatarPreview(previewUrl);
+        } else {
+            setCoverFile(file);
+            setCoverPreview(previewUrl);
+        }
+
+        setCropperConfig(prev => ({ ...prev, isOpen: false }));
     };
 
     const handleSave = async (e: React.FormEvent) => {
@@ -274,7 +318,7 @@ const SettingsPage = () => {
 
     return (
         <div className="max-w-7xl mx-auto">
-            <h1 className="text-2xl font-bold text-gray-900 mb-8">Store Settings</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-8">Store Settings</h1>
 
             {error && (
                 <div className="p-4 mb-6 bg-red-50 text-red-700 rounded-lg">
@@ -294,13 +338,13 @@ const SettingsPage = () => {
                     <div className="flex-1 space-y-6 min-w-0">
 
                         {/* ── Profile Section ── */}
-                        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-6">
+                        <div className="bg-white dark:bg-[#1a1d2b] p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 space-y-6">
                             <div>
-                                <h2 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
+                                <h2 className="text-xl font-semibold text-gray-800 dark:text-white flex items-center gap-2">
                                     <User className="w-5 h-5 text-[#6786f5]" />
                                     Profile
                                 </h2>
-                                <p className="text-sm text-gray-500 mt-1">
+                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                                     Your public profile information shown on your storefront.
                                 </p>
                             </div>
@@ -322,8 +366,8 @@ const SettingsPage = () => {
                                     )}
                                 </div>
                                 <div className="flex-1">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Profile Picture</label>
-                                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:bg-gray-50 transition-colors">
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Profile Picture</label>
+                                    <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-4 text-center hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
                                         <input
                                             type="file"
                                             accept="image/*"
@@ -332,8 +376,8 @@ const SettingsPage = () => {
                                             onChange={handleAvatarFileChange}
                                         />
                                         <label htmlFor="avatar-upload" className="cursor-pointer flex flex-col items-center">
-                                            <Upload className="w-6 h-6 text-gray-400 mb-1" />
-                                            <span className="text-sm text-gray-600">
+                                            <Upload className="w-6 h-6 text-gray-400 dark:text-gray-500 mb-1" />
+                                            <span className="text-sm text-gray-600 dark:text-gray-400">
                                                 {avatarFile ? avatarFile.name : 'Click to upload profile photo'}
                                             </span>
                                         </label>
@@ -343,7 +387,7 @@ const SettingsPage = () => {
 
                             {/* Cover Photo Upload */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Cover Photo / Banner</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cover Photo / Banner</label>
                                 {(coverPreview || profile?.coverPhotoUrl) && (
                                     <div className="mb-2 rounded-lg overflow-hidden h-32 bg-gray-100">
                                         <img
@@ -362,8 +406,8 @@ const SettingsPage = () => {
                                         onChange={handleCoverFileChange}
                                     />
                                     <label htmlFor="cover-upload" className="cursor-pointer flex flex-col items-center">
-                                        <Upload className="w-6 h-6 text-gray-400 mb-1" />
-                                        <span className="text-sm text-gray-600">
+                                        <Upload className="w-6 h-6 text-gray-400 dark:text-gray-500 mb-1" />
+                                        <span className="text-sm text-gray-600 dark:text-gray-400">
                                             {coverFile ? coverFile.name : (profile?.coverPhotoUrl ? 'Change cover photo' : 'Click to upload cover photo')}
                                         </span>
                                     </label>
@@ -372,27 +416,27 @@ const SettingsPage = () => {
 
                             {/* Display Name */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Display Name</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Display Name</label>
                                 <input
                                     type="text"
                                     required
                                     maxLength={100}
                                     value={profile?.displayName || ''}
                                     onChange={(e) => setProfile(prev => prev ? { ...prev, displayName: e.target.value } : null)}
-                                    className="block w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-[#6786f5] focus:outline-none focus:ring-1 focus:ring-[#6786f5]"
+                                    className="block w-full rounded-lg border border-gray-300 dark:border-gray-700 px-4 py-2.5 text-sm focus:border-[#6786f5] focus:outline-none focus:ring-1 focus:ring-[#6786f5] bg-white dark:bg-[#0f111a] text-gray-900 dark:text-white"
                                     placeholder="Your creator name"
                                 />
                             </div>
 
                             {/* Bio */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Bio</label>
                                 <textarea
                                     rows={3}
                                     maxLength={160}
                                     value={profile?.bio || ''}
                                     onChange={(e) => setProfile(prev => prev ? { ...prev, bio: e.target.value } : null)}
-                                    className="block w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-[#6786f5] focus:outline-none focus:ring-1 focus:ring-[#6786f5]"
+                                    className="block w-full rounded-lg border border-gray-300 dark:border-gray-700 px-4 py-2.5 text-sm focus:border-[#6786f5] focus:outline-none focus:ring-1 focus:ring-[#6786f5] bg-white dark:bg-[#0f111a] text-gray-900 dark:text-white"
                                     placeholder="A short bio about you and what you create..."
                                 />
                                 <p className="mt-1 text-xs text-gray-400 text-right">{profile?.bio?.length || 0}/160</p>
@@ -402,8 +446,8 @@ const SettingsPage = () => {
                             <div>
                                 <div className="flex items-center justify-between mb-3">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700">Social Links</label>
-                                        <p className="text-xs text-gray-400">Add up to 5 social media links to your store</p>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Social Links</label>
+                                        <p className="text-xs text-gray-400 dark:text-gray-500">Add up to 5 social media links to your store</p>
                                     </div>
                                     {(profile?.socialLinks?.length || 0) < 5 && (
                                         <button
@@ -421,7 +465,7 @@ const SettingsPage = () => {
                                             <select
                                                 value={link.platform}
                                                 onChange={(e) => updateSocialLink(index, 'platform', e.target.value)}
-                                                className="w-40 rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-[#6786f5] focus:outline-none focus:ring-1 focus:ring-[#6786f5] bg-white"
+                                                className="w-40 rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2.5 text-sm focus:border-[#6786f5] focus:outline-none focus:ring-1 focus:ring-[#6786f5] bg-white dark:bg-[#0f111a] text-gray-900 dark:text-white"
                                             >
                                                 {PLATFORMS.map((p) => (
                                                     <option key={p.id} value={p.id}>{p.label}</option>
@@ -431,7 +475,7 @@ const SettingsPage = () => {
                                                 type="url"
                                                 value={link.url}
                                                 onChange={(e) => updateSocialLink(index, 'url', e.target.value)}
-                                                className="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-[#6786f5] focus:outline-none focus:ring-1 focus:ring-[#6786f5]"
+                                                className="flex-1 rounded-lg border border-gray-300 dark:border-gray-700 px-4 py-2.5 text-sm focus:border-[#6786f5] focus:outline-none focus:ring-1 focus:ring-[#6786f5] bg-white dark:bg-[#0f111a] text-gray-900 dark:text-white"
                                                 placeholder="https://instagram.com/yourhandle"
                                             />
                                             <button
@@ -444,26 +488,26 @@ const SettingsPage = () => {
                                         </div>
                                     ))}
                                     {(!profile?.socialLinks || profile.socialLinks.length === 0) && (
-                                        <p className="text-sm text-gray-400 italic py-2">No social links added yet.</p>
+                                        <p className="text-sm text-gray-400 dark:text-gray-500 italic py-2">No social links added yet.</p>
                                     )}
                                 </div>
                             </div>
                         </div>
 
                         {/* ── Storefront Design Section ── */}
-                        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-4">
+                        <div className="bg-white dark:bg-[#1a1d2b] p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 space-y-4">
                             <div>
-                                <h2 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
+                                <h2 className="text-xl font-semibold text-gray-800 dark:text-white flex items-center gap-2">
                                     <Layout className="w-5 h-5 text-[#6786f5]" />
                                     Storefront Design
                                 </h2>
-                                <p className="text-sm text-gray-500 mt-1">
+                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                                     Personalize the look and feel of your public store page.
                                 </p>
                             </div>
 
                             {/* Tabs */}
-                            <div className="flex border-b border-gray-200">
+                            <div className="flex border-b border-gray-200 dark:border-gray-800">
                                 {[
                                     { key: 'themes' as const, label: 'Themes', icon: <Layout className="w-4 h-4" /> },
                                     { key: 'colors' as const, label: 'Colors', icon: <Palette className="w-4 h-4" /> },
@@ -475,7 +519,7 @@ const SettingsPage = () => {
                                         onClick={() => setDesignTab(tab.key)}
                                         className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${designTab === tab.key
                                                 ? 'border-[#6786f5] text-[#6786f5]'
-                                                : 'border-transparent text-gray-500 hover:text-gray-700'
+                                                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                                             }`}
                                     >
                                         {tab.icon}
@@ -494,7 +538,7 @@ const SettingsPage = () => {
                                             onClick={() => setProfile(prev => prev ? { ...prev, theme: theme.id } : null)}
                                             className={`relative flex flex-col gap-2 p-3 rounded-xl border-2 transition-all text-left ${profile?.theme === theme.id
                                                     ? 'border-[#6786f5] ring-2 ring-[#6786f520] bg-[#6786f50d]'
-                                                    : 'border-gray-200 hover:border-[#6786f5]'
+                                                    : 'border-gray-200 dark:border-gray-700 hover:border-[#6786f5] bg-white dark:bg-[#0f111a]'
                                                 }`}
                                         >
                                             {/* Theme Mini Preview */}
@@ -504,10 +548,10 @@ const SettingsPage = () => {
                                                 <div className="w-16 h-1 rounded-full bg-gray-400/20" />
                                             </div>
                                             <div>
-                                                <span className={`text-sm font-semibold ${profile?.theme === theme.id ? 'text-[#5570e0]' : 'text-gray-800'}`}>
+                                                <span className={`text-sm font-semibold ${profile?.theme === theme.id ? 'text-[#5570e0]' : 'text-gray-800 dark:text-gray-200'}`}>
                                                     {theme.name}
                                                 </span>
-                                                <p className="text-xs text-gray-500">{theme.desc}</p>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400">{theme.desc}</p>
                                             </div>
                                             {profile?.theme === theme.id && (
                                                 <div className="absolute top-2 right-2 w-5 h-5 bg-[#6786f5] rounded-full flex items-center justify-center">
@@ -524,8 +568,8 @@ const SettingsPage = () => {
                             {designTab === 'colors' && (
                                 <div className="mt-4 space-y-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">Brand Color</label>
-                                        <p className="text-xs text-gray-500 mb-3">Choose a primary color for buttons, accents, and highlights.</p>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Brand Color</label>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Choose a primary color for buttons, accents, and highlights.</p>
                                         <div className="flex items-center gap-4">
                                             <input
                                                 type="color"
@@ -534,12 +578,12 @@ const SettingsPage = () => {
                                                 className="w-14 h-14 rounded-xl cursor-pointer border-2 border-gray-200 p-1"
                                             />
                                             <div className="flex-1">
-                                                <label className="block text-xs text-gray-500 mb-1">Hex Code</label>
+                                                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Hex Code</label>
                                                 <input
                                                     type="text"
                                                     value={profile?.brandColor || '#6C5CE7'}
                                                     onChange={(e) => setProfile(prev => prev ? { ...prev, brandColor: e.target.value } : null)}
-                                                    className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-mono focus:border-[#6786f5] focus:outline-none focus:ring-1 focus:ring-[#6786f5]"
+                                                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0f111a] px-4 py-2.5 text-sm font-mono text-gray-900 dark:text-white focus:border-[#6786f5] focus:outline-none focus:ring-1 focus:ring-[#6786f5]"
                                                     placeholder="#6C5CE7"
                                                 />
                                             </div>
@@ -551,7 +595,7 @@ const SettingsPage = () => {
                                                     key={hex}
                                                     type="button"
                                                     onClick={() => setProfile(prev => prev ? { ...prev, brandColor: hex } : null)}
-                                                    className={`w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 ${profile?.brandColor === hex ? 'border-gray-800 scale-110' : 'border-gray-200'}`}
+                                                    className={`w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 ${profile?.brandColor === hex ? 'border-gray-800 dark:border-white scale-110' : 'border-gray-200 dark:border-gray-700'}`}
                                                     style={{ backgroundColor: hex }}
                                                 />
                                             ))}
@@ -562,8 +606,8 @@ const SettingsPage = () => {
 
                             {designTab === 'font' && (
                                 <div className="mt-4 space-y-3">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Choose a Font</label>
-                                    <p className="text-xs text-gray-500 mb-3">This font will be used across your entire storefront.</p>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Choose a Font</label>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">This font will be used across your entire storefront.</p>
                                     <div className="space-y-2">
                                         {FONTS.map(font => (
                                             <button
@@ -572,12 +616,12 @@ const SettingsPage = () => {
                                                 onClick={() => setProfile(prev => prev ? { ...prev, fontFamily: font.id } : null)}
                                                 className={`w-full text-left px-4 py-3 rounded-lg border-2 transition-all flex items-center justify-between ${profile?.fontFamily === font.id
                                                         ? 'border-[#6786f5] bg-[#6786f50d]'
-                                                        : 'border-gray-200 hover:border-[#6786f5]'
+                                                        : 'border-gray-200 dark:border-gray-700 hover:border-[#6786f5] bg-white dark:bg-[#0f111a]'
                                                     }`}
                                             >
                                                 <div>
-                                                    <span className="text-sm font-medium text-gray-800">{font.name}</span>
-                                                    <p className="text-lg mt-0.5 text-gray-600" style={{ fontFamily: font.id }}>
+                                                    <span className="text-sm font-medium text-gray-800 dark:text-white">{font.name}</span>
+                                                    <p className="text-lg mt-0.5 text-gray-600 dark:text-gray-400" style={{ fontFamily: font.id }}>
                                                         {font.sample}
                                                     </p>
                                                 </div>
@@ -596,26 +640,26 @@ const SettingsPage = () => {
                         </div>
 
                         {/* ── Email Automations Section ── */}
-                        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-4">
-                            <h2 className="text-xl font-semibold text-gray-800">Email Automations</h2>
-                            <p className="text-sm text-gray-500">
+                        <div className="bg-white dark:bg-[#1e2135] p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 space-y-4">
+                            <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Email Automations</h2>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
                                 Configure automated marketing emails to boost your conversions.
                             </p>
 
                             <div className="flex items-center justify-between">
                                 <div>
                                     <div className="flex items-center gap-2">
-                                        <label className="text-sm font-medium text-gray-900">Abandoned Cart Recovery</label>
-                                        <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">Active</span>
+                                        <label className="text-sm font-medium text-gray-900 dark:text-white">Abandoned Cart Recovery</label>
+                                        <span className="inline-flex items-center rounded-full bg-blue-50 dark:bg-blue-500/20 px-2 py-1 text-xs font-medium text-blue-700 dark:text-blue-400 ring-1 ring-inset ring-blue-700/10">Active</span>
                                     </div>
-                                    <p className="text-sm text-gray-500 mt-1">
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                                         Automatically send an email reminder to buyers who leave items in their cart for more than 1 hour.
                                     </p>
                                 </div>
                                 <button
                                     type="button"
                                     onClick={() => setProfile(prev => prev ? { ...prev, abandonedCartEnabled: !prev.abandonedCartEnabled } : null)}
-                                    className={`${profile?.abandonedCartEnabled ? 'bg-[#6786f5]' : 'bg-gray-200'} relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none`}
+                                    className={`${profile?.abandonedCartEnabled ? 'bg-[#6786f5]' : 'bg-gray-200 dark:bg-gray-800'} relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none`}
                                     role="switch"
                                     aria-checked={profile?.abandonedCartEnabled}
                                 >
@@ -631,12 +675,12 @@ const SettingsPage = () => {
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <div className="flex items-center gap-2">
-                                            <label className="text-sm font-medium text-gray-900">Automated Follow-Up (Post-Purchase)</label>
-                                            <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ring-1 ring-inset ${postPurchaseTemplate?.isActive ? 'bg-blue-50 text-blue-700 ring-blue-700/10' : 'bg-gray-50 text-gray-600 ring-gray-500/10'}`}>
+                                            <label className="text-sm font-medium text-gray-900 dark:text-white">Automated Follow-Up (Post-Purchase)</label>
+                                            <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ring-1 ring-inset ${postPurchaseTemplate?.isActive ? 'bg-blue-50 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 ring-blue-700/10' : 'bg-gray-50 dark:bg-gray-500/20 text-gray-600 dark:text-gray-400 ring-gray-500/10'}`}>
                                                 {postPurchaseTemplate?.isActive ? 'Active' : 'Inactive'}
                                             </span>
                                         </div>
-                                        <p className="text-sm text-gray-500 mt-1">
+                                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                                             Send a customizable email to customers a few days after their purchase.
                                         </p>
                                     </div>
@@ -657,34 +701,34 @@ const SettingsPage = () => {
                                 {postPurchaseTemplate?.isActive && (
                                     <div className="mt-5 space-y-4 pl-4 border-l-2 border-[#6786f520]">
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700">Delay Duration (Days)</label>
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Delay Duration (Days)</label>
                                             <input
                                                 type="number"
                                                 min="1"
                                                 max="30"
                                                 value={postPurchaseTemplate.delayDays}
                                                 onChange={(e) => setPostPurchaseTemplate(prev => prev ? { ...prev, delayDays: parseInt(e.target.value) || 1 } : null)}
-                                                className="mt-1 block w-32 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-[#6786f5] focus:outline-none focus:ring-1 focus:ring-[#6786f5]"
+                                                className="mt-1 block w-32 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0f111a] px-3 py-2 text-sm text-gray-900 dark:text-white focus:border-[#6786f5] focus:outline-none focus:ring-1 focus:ring-[#6786f5]"
                                             />
-                                            <p className="mt-1 text-xs text-gray-500">Number of days to wait after a purchase before sending</p>
+                                            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Number of days to wait after a purchase before sending</p>
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700">Email Subject</label>
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email Subject</label>
                                             <input
                                                 type="text"
                                                 value={postPurchaseTemplate.subject}
                                                 onChange={(e) => setPostPurchaseTemplate(prev => prev ? { ...prev, subject: e.target.value } : null)}
-                                                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-[#6786f5] focus:outline-none focus:ring-1 focus:ring-[#6786f5]"
+                                                className="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0f111a] px-3 py-2 text-sm text-gray-900 dark:text-white focus:border-[#6786f5] focus:outline-none focus:ring-1 focus:ring-[#6786f5]"
                                             />
-                                            <p className="mt-1 text-xs text-gray-500">Supports variables: {'{product_title}'}, {'{creator_name}'}</p>
+                                            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Supports variables: {'{product_title}'}, {'{creator_name}'}</p>
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700">Email Body (HTML/Text)</label>
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email Body (HTML/Text)</label>
                                             <textarea
                                                 rows={6}
                                                 value={postPurchaseTemplate.bodyHtml}
                                                 onChange={(e) => setPostPurchaseTemplate(prev => prev ? { ...prev, bodyHtml: e.target.value } : null)}
-                                                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm font-mono focus:border-[#6786f5] focus:outline-none focus:ring-1 focus:ring-[#6786f5]"
+                                                className="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0f111a] px-3 py-2 text-sm text-gray-900 dark:text-white font-mono focus:border-[#6786f5] focus:outline-none focus:ring-1 focus:ring-[#6786f5]"
                                                 placeholder="<p>Hi there,</p>..."
                                             />
                                         </div>
@@ -713,7 +757,7 @@ const SettingsPage = () => {
                     {/* Right Column: Mobile Preview */}
                     <div className="hidden lg:block sticky top-8 self-start">
                         <div className="flex flex-col items-center gap-3">
-                            <div className="flex items-center gap-2 text-sm font-medium text-gray-500">
+                            <div className="flex items-center gap-2 text-sm font-medium text-gray-500 dark:text-gray-400">
                                 <Smartphone className="w-4 h-4" />
                                 Live Preview
                             </div>
@@ -728,6 +772,15 @@ const SettingsPage = () => {
                     </div>
                 </div>
             </form>
+
+            <ImageCropperModal
+                isOpen={cropperConfig.isOpen}
+                onClose={() => setCropperConfig(prev => ({ ...prev, isOpen: false }))}
+                image={cropperConfig.image}
+                aspect={cropperConfig.aspect}
+                shape={cropperConfig.shape}
+                onCropComplete={handleCropComplete}
+            />
         </div>
     );
 };

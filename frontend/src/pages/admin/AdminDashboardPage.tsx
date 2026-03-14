@@ -99,10 +99,27 @@ const AdminDashboardPage: React.FC = () => {
                             title="Active Creators"
                             value={metrics.active_creators}
                             icon={Activity}
-                            color="bg-orange-500"
+                            color="bg-violet-500"
                         />
                     </div>
                 ) : null}
+
+                {/* Admin Quick Actions */}
+                <div className="mt-12">
+                    <h2 className="text-lg font-bold text-gray-900 mb-6">Quick Management</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <a 
+                            href="/admin/blogs"
+                            className="group p-6 bg-white rounded-2xl border border-gray-100 hover:border-[#6786f5]/30 hover:shadow-xl hover:shadow-[#6786f5]/5 transition-all"
+                        >
+                            <div className="w-12 h-12 rounded-xl bg-[#6786f5]/10 flex items-center justify-center text-[#6786f5] mb-4 group-hover:scale-110 transition-transform">
+                                <Activity className="w-6 h-6" />
+                            </div>
+                            <h3 className="font-bold text-gray-900 mb-1">Blog Posts</h3>
+                            <p className="text-sm text-gray-500">Create, edit and manage platform blog articles.</p>
+                        </a>
+                    </div>
+                </div>
             </main>
         </div>
     );

@@ -1,9 +1,10 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, ShoppingBag, Wallet, Settings, Menu, X, Megaphone, Plug, Users, TrendingUp, LogOut, Moon, Sun } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag, Wallet, Settings, Menu, X, Megaphone, Plug, Users, TrendingUp, LogOut, Mail } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { MioLogo } from '../brand/MioLogo';
+import { ThemeToggle } from '../ui/ThemeToggle';
 
 const navItems = [
     { name: 'Analytics', path: '/dashboard/analytics', icon: TrendingUp },
@@ -11,6 +12,7 @@ const navItems = [
     { name: 'Orders', path: '/dashboard/orders', icon: ShoppingBag },
     { name: 'Earnings', path: '/dashboard/earnings', icon: Wallet },
     { name: 'Campaigns', path: '/dashboard/campaigns', icon: Megaphone },
+    { name: 'Newsletter', path: '/dashboard/newsletter', icon: Mail },
     { name: 'Integrations', path: '/dashboard/integrations', icon: Plug },
     { name: 'Affiliates', path: '/dashboard/affiliates', icon: Users },
     { name: 'Settings', path: '/dashboard/settings', icon: Settings },
@@ -41,34 +43,6 @@ const NavLinks = ({ onNavigate }: { onNavigate?: () => void }) => (
 const Sidebar = () => {
     const [mobileOpen, setMobileOpen] = useState(false);
     const { user, logout } = useAuth();
-    const [isDark, setIsDark] = useState(() => {
-        if (typeof window !== 'undefined') {
-            return localStorage.getItem('theme') === 'dark' ||
-                (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
-        }
-        return false;
-    });
-
-    useEffect(() => {
-        if (isDark) {
-            document.documentElement.classList.add('dark');
-            localStorage.setItem('theme', 'dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-            localStorage.setItem('theme', 'light');
-        }
-    }, [isDark]);
-
-    const DarkModeToggle = () => (
-        <button
-            onClick={() => setIsDark(!isDark)}
-            className="flex items-center gap-2 px-4 py-2.5 text-sm rounded-xl transition-all text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 w-full"
-            aria-label="Toggle dark mode"
-        >
-            {isDark ? <Sun size={20} /> : <Moon size={20} />}
-            <span>{isDark ? 'Light Mode' : 'Dark Mode'}</span>
-        </button>
-    );
 
     const LogoutButton = () => (
         <div className="p-4 border-t border-gray-100 dark:border-gray-800">
@@ -88,7 +62,7 @@ const Sidebar = () => {
                 </div>
             )}
             <div className="space-y-1">
-                <DarkModeToggle />
+                <ThemeToggle showLabel className="w-full" />
                 <button
                     onClick={logout}
                     className="flex items-center space-x-3 px-4 py-2.5 rounded-xl transition-all text-gray-500 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-600 w-full"

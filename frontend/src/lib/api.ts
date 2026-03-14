@@ -1,5 +1,5 @@
 /**
- * API Client for Mio Store
+ * API Client for Miostore
  *
  * Wraps fetch with base URL configuration and the standardized
  * response envelope type: { data, meta, error }

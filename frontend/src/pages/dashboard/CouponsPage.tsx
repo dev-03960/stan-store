@@ -146,8 +146,8 @@ export default function CouponsPage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
             <div className="sm:flex sm:items-center">
                 <div className="sm:flex-auto">
-                    <h1 className="text-2xl font-semibold text-gray-900">Discount Coupons</h1>
-                    <p className="mt-2 text-sm text-gray-700">
+                    <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Discount Coupons</h1>
+                    <p className="mt-2 text-sm text-gray-700 dark:text-gray-400">
                         Create and manage promotional codes for your products.
                     </p>
                 </div>
@@ -173,21 +173,21 @@ export default function CouponsPage() {
             <div className="mt-8 flex flex-col">
                 <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
                     <div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
-                        <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg border border-gray-200">
-                            <table className="min-w-full divide-y divide-gray-300">
-                                <thead className="bg-gray-50">
+                        <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg border border-gray-200 dark:border-gray-700">
+                            <table className="min-w-full divide-y divide-gray-300 dark:divide-gray-700">
+                                <thead className="bg-gray-50 dark:bg-[#1a1c2e]">
                                     <tr>
-                                        <th className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Code</th>
-                                        <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Discount</th>
-                                        <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Usage</th>
-                                        <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Status</th>
-                                        <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Expires</th>
+                                        <th className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 dark:text-gray-200 sm:pl-6">Code</th>
+                                        <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-200">Discount</th>
+                                        <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-200">Usage</th>
+                                        <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-200">Status</th>
+                                        <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-200">Expires</th>
                                         <th className="relative py-3.5 pl-3 pr-4 sm:pr-6">
                                             <span className="sr-only">Actions</span>
                                         </th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-gray-200 bg-white">
+                                <tbody className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-[#1e2135]">
                                     {coupons.length === 0 ? (
                                         <tr>
                                             <td colSpan={6} className="py-10 text-center text-sm text-gray-500">
@@ -196,19 +196,19 @@ export default function CouponsPage() {
                                         </tr>
                                     ) : coupons.map((coupon) => (
                                         <tr key={coupon.id}>
-                                            <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6 font-mono">
+                                            <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 dark:text-white sm:pl-6 font-mono">
                                                 {coupon.code}
                                             </td>
-                                            <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                            <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
                                                 {coupon.discount_type === 'percentage'
                                                     ? `${coupon.discount_value}% OFF`
                                                     : `${formatPrice(coupon.discount_value)} OFF`}
                                                 {coupon.min_order_amount > 0 && <span className="block text-xs text-gray-400">Min: {formatPrice(coupon.min_order_amount)}</span>}
                                             </td>
-                                            <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                            <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
                                                 {coupon.times_used} / {coupon.max_uses === 0 ? '∞' : coupon.max_uses}
                                             </td>
-                                            <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                            <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
                                                 <button
                                                     onClick={() => handleToggleActive(coupon.id, coupon.is_active)}
                                                     className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${coupon.is_active ? 'bg-green-100 text-green-800 hover:bg-green-200' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
@@ -217,7 +217,7 @@ export default function CouponsPage() {
                                                     {coupon.is_active ? 'Active' : 'Inactive'}
                                                 </button>
                                             </td>
-                                            <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                            <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
                                                 {coupon.expires_at ? new Date(coupon.expires_at).toLocaleDateString() : 'Never'}
                                             </td>
                                             <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
@@ -255,17 +255,17 @@ export default function CouponsPage() {
 
                         <span className="hidden sm:inline-block sm:h-screen sm:align-middle" aria-hidden="true">&#8203;</span>
 
-                        <div className="inline-block transform overflow-hidden rounded-lg bg-white text-left align-bottom shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:align-middle">
+                        <div className="inline-block transform overflow-hidden rounded-lg bg-white dark:bg-[#1e2135] text-left align-bottom shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:align-middle">
                             <form onSubmit={handleSubmit}>
-                                <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                                    <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
+                                <div className="bg-white dark:bg-[#1e2135] px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                                    <h3 className="text-lg font-medium leading-6 text-gray-900 dark:text-white mb-4">
                                         {editingCoupon ? 'Edit Coupon' : 'Create New Coupon'}
                                     </h3>
 
                                     <div className="space-y-4">
                                         {/* Code */}
                                         <div>
-                                            <label htmlFor="code" className="block text-sm font-medium text-gray-700">Coupon Code</label>
+                                            <label htmlFor="code" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Coupon Code</label>
                                             <div className="mt-1 flex rounded-md shadow-sm">
                                                 <input
                                                     type="text"
@@ -274,13 +274,13 @@ export default function CouponsPage() {
                                                     required
                                                     value={formData.code}
                                                     onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-                                                    className="block w-full flex-1 rounded-none rounded-l-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm uppercase font-mono px-3 py-2 border"
+                                                    className="block w-full flex-1 rounded-none rounded-l-md border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0f111a] text-gray-900 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm uppercase font-mono px-3 py-2 border"
                                                     placeholder="SUMMER50"
                                                 />
                                                 <button
                                                     type="button"
                                                     onClick={generateCode}
-                                                    className="relative -ml-px inline-flex items-center space-x-2 rounded-r-md border border-gray-300 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                    className="relative -ml-px inline-flex items-center space-x-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1a1c2e] px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                                                 >
                                                     Generate
                                                 </button>
@@ -290,12 +290,12 @@ export default function CouponsPage() {
                                         <div className="grid grid-cols-2 gap-4">
                                             {/* Discount Type */}
                                             <div>
-                                                <label htmlFor="discount_type" className="block text-sm font-medium text-gray-700">Discount Type</label>
+                                                <label htmlFor="discount_type" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Discount Type</label>
                                                 <select
                                                     id="discount_type"
                                                     value={formData.discount_type}
                                                     onChange={(e) => setFormData({ ...formData, discount_type: e.target.value as 'percentage' | 'fixed' })}
-                                                    className="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm border"
+                                                    className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0f111a] text-gray-900 dark:text-white py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm border"
                                                 >
                                                     <option value="percentage">Percentage (%)</option>
                                                     <option value="fixed">Fixed Amount (₹)</option>
@@ -304,7 +304,7 @@ export default function CouponsPage() {
 
                                             {/* Discount Value */}
                                             <div>
-                                                <label htmlFor="discount_value" className="block text-sm font-medium text-gray-700">
+                                                <label htmlFor="discount_value" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                                     {formData.discount_type === 'percentage' ? 'Percentage Off' : 'Amount Off (₹)'}
                                                 </label>
                                                 <input
@@ -315,14 +315,14 @@ export default function CouponsPage() {
                                                     max={formData.discount_type === 'percentage' ? 100 : undefined}
                                                     value={formData.discount_value || ''}
                                                     onChange={(e) => setFormData({ ...formData, discount_value: Number(e.target.value) })}
-                                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2 border"
+                                                    className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0f111a] text-gray-900 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2 border"
                                                 />
                                             </div>
                                         </div>
 
                                         {/* Minimum Order */}
                                         <div>
-                                            <label htmlFor="min_order" className="block text-sm font-medium text-gray-700">Minimum Order Amount (₹) - Optional</label>
+                                            <label htmlFor="min_order" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Minimum Order Amount (₹) - Optional</label>
                                             <input
                                                 type="number"
                                                 id="min_order"
@@ -330,14 +330,14 @@ export default function CouponsPage() {
                                                 value={formData.min_order_amount || ''}
                                                 onChange={(e) => setFormData({ ...formData, min_order_amount: Number(e.target.value) })}
                                                 placeholder="0 for no minimum"
-                                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2 border"
+                                                className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0f111a] text-gray-900 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2 border"
                                             />
                                         </div>
 
                                         <div className="grid grid-cols-2 gap-4">
                                             {/* Max Uses */}
                                             <div>
-                                                <label htmlFor="max_uses" className="block text-sm font-medium text-gray-700">Usage Limit</label>
+                                                <label htmlFor="max_uses" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Usage Limit</label>
                                                 <input
                                                     type="number"
                                                     id="max_uses"
@@ -345,26 +345,26 @@ export default function CouponsPage() {
                                                     value={formData.max_uses || ''}
                                                     onChange={(e) => setFormData({ ...formData, max_uses: Number(e.target.value) })}
                                                     placeholder="0 for unlimited"
-                                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2 border"
+                                                    className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0f111a] text-gray-900 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2 border"
                                                 />
                                             </div>
 
                                             {/* Expiry Date */}
                                             <div>
-                                                <label htmlFor="expires_at" className="block text-sm font-medium text-gray-700">Expiry Date (Optional)</label>
+                                                <label htmlFor="expires_at" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Expiry Date (Optional)</label>
                                                 <input
                                                     type="date"
                                                     id="expires_at"
                                                     value={formData.expires_at}
                                                     onChange={(e) => setFormData({ ...formData, expires_at: e.target.value })}
-                                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2 border"
+                                                    className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2 border bg-white dark:bg-[#0f111a] text-gray-900 dark:text-white"
                                                 />
                                             </div>
                                         </div>
 
                                     </div>
                                 </div>
-                                <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                                <div className="bg-gray-50 dark:bg-[#1a1c2e] px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 border-t dark:border-gray-700">
                                     <button
                                         type="submit"
                                         className="inline-flex w-full justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
@@ -374,7 +374,7 @@ export default function CouponsPage() {
                                     <button
                                         type="button"
                                         onClick={handleCloseModal}
-                                        className="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:mt-0 sm:w-auto sm:text-sm"
+                                        className="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0f111a] px-4 py-2 text-base font-medium text-gray-700 dark:text-gray-300 shadow-sm hover:bg-gray-50 dark:hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:mt-0 sm:w-auto sm:text-sm"
                                     >
                                         Cancel
                                     </button>

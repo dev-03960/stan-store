@@ -19,8 +19,8 @@ const PRODUCT_TYPES = [
         name: 'Collect Emails / Lead Magnet',
         description: "Collect your audience's info with a free resource",
         icon: Mail,
-        color: 'from-rose-400 to-orange-400',
-        bgColor: 'bg-rose-50',
+        color: 'from-blue-600 to-indigo-700',
+        bgColor: 'bg-indigo-50',
     },
     {
         id: 'download',
@@ -58,13 +58,14 @@ const PRODUCT_TYPES = [
 
 interface ProductFormProps {
     product?: Product;
+    defaultProductType?: string;
     onClose: () => void;
 }
 
-const ProductForm: React.FC<ProductFormProps> = ({ product, onClose }) => {
+const ProductForm: React.FC<ProductFormProps> = ({ product, defaultProductType, onClose }) => {
     const queryClient = useQueryClient();
     const isEditing = !!product;
-    const [step, setStep] = useState<'choose_type' | 'form'>(isEditing ? 'form' : 'choose_type');
+    const [step, setStep] = useState<'choose_type' | 'form'>(isEditing || defaultProductType ? 'form' : 'choose_type');
 
     // Price is stored in paise in the backend — convert to rupees for the form
     const [formData, setFormData] = useState<CreateProductDTO>({
@@ -72,7 +73,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose }) => {
         subtitle: product?.subtitle || '',
         price: product ? product.price / 100 : 0,
         description: product?.description || '',
-        product_type: product?.product_type || 'download',
+        product_type: product?.product_type || defaultProductType || 'download',
         cover_image_url: product?.cover_image_url || '',
         file_url: product?.file_url || '',
         duration_minutes: product?.duration_minutes || 30,
@@ -88,49 +89,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose }) => {
     };
 
 
-
-    // ── Choose Product Type Step ──
-    if (step === 'choose_type') {
-        return (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-                <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                    <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-white sticky top-0 z-10">
-                        <h2 className="text-xl font-bold font-heading">Choose Product Type</h2>
-                        <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
-                            <X className="w-5 h-5" />
-                        </button>
-                    </div>
-                    <div className="p-6">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {PRODUCT_TYPES.map((type) => {
-                                const Icon = type.icon;
-                                return (
-                                    <button
-                                        key={type.id}
-                                        type="button"
-                                        onClick={() => handleSelectType(type.id)}
-                                        className="flex items-start gap-4 p-4 rounded-xl border-2 border-gray-100 hover:border-indigo-300 hover:shadow-md transition-all text-left group"
-                                    >
-                                        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${type.color} flex items-center justify-center flex-shrink-0 shadow-sm`}>
-                                            <Icon className="w-6 h-6 text-white" />
-                                        </div>
-                                        <div>
-                                            <h3 className="font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">
-                                                {type.name}
-                                            </h3>
-                                            <p className="text-sm text-gray-500 mt-0.5">
-                                                {type.description}
-                                            </p>
-                                        </div>
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
-    }
 
     // ── Rest of the form (existing behavior) ──
 
@@ -256,24 +214,67 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose }) => {
         }
     };
 
+    // ── Choose Product Type Step ──
+    if (step === 'choose_type') {
+        return (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={onClose}>
+                <div className="bg-white dark:bg-[#1a1d2b] rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                    <div className="p-6 border-b border-slate-100 dark:border-gray-700 flex justify-between items-center bg-white dark:bg-[#1a1d2b] sticky top-0 z-10">
+                        <h2 className="text-xl font-bold font-heading dark:text-white">Choose Product Type</h2>
+                        <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-full transition-colors">
+                            <X className="w-5 h-5 dark:text-gray-400" />
+                        </button>
+                    </div>
+                    <div className="p-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {PRODUCT_TYPES.map((type) => {
+                                const Icon = type.icon;
+                                return (
+                                    <button
+                                        key={type.id}
+                                        type="button"
+                                        onClick={() => handleSelectType(type.id)}
+                                        className="flex items-start gap-4 p-4 rounded-xl border-2 border-gray-100 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-500 hover:shadow-md transition-all text-left group"
+                                    >
+                                        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${type.color} flex items-center justify-center flex-shrink-0 shadow-sm`}>
+                                            <Icon className="w-6 h-6 text-white" />
+                                        </div>
+                                        <div>
+                                            <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                                                {type.name}
+                                            </h3>
+                                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                                                {type.description}
+                                            </p>
+                                        </div>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-white sticky top-0 z-10">
-                    <h2 className="text-xl font-bold font-heading">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={onClose}>
+            <div className="bg-white dark:bg-[#1a1d2b] rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                <div className="p-6 border-b border-slate-100 dark:border-gray-700 flex justify-between items-center bg-white dark:bg-[#1a1d2b] sticky top-0 z-10">
+                    <h2 className="text-xl font-bold font-heading dark:text-white">
                         {isEditing ? 'Edit Product' : 'Add New Product'}
                     </h2>
-                    <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
-                        <X className="w-5 h-5" />
+                    <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-full transition-colors">
+                        <X className="w-5 h-5 dark:text-gray-400" />
                     </button>
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-6">
                     <div className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Product Type</label>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">Product Type</label>
                             <select
-                                className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all disabled:bg-slate-100 disabled:opacity-75"
+                                className="w-full p-2 border border-slate-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all disabled:bg-slate-100 disabled:opacity-75 bg-white dark:bg-[#0f111a] dark:text-white"
                                 value={formData.product_type}
                                 onChange={(e) => setFormData({ ...formData, product_type: e.target.value as any })}
                                 disabled={isEditing}
@@ -285,15 +286,15 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose }) => {
                                 <option value="membership">Membership</option>
                             </select>
                             {isEditing && (
-                                <p className="text-xs text-slate-400 mt-1">Product type cannot be changed after creation.</p>
+                                <p className="text-xs text-slate-400 dark:text-gray-500 mt-1">Product type cannot be changed after creation.</p>
                             )}
                         </div>
 
                         {formData.product_type === 'membership' && (
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Billing Cycle</label>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">Billing Cycle</label>
                                 <select
-                                    className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                                    className="w-full p-2 border border-slate-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-white dark:bg-[#0f111a] dark:text-white"
                                     value={formData.subscription_interval}
                                     onChange={(e) => setFormData({ ...formData, subscription_interval: e.target.value as any })}
                                 >
@@ -305,7 +306,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose }) => {
 
                         <div>
                             <div className="flex justify-between items-center mb-1">
-                                <label className="block text-sm font-medium text-slate-700">Title</label>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-gray-300">Title</label>
                                 {!isEditing && (
                                     <button
                                         type="button"
@@ -349,17 +350,17 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose }) => {
                             <input
                                 type="text"
                                 required
-                                className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                                className="w-full p-2 border border-slate-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-white dark:bg-[#0f111a] dark:text-white"
                                 value={formData.title}
                                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                             />
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Subtitle</label>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">Subtitle</label>
                             <input
                                 type="text"
-                                className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                                className="w-full p-2 border border-slate-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-white dark:bg-[#0f111a] dark:text-white"
                                 value={formData.subtitle}
                                 onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
                             />
@@ -367,21 +368,21 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose }) => {
 
                         {formData.product_type !== 'lead_magnet' && (
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Price (₹ INR)</label>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">Price (₹ INR)</label>
                                 <div className="relative">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium">₹</span>
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-gray-500 font-medium">₹</span>
                                     <input
                                         type="number"
                                         required
                                         min="1"
                                         step="1"
-                                        className="w-full pl-8 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                                        className="w-full pl-8 pr-3 py-2 border border-slate-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-white dark:bg-[#0f111a] dark:text-white"
                                         value={formData.price || ''}
                                         onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
                                         placeholder="4000"
                                     />
                                 </div>
-                                <p className="text-xs text-slate-400 mt-1">
+                                <p className="text-xs text-slate-400 dark:text-gray-500 mt-1">
                                     {formData.product_type === 'membership'
                                         ? `Enter price in rupees per ${formData.subscription_interval === 'yearly' ? 'year' : 'month'}`
                                         : 'Enter price in rupees (e.g., 4000 for ₹4,000)'}
@@ -390,8 +391,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose }) => {
                         )}
 
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Thumbnail Image</label>
-                            <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:bg-slate-50 transition-colors">
+                            <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">Thumbnail Image</label>
+                            <div className="border-2 border-dashed border-slate-300 dark:border-gray-600 rounded-lg p-6 text-center hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
                                 <input
                                     type="file"
                                     accept="image/*"
@@ -401,7 +402,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose }) => {
                                 />
                                 <label htmlFor="thumbnail-upload" className="cursor-pointer flex flex-col items-center">
                                     <Upload className="w-8 h-8 text-slate-400 mb-2" />
-                                    <span className="text-sm text-slate-600">
+                                    <span className="text-sm text-slate-600 dark:text-gray-400">
                                         {imageFile ? imageFile.name : (formData.cover_image_url ? 'Change Image' : 'Click to upload thumbnail')}
                                     </span>
                                 </label>
@@ -410,8 +411,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose }) => {
 
                         {formData.product_type !== 'booking' && formData.product_type !== 'course' && (
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Product File</label>
-                                <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:bg-slate-50 transition-colors">
+                                <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">Product File</label>
+                                <div className="border-2 border-dashed border-slate-300 dark:border-gray-600 rounded-lg p-6 text-center hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
                                     <input
                                         type="file"
                                         className="hidden"
@@ -472,27 +473,27 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose }) => {
                         )}
 
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">Description</label>
                             <textarea
-                                className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all h-32 resize-none"
+                                className="w-full p-2 border border-slate-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all h-32 resize-none bg-white dark:bg-[#0f111a] dark:text-white"
                                 value={formData.description}
                                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                             />
                         </div>
                     </div>
 
-                    <div className="pt-4 flex justify-end gap-3 sticky bottom-0 bg-white pb-4 border-t border-slate-100">
+                    <div className="pt-4 flex justify-end gap-3 sticky bottom-0 bg-white dark:bg-[#1a1d2b] pb-4 border-t border-slate-100 dark:border-gray-700">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors font-medium"
+                            className="px-4 py-2 text-slate-600 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors font-medium"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={uploading || mutation.isPending}
-                            className="px-6 py-2 bg-slate-900 text-white rounded-full hover:bg-indigo-600 transition-colors disabled:opacity-50 flex items-center font-medium"
+                            className="px-6 py-2 bg-slate-900 dark:bg-indigo-600 text-white rounded-full hover:bg-indigo-600 dark:hover:bg-indigo-500 transition-colors disabled:opacity-50 flex items-center font-medium"
                         >
                             {uploading || mutation.isPending ? (
                                 <>

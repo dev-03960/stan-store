@@ -42,6 +42,8 @@ type RouterDeps struct {
 	GoogleCalendarHandler *GoogleCalendarHandler
 	AffiliateHandler      *AffiliateHandler
 	AnalyticsHandler      *AnalyticsHandler
+	NewsletterHandler     *NewsletterHandler
+	BlogHandler           *BlogHandler
 	WorkerService         *services.WorkerService
 }
 
@@ -144,6 +146,9 @@ func SetupRouter(app *fiber.App, deps *RouterDeps) {
 	creator.Get("/payouts", authRequired, banCheck, deps.PayoutHandler.GetPayoutHistory)
 	creator.Get("/payouts/balance", authRequired, banCheck, deps.PayoutHandler.GetBalance)
 	creator.Get("/subscribers", authRequired, banCheck, deps.SubscriberHandler.GetSubscribers)
+	if deps.NewsletterHandler != nil {
+		creator.Post("/newsletter", authRequired, banCheck, deps.NewsletterHandler.SendNewsletter)
+	}
 	creator.Get("/analytics", authRequired, banCheck, deps.AnalyticsHandler.GetDashboardMetrics)
 
 	creator.Get("/email-templates/:type", authRequired, banCheck, deps.EmailTemplateHandler.GetTemplate)
@@ -319,6 +324,11 @@ func SetupRouter(app *fiber.App, deps *RouterDeps) {
 	store := v1.Group("/store")
 	store.Get("/:username", deps.StoreHandler.GetStore)
 
+	// Blog routes (PUBLIC)
+	blogs := v1.Group("/blogs")
+	blogs.Get("/", deps.BlogHandler.GetPublicBlogs)
+	blogs.Get("/:slug", deps.BlogHandler.GetBlogBySlug)
+
 	// Admin routes (Protected - Admin Role)
 	admin := v1.Group("/admin")
 	admin.Get("/metrics", authRequired, RoleRequired("admin"), deps.AdminHandler.GetMetrics)
@@ -329,6 +339,13 @@ func SetupRouter(app *fiber.App, deps *RouterDeps) {
 		admin.Get("/jobs/stats", authRequired, RoleRequired("admin"), deps.AdminHandler.GetJobStats)
 	}
 	admin.Get("/webhooks/stats", authRequired, RoleRequired("admin"), deps.AdminHandler.GetWebhookStats)
+
+	// Blog Admin routes
+	admin.Get("/blogs", authRequired, RoleRequired("admin"), deps.BlogHandler.AdminListBlogs)
+	admin.Post("/blogs", authRequired, RoleRequired("admin"), deps.BlogHandler.CreateBlog)
+	admin.Get("/blogs/:id", authRequired, RoleRequired("admin"), deps.BlogHandler.GetBlogByID)
+	admin.Put("/blogs/:id", authRequired, RoleRequired("admin"), deps.BlogHandler.UpdateBlog)
+	admin.Delete("/blogs/:id", authRequired, RoleRequired("admin"), deps.BlogHandler.DeleteBlog)
 
 	// Protected buyer routes (with CSRF protection for state-changing endpoints)
 	buyers := v1.Group("/buyer", authRequired, banCheck, CsrfProtection())

@@ -65,31 +65,31 @@ export const LessonModal: React.FC<LessonModalProps> = ({ productId, moduleId, l
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[60]">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-lg">
-                <div className="p-6 border-b border-slate-100 flex justify-between items-center">
-                    <h2 className="text-xl font-bold font-heading">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[60]" onClick={onClose}>
+            <div className="bg-white dark:bg-[#1a1d2b] rounded-xl shadow-xl w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
+                <div className="p-6 border-b border-slate-100 dark:border-gray-700 flex justify-between items-center">
+                    <h2 className="text-xl font-bold font-heading dark:text-white">
                         {isEditing ? 'Edit Lesson' : 'Add New Lesson'}
                     </h2>
-                    <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full">
-                        <X className="w-5 h-5 text-slate-500" />
+                    <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-full">
+                        <X className="w-5 h-5 text-slate-500 dark:text-gray-400" />
                     </button>
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-6">
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Lesson Title</label>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">Lesson Title</label>
                         <input
                             type="text"
                             required
-                            className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                            className="w-full p-2 border border-slate-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-[#0f111a] dark:text-white"
                             value={formData.title}
                             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">Lesson Type</label>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-2">Lesson Type</label>
                         <div className="grid grid-cols-3 gap-3">
                             {[
                                 { id: 'video', icon: Video, label: 'Video' },
@@ -104,8 +104,8 @@ export const LessonModal: React.FC<LessonModalProps> = ({ productId, moduleId, l
                                         type="button"
                                         onClick={() => setFormData({ ...formData, type: type.id as any, content: '' })}
                                         className={`flex flex-col items-center justify-center p-4 border-2 rounded-xl transition-all ${isSelected
-                                            ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                                            : 'border-slate-200 hover:border-slate-300 text-slate-600'
+                                            ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-400'
+                                            : 'border-slate-200 dark:border-gray-700 hover:border-slate-300 dark:hover:border-gray-600 text-slate-600 dark:text-gray-400'
                                             }`}
                                     >
                                         <Icon className="w-6 h-6 mb-2" />
@@ -119,8 +119,8 @@ export const LessonModal: React.FC<LessonModalProps> = ({ productId, moduleId, l
                     {formData.type === 'video' && (
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Video Source</label>
-                                <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:bg-slate-50 cursor-pointer">
+                                <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">Video Source</label>
+                                <div className="border-2 border-dashed border-slate-300 dark:border-gray-600 rounded-lg p-6 text-center hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer">
                                     <input
                                         type="file"
                                         accept="video/*"
@@ -141,7 +141,7 @@ export const LessonModal: React.FC<LessonModalProps> = ({ productId, moduleId, l
                                         <input
                                             type="url"
                                             placeholder="https://vimeo.com/... or YouTube URL"
-                                            className="w-full p-2 border border-slate-300 rounded-lg outline-none text-sm"
+                                            className="w-full p-2 border border-slate-300 dark:border-gray-600 rounded-lg outline-none text-sm bg-white dark:bg-[#0f111a] dark:text-white"
                                             value={formData.content}
                                             onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                                         />
@@ -149,11 +149,11 @@ export const LessonModal: React.FC<LessonModalProps> = ({ productId, moduleId, l
                                 )}
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Duration (Minutes)</label>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">Duration (Minutes)</label>
                                 <input
                                     type="number"
                                     min="1"
-                                    className="w-full p-2 border border-slate-300 rounded-lg outline-none"
+                                    className="w-full p-2 border border-slate-300 dark:border-gray-600 rounded-lg outline-none bg-white dark:bg-[#0f111a] dark:text-white"
                                     value={formData.duration_minutes || ''}
                                     onChange={(e) => setFormData({ ...formData, duration_minutes: parseInt(e.target.value) || undefined })}
                                 />
@@ -163,11 +163,11 @@ export const LessonModal: React.FC<LessonModalProps> = ({ productId, moduleId, l
 
                     {formData.type === 'text' && (
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Lesson Content (Markdown Supported)</label>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">Lesson Content (Markdown Supported)</label>
                             <textarea
                                 required
                                 rows={8}
-                                className="w-full p-3 border border-slate-300 rounded-lg outline-none font-mono text-sm leading-relaxed"
+                                className="w-full p-3 border border-slate-300 dark:border-gray-600 rounded-lg outline-none font-mono text-sm leading-relaxed bg-white dark:bg-[#0f111a] dark:text-white"
                                 placeholder="## Welcome to this lesson&#10;&#10;Here is what we will cover..."
                                 value={formData.content}
                                 onChange={(e) => setFormData({ ...formData, content: e.target.value })}
@@ -177,8 +177,8 @@ export const LessonModal: React.FC<LessonModalProps> = ({ productId, moduleId, l
 
                     {formData.type === 'attachment' && (
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Worksheet / File</label>
-                            <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:bg-slate-50 cursor-pointer">
+                            <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">Worksheet / File</label>
+                            <div className="border-2 border-dashed border-slate-300 dark:border-gray-600 rounded-lg p-6 text-center hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer">
                                 <input
                                     type="file"
                                     className="hidden"
@@ -193,16 +193,16 @@ export const LessonModal: React.FC<LessonModalProps> = ({ productId, moduleId, l
                                 </label>
                             </div>
                             {formData.content && !file && (
-                                <p className="text-xs text-slate-500 mt-2 truncate">Current file: {formData.content}</p>
+                                <p className="text-xs text-slate-500 dark:text-gray-400 mt-2 truncate">Current file: {formData.content}</p>
                             )}
                         </div>
                     )}
 
-                    <div className="pt-4 flex justify-end gap-3 border-t border-slate-100">
+                    <div className="pt-4 flex justify-end gap-3 border-t border-slate-100 dark:border-gray-700">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-4 py-2 text-slate-600 font-medium hover:bg-slate-50 rounded-lg transition-colors"
+                            className="px-4 py-2 text-slate-600 dark:text-gray-400 font-medium hover:bg-slate-50 dark:hover:bg-white/10 rounded-lg transition-colors"
                         >
                             Cancel
                         </button>

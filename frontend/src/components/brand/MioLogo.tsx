@@ -19,8 +19,8 @@ export const MioLogo: React.FC<MioLogoProps> = ({ size = 'md', showText = true, 
     return (
         <span className={`inline-flex items-center gap-2 ${className}`}>
             <img
-                src="/mio-store-logo.png"
-                alt="Mio Store"
+                src="/logo.jpg"
+                alt="Miostore"
                 width={icon}
                 height={icon}
                 className="rounded-lg object-contain"
@@ -28,10 +28,9 @@ export const MioLogo: React.FC<MioLogoProps> = ({ size = 'md', showText = true, 
             />
             {showText && (
                 <span className={`font-heading font-bold ${text}`}>
-                    <span className="bg-gradient-to-r from-pink-500 via-orange-500 to-amber-500 bg-clip-text text-transparent">
-                        Mio
+                    <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                        Miostore
                     </span>
-                    <span className="text-gray-400 font-medium">-store</span>
                 </span>
             )}
         </span>

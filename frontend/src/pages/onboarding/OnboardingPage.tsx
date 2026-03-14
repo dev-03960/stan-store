@@ -120,11 +120,11 @@ export default function OnboardingPage() {
                     <div className="mt-8 space-y-6">
                         <div>
                             <label htmlFor="username" className="block text-sm font-medium text-gray-700">
-                                stan.store/
+                                miostore.com/
                             </label>
                             <div className="mt-1 flex rounded-md shadow-sm">
                                 <span className="inline-flex items-center rounded-l-md border border-r-0 border-gray-300 bg-gray-50 px-3 text-gray-500 sm:text-sm">
-                                    stan.store/
+                                    miostore.com/
                                 </span>
                                 <input
                                     type="text"

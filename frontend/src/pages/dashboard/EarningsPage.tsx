@@ -58,20 +58,20 @@ const EarningsPage: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Payouts Dashboard</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Payouts Dashboard</h1>
 
             {/* Top Cards Row */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
                 {/* Available Balance (Main Card) */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 md:col-span-2 relative overflow-hidden">
+                <div className="bg-white dark:bg-[#1e2135] p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 md:col-span-2 relative overflow-hidden">
                     <div className="absolute top-0 right-0 p-3 opacity-10">
                         <Landmark className="w-24 h-24 text-gray-900" />
                     </div>
 
-                    <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wide">Available to Withdraw</h2>
+                    <h2 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Available to Withdraw</h2>
                     <div className="mt-4 flex items-baseline space-x-2">
-                        <span className="text-4xl font-extrabold text-gray-900">
+                        <span className="text-4xl font-extrabold text-gray-900 dark:text-white">
                             {formatPrice(balance?.available_balance || 0)}
                         </span>
                     </div>
@@ -97,7 +97,7 @@ const EarningsPage: React.FC = () => {
                         {hasBankConfigured && (
                             <button
                                 onClick={() => setIsSettingsModalOpen(true)}
-                                className="text-sm text-gray-500 hover:text-gray-900 underline"
+                                className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white underline"
                             >
                                 Edit Bank Link (•••• {accountEnding})
                             </button>
@@ -107,22 +107,22 @@ const EarningsPage: React.FC = () => {
 
                 {/* Stats Column */}
                 <div className="space-y-6">
-                    <div className="bg-orange-50 p-6 rounded-xl border border-orange-100">
-                        <div className="flex items-center gap-2 text-orange-600 mb-2">
+                    <div className="bg-blue-50 dark:bg-blue-500/10 p-6 rounded-xl border border-blue-100 dark:border-blue-500/20">
+                        <div className="flex items-center gap-2 text-blue-600 mb-2">
                             <Clock className="w-4 h-4" />
                             <h2 className="text-xs font-semibold uppercase tracking-wider">Processing</h2>
                         </div>
-                        <span className="text-2xl font-bold text-orange-900">
+                        <span className="text-2xl font-bold text-blue-900 dark:text-blue-400">
                             {formatPrice(balance?.pending_balance || 0)}
                         </span>
                     </div>
 
-                    <div className="bg-green-50 p-6 rounded-xl border border-green-100">
+                    <div className="bg-green-50 dark:bg-green-500/10 p-6 rounded-xl border border-green-100 dark:border-green-500/20">
                         <div className="flex items-center gap-2 text-green-600 mb-2">
                             <TrendingUp className="w-4 h-4" />
                             <h2 className="text-xs font-semibold uppercase tracking-wider">Total Earned All Time</h2>
                         </div>
-                        <span className="text-2xl font-bold text-green-900">
+                        <span className="text-2xl font-bold text-green-900 dark:text-green-400">
                             {formatPrice(balance?.total_earnings || 0)}
                         </span>
                     </div>
@@ -130,17 +130,17 @@ const EarningsPage: React.FC = () => {
             </div>
 
             {/* Payout History */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-gray-900">Withdrawal History</h3>
-                    <p className="text-sm text-gray-500">
-                        Total Withdrawn: <span className="font-medium text-gray-900">{formatPrice(balance?.total_withdrawn || 0)}</span>
+            <div className="bg-white dark:bg-[#1e2135] rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <div className="px-6 py-5 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Withdrawal History</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Total Withdrawn: <span className="font-medium text-gray-900 dark:text-white">{formatPrice(balance?.total_withdrawn || 0)}</span>
                     </p>
                 </div>
 
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm text-gray-600">
-                        <thead className="bg-gray-50 text-gray-900 font-medium border-b border-gray-200">
+                    <table className="w-full text-left text-sm text-gray-600 dark:text-gray-400">
+                        <thead className="bg-gray-50 dark:bg-[#0f111a] text-gray-900 dark:text-gray-200 font-medium border-b border-gray-200 dark:border-gray-700">
                             <tr>
                                 <th className="px-6 py-3">Date</th>
                                 <th className="px-6 py-3">Reference ID</th>
@@ -148,11 +148,11 @@ const EarningsPage: React.FC = () => {
                                 <th className="px-6 py-3 text-right">Amount</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-100">
+                        <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                             {payouts.length > 0 ? (
                                 payouts.map((payout) => (
-                                    <tr key={payout.id} className="hover:bg-gray-50">
-                                        <td className="px-6 py-4 whitespace-nowrap">
+                                    <tr key={payout.id} className="hover:bg-gray-50 dark:hover:bg-white/5">
+                                        <td className="px-6 py-4 whitespace-nowrap dark:text-gray-300">
                                             {new Date(payout.created_at).toLocaleDateString()}
                                             <div className="text-xs text-gray-400 mt-0.5">
                                                 {new Date(payout.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -164,7 +164,7 @@ const EarningsPage: React.FC = () => {
                                         <td className="px-6 py-4 capitalize">
                                             <span
                                                 className={`px-2.5 py-1 rounded-full text-xs font-medium border ${payout.status === 'completed' ? 'bg-green-50 text-green-700 border-green-200' :
-                                                        payout.status === 'processing' ? 'bg-orange-50 text-orange-700 border-orange-200' :
+                                                        payout.status === 'processing' ? 'bg-blue-50 text-blue-700 border-blue-200' :
                                                             'bg-red-50 text-red-700 border-red-200'
                                                     }`}
                                             >
@@ -176,7 +176,7 @@ const EarningsPage: React.FC = () => {
                                                 </p>
                                             )}
                                         </td>
-                                        <td className="px-6 py-4 text-right font-medium text-gray-900">
+                                        <td className="px-6 py-4 text-right font-medium text-gray-900 dark:text-white">
                                             <div className="flex items-center justify-end gap-1">
                                                 {formatPrice(payout.amount)}
                                                 <ArrowUpRight className="w-3 h-3 text-gray-400" />

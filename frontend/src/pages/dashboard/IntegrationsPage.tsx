@@ -143,8 +143,8 @@ export default function IntegrationsPage() {
     return (
         <div className="max-w-5xl mx-auto space-y-6">
             <div className="mb-8">
-                <h1 className="text-2xl font-bold text-gray-900">Integrations</h1>
-                <p className="text-gray-500 mt-1">Connect external platforms to automate your marketing and sales.</p>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Integrations</h1>
+                <p className="text-gray-500 dark:text-gray-400 mt-1">Connect external platforms to automate your marketing and sales.</p>
             </div>
 
             {error && (
@@ -162,27 +162,27 @@ export default function IntegrationsPage() {
             )}
 
             {/* Google Calendar Card */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="p-6 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="bg-white dark:bg-[#1e2135] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+                <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="flex items-center gap-4">
                         <div className="w-12 h-12 bg-gradient-to-tr from-blue-500 to-cyan-400 rounded-xl flex items-center justify-center shadow-inner">
                             <Calendar className="w-6 h-6 text-white" />
                         </div>
                         <div>
-                            <h2 className="text-lg font-semibold text-gray-900">Google Calendar</h2>
-                            <p className="text-sm text-gray-500">Auto-create calendar events with Google Meet links for bookings</p>
+                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Google Calendar</h2>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">Auto-create calendar events with Google Meet links for bookings</p>
                         </div>
                     </div>
                     <div>
                         {gcalConnection?.connected ? (
                             <div className="flex items-center gap-3">
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium bg-green-50 text-green-700 border border-green-200">
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium bg-green-50 dark:bg-green-500/20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-500/30">
                                     <span className="w-2 h-2 rounded-full bg-green-500"></span>
                                     Connected: {gcalConnection.email}
                                 </span>
                                 <button
                                     onClick={handleDisconnectGoogleCalendar}
-                                    className="text-sm font-medium text-gray-500 hover:text-red-600 transition-colors"
+                                    className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                                 >
                                     Disconnect
                                 </button>
@@ -200,12 +200,12 @@ export default function IntegrationsPage() {
                 </div>
 
                 {gcalConnection?.connected && (
-                    <div className="p-6 bg-slate-50">
-                        <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-100 rounded-lg">
-                            <Video className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" />
+                    <div className="p-6 bg-slate-50 dark:bg-[#0f111a]">
+                        <div className="flex items-start gap-3 p-4 bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 rounded-lg">
+                            <Video className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
                             <div>
-                                <p className="text-sm font-medium text-blue-900">Auto Meet Links Active</p>
-                                <p className="text-sm text-blue-700 mt-1">
+                                <p className="text-sm font-medium text-blue-900 dark:text-blue-300">Auto Meet Links Active</p>
+                                <p className="text-sm text-blue-700 dark:text-blue-400 mt-1">
                                     When a buyer purchases a 1:1 coaching session, a Google Calendar event with a unique
                                     Google Meet link will be created automatically on your calendar. Both you and the buyer
                                     will receive an invite email from Google.
@@ -217,27 +217,27 @@ export default function IntegrationsPage() {
             </div>
 
             {/* Instagram Card */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="p-6 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="bg-white dark:bg-[#1e2135] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+                <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="flex items-center gap-4">
                         <div className="w-12 h-12 bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 rounded-xl flex items-center justify-center shadow-inner">
                             <Instagram className="w-6 h-6 text-white" />
                         </div>
                         <div>
-                            <h2 className="text-lg font-semibold text-gray-900">Instagram Auto-DM</h2>
-                            <p className="text-sm text-gray-500">Automatically reply to comments with DMs</p>
+                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Instagram Auto-DM</h2>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">Automatically reply to comments with DMs</p>
                         </div>
                     </div>
                     <div>
                         {connection?.connected ? (
                             <div className="flex items-center gap-3">
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium bg-green-50 text-green-700 border border-green-200">
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium bg-green-50 dark:bg-green-500/20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-500/30">
                                     <span className="w-2 h-2 rounded-full bg-green-500"></span>
                                     Connected: @{connection.igUsername}
                                 </span>
                                 <button
                                     onClick={handleDisconnectInstagram}
-                                    className="text-sm font-medium text-gray-500 hover:text-red-600 transition-colors"
+                                    className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                                 >
                                     Disconnect
                                 </button>
@@ -255,10 +255,10 @@ export default function IntegrationsPage() {
                 </div>
 
                 {connection?.connected && (
-                    <div className="p-6 bg-slate-50">
+                    <div className="p-6 bg-slate-50 dark:bg-[#0f111a]">
                         <div className="mb-6">
-                            <h3 className="text-md font-semibold text-gray-900">Keyword Triggers</h3>
-                            <p className="text-sm text-gray-500">If a follower comments the exact keyword on any post, Stan will send them a DM.</p>
+                            <h3 className="text-md font-semibold text-gray-900 dark:text-white">Keyword Triggers</h3>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">If a follower comments the exact keyword on any post, Miostore will send them a DM.</p>
                         </div>
 
                         {/* Add Rule Form */}
@@ -269,7 +269,7 @@ export default function IntegrationsPage() {
                                 required
                                 value={newKeyword}
                                 onChange={e => setNewKeyword(e.target.value)}
-                                className="w-1/4 rounded-lg border-gray-300 border px-4 py-2 text-sm focus:ring-[#6786f5] focus:border-[#6786f5]"
+                                className="w-1/4 rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0f111a] text-gray-900 dark:text-white px-4 py-2 text-sm focus:ring-[#6786f5] focus:border-[#6786f5]"
                             />
                             <input
                                 type="text"
@@ -277,7 +277,7 @@ export default function IntegrationsPage() {
                                 required
                                 value={newResponse}
                                 onChange={e => setNewResponse(e.target.value)}
-                                className="w-full rounded-lg border-gray-300 border px-4 py-2 text-sm focus:ring-[#6786f5] focus:border-[#6786f5]"
+                                className="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0f111a] text-gray-900 dark:text-white px-4 py-2 text-sm focus:ring-[#6786f5] focus:border-[#6786f5]"
                             />
                             <button
                                 type="submit"
@@ -290,15 +290,15 @@ export default function IntegrationsPage() {
                         {/* Active Rules List */}
                         <div className="space-y-3">
                             {automations.map((auto) => (
-                                <div key={auto.id} className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
+                                <div key={auto.id} className="flex items-center justify-between p-4 bg-white dark:bg-[#1e2135] border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
                                     <div className="flex items-center gap-4 flex-1">
-                                        <div className="shrink-0 bg-[#6786f50d] text-[#5570e0] px-3 py-1 rounded-md text-sm font-bold border border-purple-100">
+                                        <div className="shrink-0 bg-[#6786f50d] text-[#5570e0] dark:text-indigo-400 px-3 py-1 rounded-md text-sm font-bold border border-purple-100 dark:border-indigo-500/30">
                                             {auto.keyword.toUpperCase()}
                                         </div>
                                         <div className="flex-1">
-                                            <p className="text-sm text-gray-800 line-clamp-1">"{auto.responseText}"</p>
+                                            <p className="text-sm text-gray-800 dark:text-gray-200 line-clamp-1">"{auto.responseText}"</p>
                                         </div>
-                                        <div className="shrink-0 text-sm text-gray-500 pr-4 border-r border-gray-200">
+                                        <div className="shrink-0 text-sm text-gray-500 dark:text-gray-400 pr-4 border-r border-gray-200 dark:border-gray-700">
                                             {auto.dmCount} DMs Sent
                                         </div>
                                     </div>
@@ -312,7 +312,7 @@ export default function IntegrationsPage() {
                             ))}
 
                             {automations.length === 0 && (
-                                <div className="text-center py-8 text-sm text-gray-500 border-2 border-dashed border-gray-200 rounded-lg">
+                                <div className="text-center py-8 text-sm text-gray-500 dark:text-gray-400 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg">
                                     No keyword triggers active yet. Add one above!
                                 </div>
                             )}
