@@ -1,4 +1,3 @@
-import React from 'react';
 import { Target, Eye, Heart, Globe, CheckCircle, ArrowRight, Rocket, Shield, Zap, Sparkles, TrendingUp, X, CreditCard } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -40,8 +39,8 @@ export default function AboutPage() {
             <section className="relative max-w-6xl mx-auto mb-32 pt-12">
                 <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/10 dark:bg-blue-500/5 blur-[120px] rounded-full -z-10" />
                 <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-indigo-500/10 dark:bg-indigo-500/5 blur-[120px] rounded-full -z-10" />
-                
-                <motion.div 
+
+                <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, ease: "easeOut" }}
@@ -63,7 +62,7 @@ export default function AboutPage() {
             </section>
 
             {/* ════════════════ PROBLEM/STORY INTRO ════════════════ */}
-            <motion.section 
+            <motion.section
                 {...fadeInUp}
                 className="max-w-4xl mx-auto mb-32"
             >
@@ -91,7 +90,7 @@ export default function AboutPage() {
                 </div>
 
                 <div className="grid lg:grid-cols-2 gap-16 items-center mb-32">
-                    <motion.div 
+                    <motion.div
                         initial={{ opacity: 0, x: -30 }}
                         whileInView={{ opacity: 1, x: 0 }}
                         viewport={{ once: true }}
@@ -113,7 +112,7 @@ export default function AboutPage() {
                             </p>
                         </div>
                     </motion.div>
-                    <motion.div 
+                    <motion.div
                         initial={{ opacity: 0, x: 30 }}
                         whileInView={{ opacity: 1, x: 0 }}
                         viewport={{ once: true }}
@@ -137,7 +136,7 @@ export default function AboutPage() {
                     </motion.div>
                 </div>
 
-                <motion.div 
+                <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
@@ -152,7 +151,7 @@ export default function AboutPage() {
             </section>
 
             {/* ════════════════ MISSION & VISION ════════════════ */}
-            <motion.section 
+            <motion.section
                 variants={containerVariants}
                 initial="hidden"
                 whileInView="show"
@@ -192,7 +191,7 @@ export default function AboutPage() {
             </motion.section>
 
             {/* ════════════════ ECONOMY INSIGHTS ════════════════ */}
-            <motion.section 
+            <motion.section
                 {...fadeInUp}
                 className="py-32 bg-gray-50 dark:bg-[#1a1d2b] -mx-4 px-4 mb-32 relative overflow-hidden"
             >
@@ -209,9 +208,9 @@ export default function AboutPage() {
                             </p>
                             <div className="grid sm:grid-cols-2 gap-4">
                                 {['Complex tools', 'Expensive software', 'Poor integrations', 'Difficult setup'].map((item) => (
-                                    <motion.div 
+                                    <motion.div
                                         whileHover={{ scale: 1.05 }}
-                                        key={item} 
+                                        key={item}
                                         className="flex items-center gap-3 p-5 rounded-2xl bg-white dark:bg-[#0f111a] border border-gray-100 dark:border-gray-800 shadow-sm"
                                     >
                                         <div className="p-1 rounded-full bg-red-500/10 text-red-500">
@@ -222,7 +221,7 @@ export default function AboutPage() {
                                 ))}
                             </div>
                         </div>
-                        <motion.div 
+                        <motion.div
                             whileHover={{ y: -5 }}
                             className="p-10 rounded-[4rem] bg-gradient-to-br from-[#6786f5] to-indigo-700 text-white shadow-3xl relative"
                         >
@@ -255,7 +254,7 @@ export default function AboutPage() {
                     <p className="text-xl text-gray-500 dark:text-gray-400 font-medium">The core principles that guide everything we do.</p>
                 </div>
 
-                <motion.div 
+                <motion.div
                     variants={containerVariants}
                     initial="hidden"
                     whileInView="show"
@@ -269,8 +268,8 @@ export default function AboutPage() {
                         { title: 'Affordable Access', icon: null, iconRaw: CreditCard, color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-500/5' },
                         { title: 'Global Opportunity', icon: Globe, iconRaw: null, color: 'text-indigo-500', bg: 'bg-indigo-50 dark:bg-indigo-500/5' },
                     ].map((v) => (
-                        <motion.div 
-                            key={v.title} 
+                        <motion.div
+                            key={v.title}
                             variants={itemVariants}
                             className={`p-10 rounded-[2.5rem] ${v.bg} border border-gray-100 dark:border-gray-800/50 flex flex-col items-center text-center transition-all hover:-translate-y-3 cursor-default active:scale-95`}
                         >
@@ -289,7 +288,7 @@ export default function AboutPage() {
                     <h2 className="text-4xl sm:text-6xl font-black text-gray-900 dark:text-white mb-6 tracking-tight" style={{ fontFamily: "'Lexend', sans-serif" }}>What's Next?</h2>
                     <p className="text-xl text-gray-500 dark:text-gray-400 font-medium">The roadmap to building the operating system for creator businesses.</p>
                 </div>
-                <motion.div 
+                <motion.div
                     variants={containerVariants}
                     initial="hidden"
                     whileInView="show"
@@ -303,8 +302,8 @@ export default function AboutPage() {
                         'Global payment integrations',
                         'Better analytics and growth tools'
                     ].map((item, i) => (
-                        <motion.div 
-                            key={i} 
+                        <motion.div
+                            key={i}
                             variants={itemVariants}
                             className="flex items-center gap-8 p-8 rounded-[2rem] bg-white dark:bg-[#1a1d2b] border border-gray-100 dark:border-gray-800 group hover:border-[#6786f5] transition-all hover:shadow-xl hover:shadow-blue-500/5 cursor-default"
                         >
@@ -319,7 +318,7 @@ export default function AboutPage() {
 
             {/* ════════════════ FINAL CTA ════════════════ */}
             <section className="max-w-6xl mx-auto mb-40 px-4">
-                <motion.div 
+                <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
                     whileInView={{ opacity: 1, scale: 1 }}
                     viewport={{ once: true }}
@@ -327,7 +326,7 @@ export default function AboutPage() {
                 >
                     <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-blue-500/10 blur-[150px] -z-10" />
                     <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-indigo-500/5 blur-[100px] -z-10" />
-                    
+
                     <div className="relative z-10">
                         <h2 className="text-5xl sm:text-8xl font-black mb-10 leading-[1.1] tracking-tighter" style={{ fontFamily: "'Lexend', sans-serif" }}>
                             Join the Creator <br className="hidden sm:block" /> Movement
@@ -335,10 +334,10 @@ export default function AboutPage() {
                         <p className="text-2xl text-indigo-100/60 mb-16 max-w-3xl mx-auto leading-relaxed font-medium">
                             Mio Store is more than a platform. It's a movement to help creators build independent businesses and control their own income.
                         </p>
-                        <motion.a 
+                        <motion.a
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
-                            href="/login" 
+                            href="/login"
                             className="group inline-flex items-center gap-5 bg-white text-[#1a1d2b] px-14 py-8 rounded-full text-3xl font-black hover:shadow-2xl hover:shadow-white/10 transition-all"
                         >
                             Start Your Store
