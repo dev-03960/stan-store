@@ -46,9 +46,12 @@ export interface Product {
     file_url?: string;
     is_visible?: boolean;
     sort_order?: number;
-    subscription_interval?: 'monthly' | 'yearly';
+    subscription_interval?: 'daily' | 'weekly' | 'monthly' | 'yearly';
+    subscription_billing_cycles?: number;
     affiliate_enabled?: boolean;
     commission_rate?: number;
+    external_url?: string;
+    button_text?: string;
 }
 
 export interface StoreResponse {

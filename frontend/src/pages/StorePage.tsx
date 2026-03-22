@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getStoreByUsername, type Product } from '../lib/api/store';
+import { trackAffiliateClick } from '../features/affiliates/api';
 import StoreHeader from '../components/store/StoreHeader';
 import ProductCard from '../components/store/ProductCard';
 import StoreSkeleton from '../components/store/StoreSkeleton';
@@ -36,8 +37,17 @@ const itemVariants: Variants = {
 
 const StorePage: React.FC = () => {
     const { username } = useParams<{ username: string }>();
+    const [searchParams] = useSearchParams();
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
     const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+
+    useEffect(() => {
+        const ref = searchParams.get('ref');
+        if (ref) {
+            localStorage.setItem('stan_ref', ref);
+            trackAffiliateClick(ref).catch(err => console.error('Failed to track click:', err));
+        }
+    }, [searchParams]);
 
     const { data: store, isLoading, error } = useQuery({
         queryKey: ['store', username],
@@ -47,6 +57,10 @@ const StorePage: React.FC = () => {
     });
 
     const handleBuy = (product: Product) => {
+        if (product.product_type === 'external_link' && product.external_url) {
+            window.open(product.external_url, '_blank', 'noopener,noreferrer');
+            return;
+        }
         setSelectedProduct(product);
         setIsCheckoutOpen(true);
     };

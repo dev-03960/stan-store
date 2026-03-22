@@ -57,3 +57,31 @@ export async function getAffiliateStats(code: string) {
 export async function trackAffiliateClick(code: string) {
     await api.post('/affiliates/track', { code });
 }
+
+// Protected: Edit an affiliate's commission rate
+export async function updateAffiliateCommission(id: string, rate: number) {
+    await api.put(`/creator/affiliates/${id}/commission`, { commission_rate: rate });
+}
+
+// Protected: Suspend an affiliate
+export async function suspendAffiliate(id: string) {
+    await api.patch(`/creator/affiliates/${id}/suspend`);
+}
+
+// Protected: Reactivate an affiliate
+export async function reactivateAffiliate(id: string) {
+    await api.patch(`/creator/affiliates/${id}/reactivate`);
+}
+
+// Protected: Manually grant an affiliate access
+export async function manualGrantAffiliate(email: string, name: string) {
+    const response = await api.post<RegisterAffiliateResponse>('/creator/affiliates/manual-grant', { email, name });
+    if (!response.data) throw new Error('Failed to grant affiliate');
+    return response.data;
+}
+
+// Protected: Get product-specific affiliate analytics
+export async function getProductAffiliateAnalytics(productId: string) {
+    const response = await api.get<any[]>(`/creator/products/${productId}/affiliate-analytics`);
+    return response.data || [];
+}

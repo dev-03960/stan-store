@@ -34,7 +34,9 @@ import { CampaignsPage } from './pages/dashboard/CampaignsPage';
 import AffiliateDashboard from './pages/dashboard/AffiliateDashboard';
 import AnalyticsDashboard from './pages/dashboard/AnalyticsDashboard';
 import NewsletterPage from './pages/dashboard/NewsletterPage';
+import ReferralsPage from './pages/dashboard/ReferralsPage';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
+import AdminSubscriptionsPage from './pages/admin/AdminSubscriptionsPage';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { trackAffiliateClick } from './features/affiliates/api';
 import { CookieConsentBanner } from './components/storefront/CookieConsentBanner';
@@ -102,11 +104,13 @@ function AnimatedRoutes() {
               <Route path="integrations" element={<IntegrationsPage />} />
               <Route path="newsletter" element={<NewsletterPage />} />
               <Route path="affiliates" element={<AffiliateDashboard />} />
+              <Route path="referrals" element={<ReferralsPage />} />
               <Route path="analytics" element={<AnalyticsDashboard />} />
               <Route path="settings" element={<SettingsPage />} />
             </Route>
             {/* Platform Admin Routes */}
             <Route path="/admin" element={<AdminDashboardPage />} />
+            <Route path="/admin/subscriptions" element={<AdminSubscriptionsPage />} />
             <Route path="/admin/blogs" element={<AdminBlogList />} />
             <Route path="/admin/blogs/new" element={<AdminBlogEditor />} />
             <Route path="/admin/blogs/edit/:id" element={<AdminBlogEditor />} />

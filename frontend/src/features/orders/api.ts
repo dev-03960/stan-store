@@ -7,6 +7,7 @@ export interface CreateOrderRequest {
     coupon_code?: string;
     booking_slot_start?: string;
     bump_accepted?: boolean;
+    referral_code?: string;
 }
 
 export interface CreateOrderResponse {

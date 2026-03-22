@@ -160,3 +160,89 @@ func (s *AffiliateService) GetAffiliateStats(ctx context.Context, code string) (
 		"availablePaid": aff.TotalEarned - pendingEarned,
 	}, nil
 }
+
+func (s *AffiliateService) UpdateAffiliateCommission(ctx context.Context, creatorID primitive.ObjectID, affiliateID primitive.ObjectID, newRate float64) error {
+	if newRate < 0 || newRate > 100 {
+		return errors.New("commission rate must be between 0 and 100")
+	}
+	aff, err := s.repo.FindByID(ctx, affiliateID)
+	if err != nil || aff == nil {
+		return errors.New("affiliate not found")
+	}
+	if aff.CreatorID != creatorID {
+		return errors.New("unauthorized to edit this affiliate")
+	}
+	return s.repo.UpdateCommission(ctx, affiliateID, newRate)
+}
+
+func (s *AffiliateService) SuspendAffiliate(ctx context.Context, creatorID primitive.ObjectID, affiliateID primitive.ObjectID) error {
+	aff, err := s.repo.FindByID(ctx, affiliateID)
+	if err != nil || aff == nil {
+		return errors.New("affiliate not found")
+	}
+	if aff.CreatorID != creatorID {
+		return errors.New("unauthorized to edit this affiliate")
+	}
+	return s.repo.UpdateStatus(ctx, affiliateID, "suspended")
+}
+
+func (s *AffiliateService) ReactivateAffiliate(ctx context.Context, creatorID primitive.ObjectID, affiliateID primitive.ObjectID) error {
+	aff, err := s.repo.FindByID(ctx, affiliateID)
+	if err != nil || aff == nil {
+		return errors.New("affiliate not found")
+	}
+	if aff.CreatorID != creatorID {
+		return errors.New("unauthorized to edit this affiliate")
+	}
+	return s.repo.UpdateStatus(ctx, affiliateID, "active")
+}
+
+func (s *AffiliateService) ManualGrant(ctx context.Context, creatorID primitive.ObjectID, email string, name string) (*domain.Affiliate, error) {
+	return s.Register(ctx, creatorID, email, name)
+}
+
+func (s *AffiliateService) GetProductAffiliateAnalytics(ctx context.Context, productID primitive.ObjectID, creatorID primitive.ObjectID) ([]map[string]interface{}, error) {
+	sales, err := s.saleRepo.FindAllByProduct(ctx, productID)
+	if err != nil {
+		return nil, err
+	}
+
+	affiliates, err := s.repo.FindAllByCreator(ctx, creatorID)
+	if err != nil {
+		return nil, err
+	}
+
+	affMap := make(map[primitive.ObjectID]*domain.Affiliate)
+	for _, a := range affiliates {
+		affMap[a.ID] = a
+	}
+
+	type agg struct {
+		SalesCount int64
+		Earned     int64
+	}
+	aggMap := make(map[primitive.ObjectID]*agg)
+
+	for _, sale := range sales {
+		if _, exists := aggMap[sale.AffiliateID]; !exists {
+			aggMap[sale.AffiliateID] = &agg{}
+		}
+		aggMap[sale.AffiliateID].SalesCount++
+		if sale.Status == domain.AffiliateSalePaid {
+			aggMap[sale.AffiliateID].Earned += sale.CommissionAmount
+		}
+	}
+
+	var results []map[string]interface{}
+	for affID, aggregate := range aggMap {
+		if aff, exists := affMap[affID]; exists {
+			results = append(results, map[string]interface{}{
+				"affiliate":         aff,
+				"sales_count":       aggregate.SalesCount,
+				"commission_earned": aggregate.Earned,
+			})
+		}
+	}
+
+	return results, nil
+}

@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, ShoppingBag, Wallet, Settings, Menu, X, Megaphone, Plug, Users, TrendingUp, LogOut, Mail } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag, Wallet, Settings, Menu, X, Megaphone, Plug, Users, TrendingUp, LogOut, Mail, Share2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { MioLogo } from '../brand/MioLogo';
 import { ThemeToggle } from '../ui/ThemeToggle';
@@ -15,6 +15,7 @@ const navItems = [
     { name: 'Newsletter', path: '/dashboard/newsletter', icon: Mail },
     { name: 'Integrations', path: '/dashboard/integrations', icon: Plug },
     { name: 'Affiliates', path: '/dashboard/affiliates', icon: Users },
+    { name: 'Referrals', path: '/dashboard/referrals', icon: Share2 },
     { name: 'Settings', path: '/dashboard/settings', icon: Settings },
 ];
 
@@ -40,11 +41,10 @@ const NavLinks = ({ onNavigate }: { onNavigate?: () => void }) => (
     </nav>
 );
 
-const Sidebar = () => {
-    const [mobileOpen, setMobileOpen] = useState(false);
+const LogoutButton = () => {
     const { user, logout } = useAuth();
-
-    const LogoutButton = () => (
+    
+    return (
         <div className="p-4 border-t border-gray-100 dark:border-gray-800">
             {user && (
                 <div className="flex items-center gap-3 px-4 py-2 mb-2">
@@ -73,6 +73,10 @@ const Sidebar = () => {
             </div>
         </div>
     );
+};
+
+const Sidebar = () => {
+    const [mobileOpen, setMobileOpen] = useState(false);
 
     return (
         <>

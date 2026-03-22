@@ -95,6 +95,18 @@ func (r *MongoAffiliateRepository) FindByCode(ctx context.Context, code string) 
 	return &aff, nil
 }
 
+func (r *MongoAffiliateRepository) FindByID(ctx context.Context, id primitive.ObjectID) (*domain.Affiliate, error) {
+	var aff domain.Affiliate
+	err := r.affiliateCollection.FindOne(ctx, bson.M{"_id": id}).Decode(&aff)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &aff, nil
+}
+
 func (r *MongoAffiliateRepository) FindByEmailAndCreator(ctx context.Context, email string, creatorID primitive.ObjectID) (*domain.Affiliate, error) {
 	var aff domain.Affiliate
 	err := r.affiliateCollection.FindOne(ctx, bson.M{"email": email, "creator_id": creatorID}).Decode(&aff)
@@ -157,6 +169,15 @@ func (r *MongoAffiliateRepository) UpdateStatus(ctx context.Context, affiliateID
 	return err
 }
 
+func (r *MongoAffiliateRepository) UpdateCommission(ctx context.Context, affiliateID primitive.ObjectID, rate float64) error {
+	_, err := r.affiliateCollection.UpdateOne(
+		ctx,
+		bson.M{"_id": affiliateID},
+		bson.M{"$set": bson.M{"commission_rate": rate}},
+	)
+	return err
+}
+
 // AffiliateSale Operations
 
 func (r *MongoAffiliateSaleRepository) Create(ctx context.Context, sale *domain.AffiliateSale) error {
@@ -187,6 +208,23 @@ func (r *MongoAffiliateSaleRepository) FindAllByAffiliate(ctx context.Context, a
 
 func (r *MongoAffiliateSaleRepository) FindPendingByAffiliate(ctx context.Context, affiliateID primitive.ObjectID) ([]*domain.AffiliateSale, error) {
 	cursor, err := r.saleCollection.Find(ctx, bson.M{"affiliate_id": affiliateID, "status": domain.AffiliateSalePending})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var sales []*domain.AffiliateSale
+	if err = cursor.All(ctx, &sales); err != nil {
+		return nil, err
+	}
+	if sales == nil {
+		return []*domain.AffiliateSale{}, nil
+	}
+	return sales, nil
+}
+
+func (r *MongoAffiliateSaleRepository) FindAllByProduct(ctx context.Context, productID primitive.ObjectID) ([]*domain.AffiliateSale, error) {
+	cursor, err := r.saleCollection.Find(ctx, bson.M{"product_id": productID})
 	if err != nil {
 		return nil, err
 	}

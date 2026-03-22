@@ -138,7 +138,11 @@ export default function MyPurchasesPage() {
                                             </span>
                                         ) : order.line_items && order.line_items.length > 0 && order.line_items[0].product_type === 'course' ? (
                                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#6786f51a] text-purple-800">
-                                                Course / Membership
+                                                Course
+                                            </span>
+                                        ) : order.line_items && order.line_items.length > 0 && order.line_items[0].product_type === 'membership' ? (
+                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-800">
+                                                Membership
                                             </span>
                                         ) : order.line_items && order.line_items.length > 0 && order.line_items[0].product_type === 'lead_magnet' ? (
                                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
@@ -222,12 +226,20 @@ export default function MyPurchasesPage() {
                                 </div>
 
                                 {sub.status !== 'cancelled' && (
-                                    <button
-                                        onClick={() => handleCancelSubscription(sub.id)}
-                                        className="inline-flex justify-center items-center px-4 py-2 border border-red-200 text-sm font-medium rounded-md text-red-700 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
-                                    >
-                                        Cancel Subscription
-                                    </button>
+                                    <div className="flex items-center gap-3">
+                                        <Link
+                                            to={`/course-player/${sub.product_id}`}
+                                            className="inline-flex justify-center items-center px-4 py-2 border border-indigo-200 text-sm font-medium rounded-md text-indigo-700 bg-indigo-50 hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                                        >
+                                            Access Content
+                                        </Link>
+                                        <button
+                                            onClick={() => handleCancelSubscription(sub.id)}
+                                            className="inline-flex justify-center items-center px-4 py-2 border border-red-200 text-sm font-medium rounded-md text-red-700 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+                                        >
+                                            Cancel Subscription
+                                        </button>
+                                    </div>
                                 )}
                             </div>
                         ))}

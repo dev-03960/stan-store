@@ -80,6 +80,8 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, product,
                 throw new Error('Razorpay SDK failed to load. Are you online?');
             }
 
+            const refFromStorage = localStorage.getItem('stan_ref');
+
             const orderData = await createOrder({
                 product_id: product.id,
                 customer_name: name,
@@ -87,6 +89,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, product,
                 coupon_code: appliedCoupon || undefined,
                 booking_slot_start: selectedSlot || undefined,
                 bump_accepted: bumpAccepted,
+                referral_code: refFromStorage || undefined,
             });
 
             const options: any = {

@@ -13,7 +13,10 @@ export interface CreateProductDTO {
     timezone?: string;
     cancellation_window_hours?: number;
     availability?: import('./store').AvailabilityWindow[];
-    subscription_interval?: 'monthly' | 'yearly';
+    subscription_interval?: 'daily' | 'weekly' | 'monthly' | 'yearly';
+    subscription_billing_cycles?: number;
+    external_url?: string;
+    button_text?: string;
 }
 
 export interface UpdateProductDTO extends Partial<CreateProductDTO> { }
@@ -97,7 +100,7 @@ export async function uploadFileToUrl(url: string, file: File) {
 export interface Lesson {
     id: string; // lesson_id from backend
     title: string;
-    type: 'video' | 'text' | 'attachment';
+    type: 'video' | 'text' | 'attachment' | 'link';
     content: string; // URL, text, or file key
     sort_order: number;
     duration_minutes?: number;

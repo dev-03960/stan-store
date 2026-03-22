@@ -258,7 +258,11 @@ const SettingsPage = () => {
             if (avatarFile) {
                 const presigned = await getPresignedUrl(avatarFile.name, avatarFile.type, 'cover_image');
                 await uploadFileToUrl(presigned.url, avatarFile);
-                const r2PublicUrl = import.meta.env.VITE_R2_PUBLIC_URL || '';
+                let r2PublicUrl = import.meta.env.VITE_R2_PUBLIC_URL || '';
+                if (r2PublicUrl) {
+                    r2PublicUrl = r2PublicUrl.replace(/\/$/, '');
+                    if (!r2PublicUrl.startsWith('http')) r2PublicUrl = 'https://' + r2PublicUrl;
+                }
                 finalProfile.avatarUrl = r2PublicUrl ? `${r2PublicUrl}/${presigned.key}` : presigned.url.split('?')[0];
             }
 
@@ -266,7 +270,11 @@ const SettingsPage = () => {
             if (coverFile) {
                 const presigned = await getPresignedUrl(coverFile.name, coverFile.type, 'cover_image');
                 await uploadFileToUrl(presigned.url, coverFile);
-                const r2PublicUrl = import.meta.env.VITE_R2_PUBLIC_URL || '';
+                let r2PublicUrl = import.meta.env.VITE_R2_PUBLIC_URL || '';
+                if (r2PublicUrl) {
+                    r2PublicUrl = r2PublicUrl.replace(/\/$/, '');
+                    if (!r2PublicUrl.startsWith('http')) r2PublicUrl = 'https://' + r2PublicUrl;
+                }
                 finalProfile.coverPhotoUrl = r2PublicUrl ? `${r2PublicUrl}/${presigned.key}` : presigned.url.split('?')[0];
             }
 
@@ -380,6 +388,7 @@ const SettingsPage = () => {
                                             <span className="text-sm text-gray-600 dark:text-gray-400">
                                                 {avatarFile ? avatarFile.name : 'Click to upload profile photo'}
                                             </span>
+                                            <span className="text-xs text-gray-400 dark:text-gray-500 mt-1">Suggested: 400x400px, under 5MB</span>
                                         </label>
                                     </div>
                                 </div>
@@ -410,6 +419,7 @@ const SettingsPage = () => {
                                         <span className="text-sm text-gray-600 dark:text-gray-400">
                                             {coverFile ? coverFile.name : (profile?.coverPhotoUrl ? 'Change cover photo' : 'Click to upload cover photo')}
                                         </span>
+                                        <span className="text-xs text-gray-400 dark:text-gray-500 mt-1">Suggested: 1200x450px (8:3 Ratio)</span>
                                     </label>
                                 </div>
                             </div>

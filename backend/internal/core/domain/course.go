@@ -14,6 +14,7 @@ const (
 	LessonTypeVideo      LessonType = "video"
 	LessonTypeText       LessonType = "text"
 	LessonTypeAttachment LessonType = "attachment"
+	LessonTypeLink       LessonType = "link"
 )
 
 // Lesson represents an individual item in a course module

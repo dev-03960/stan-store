@@ -19,8 +19,9 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { getMyProducts, updateVisibility, deleteProduct, reorderProducts } from '../../lib/api/products';
 import type { Product } from '../../lib/api/store';
-import { Loader2, Plus, GripVertical, Edit2, Trash2, Eye, EyeOff, Mail, FileText, Video, BookOpen, Users, ArrowLeft } from 'lucide-react';
+import { Loader2, Plus, GripVertical, Edit2, Trash2, Eye, EyeOff, Mail, FileText, Video, BookOpen, Users, ArrowLeft, BarChart3 } from 'lucide-react';
 import ProductForm from './ProductForm';
+import { AffiliateAnalyticsModal } from './AffiliateAnalyticsModal';
 
 // Category definitions (matching ProductForm PRODUCT_TYPES)
 const CATEGORIES = [
@@ -71,9 +72,10 @@ interface SortableProductItemProps {
     onEdit: (product: Product) => void;
     onToggleVisibility: (id: string, current: boolean) => void;
     onDelete: (id: string) => void;
+    onViewAnalytics: (product: Product) => void;
 }
 
-const SortableProductItem = ({ product, onEdit, onToggleVisibility, onDelete }: SortableProductItemProps) => {
+const SortableProductItem = ({ product, onEdit, onToggleVisibility, onDelete, onViewAnalytics }: SortableProductItemProps) => {
     const {
         attributes,
         listeners,
@@ -139,6 +141,15 @@ const SortableProductItem = ({ product, onEdit, onToggleVisibility, onDelete }: 
                 >
                     {product.is_visible ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
                 </button>
+                {product.affiliate_enabled && (
+                    <button
+                        onClick={() => onViewAnalytics(product)}
+                        className="p-2 text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-full transition-colors"
+                        title="Affiliate Analytics"
+                    >
+                        <BarChart3 className="w-5 h-5" />
+                    </button>
+                )}
                 <button
                     onClick={() => onEdit(product)}
                     className="p-2 text-slate-400 dark:text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-full transition-colors"
@@ -161,6 +172,7 @@ const SortableProductItem = ({ product, onEdit, onToggleVisibility, onDelete }: 
 const ProductList: React.FC = () => {
     const queryClient = useQueryClient();
     const [editingProduct, setEditingProduct] = useState<Product | undefined>(undefined);
+    const [analyticsProduct, setAnalyticsProduct] = useState<Product | undefined>(undefined);
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
@@ -314,6 +326,7 @@ const ProductList: React.FC = () => {
                                 key={product.id}
                                 product={product}
                                 onEdit={(p) => { setEditingProduct(p); setIsFormOpen(true); }}
+                                onViewAnalytics={(p) => setAnalyticsProduct(p)}
                                 onToggleVisibility={(id, current) => visibilityMutation.mutate({ id, isVisible: !current })}
                                 onDelete={(id) => {
                                     if (confirm('Are you sure you want to delete this product?')) {
@@ -341,6 +354,14 @@ const ProductList: React.FC = () => {
                     product={editingProduct}
                     defaultProductType={selectedCategory || undefined}
                     onClose={() => setIsFormOpen(false)}
+                />
+            )}
+
+            {analyticsProduct && (
+                <AffiliateAnalyticsModal 
+                    isOpen={!!analyticsProduct}
+                    onClose={() => setAnalyticsProduct(undefined)}
+                    product={analyticsProduct}
                 />
             )}
         </div>

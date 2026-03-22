@@ -138,7 +138,6 @@ func (h *AffiliateHandler) TrackClick(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusNoContent)
 	}
 	_ = h.affiliateSvc.TrackClick(c.Context(), req.Code)
-	_ = h.affiliateSvc.TrackClick(c.Context(), req.Code)
 
 	c.Cookie(&fiber.Cookie{
 		Name:     "stan_ref",
@@ -150,6 +149,120 @@ func (h *AffiliateHandler) TrackClick(c *fiber.Ctx) error {
 		SameSite: "None", // Required for cross-origin
 	})
 
-	// Return 204 No Content transparently since it's just telemetry mapping
 	return c.SendStatus(fiber.StatusNoContent)
+}
+
+func (h *AffiliateHandler) UpdateAffiliateCommission(c *fiber.Ctx) error {
+	creatorID, ok := c.Locals("userId").(string)
+	if !ok {
+		return SendError(c, fiber.StatusUnauthorized, ErrUnauthorized, "Authentication required", nil)
+	}
+	cID, _ := primitive.ObjectIDFromHex(creatorID)
+
+	affiliateID := c.Params("id")
+	aID, err := primitive.ObjectIDFromHex(affiliateID)
+	if err != nil {
+		return SendError(c, fiber.StatusBadRequest, ErrValidation, "invalid affiliate id", nil)
+	}
+
+	var req struct {
+		CommissionRate float64 `json:"commission_rate"`
+	}
+	if err := c.BodyParser(&req); err != nil {
+		return SendError(c, fiber.StatusBadRequest, ErrValidation, "invalid json body", nil)
+	}
+
+	if err := h.affiliateSvc.UpdateAffiliateCommission(c.Context(), cID, aID, req.CommissionRate); err != nil {
+		return SendError(c, fiber.StatusBadRequest, ErrValidation, err.Error(), nil)
+	}
+	return SendOK(c, fiber.Map{"message": "commission updated"})
+}
+
+func (h *AffiliateHandler) SuspendAffiliate(c *fiber.Ctx) error {
+	return h.toggleAffiliateStatus(c, true)
+}
+
+func (h *AffiliateHandler) ReactivateAffiliate(c *fiber.Ctx) error {
+	return h.toggleAffiliateStatus(c, false)
+}
+
+func (h *AffiliateHandler) toggleAffiliateStatus(c *fiber.Ctx, suspend bool) error {
+	creatorID, ok := c.Locals("userId").(string)
+	if !ok {
+		return SendError(c, fiber.StatusUnauthorized, ErrUnauthorized, "Authentication required", nil)
+	}
+	cID, _ := primitive.ObjectIDFromHex(creatorID)
+
+	affiliateID := c.Params("id")
+	aID, err := primitive.ObjectIDFromHex(affiliateID)
+	if err != nil {
+		return SendError(c, fiber.StatusBadRequest, ErrValidation, "invalid affiliate id", nil)
+	}
+
+	if suspend {
+		err = h.affiliateSvc.SuspendAffiliate(c.Context(), cID, aID)
+	} else {
+		err = h.affiliateSvc.ReactivateAffiliate(c.Context(), cID, aID)
+	}
+
+	if err != nil {
+		return SendError(c, fiber.StatusBadRequest, ErrValidation, err.Error(), nil)
+	}
+	return SendOK(c, fiber.Map{"message": "status updated"})
+}
+
+func (h *AffiliateHandler) ManualGrantAffiliate(c *fiber.Ctx) error {
+	creatorID, ok := c.Locals("userId").(string)
+	if !ok {
+		return SendError(c, fiber.StatusUnauthorized, ErrUnauthorized, "Authentication required", nil)
+	}
+	cID, _ := primitive.ObjectIDFromHex(creatorID)
+
+	var req struct {
+		Email string `json:"email"`
+		Name  string `json:"name"`
+	}
+	if err := c.BodyParser(&req); err != nil {
+		return SendError(c, fiber.StatusBadRequest, ErrValidation, "invalid json body", nil)
+	}
+
+	aff, err := h.affiliateSvc.ManualGrant(c.Context(), cID, req.Email, req.Name)
+	if err != nil {
+		return SendError(c, fiber.StatusBadRequest, ErrValidation, err.Error(), nil)
+	}
+
+	return SendOK(c, fiber.Map{
+		"message":       "affiliate granted",
+		"referral_code": aff.ReferralCode,
+	})
+}
+
+func (h *AffiliateHandler) GetProductAffiliateAnalytics(c *fiber.Ctx) error {
+	creatorID, ok := c.Locals("userId").(string)
+	if !ok {
+		return SendError(c, fiber.StatusUnauthorized, ErrUnauthorized, "Authentication required", nil)
+	}
+	cID, _ := primitive.ObjectIDFromHex(creatorID)
+
+	productID := c.Params("id")
+	pID, err := primitive.ObjectIDFromHex(productID)
+	if err != nil {
+		return SendError(c, fiber.StatusBadRequest, ErrValidation, "invalid product id", nil)
+	}
+
+	// Verify product belongs to creator
+	product, err := h.productSvc.GetProductByID(c.Context(), productID)
+	if err != nil || product == nil {
+		return SendError(c, fiber.StatusNotFound, ErrNotFound, "product not found", nil)
+	}
+	if product.CreatorID.Hex() != creatorID {
+		return SendError(c, fiber.StatusForbidden, ErrForbidden, "unauthorized to view this product's analytics", nil)
+	}
+
+	analytics, err := h.affiliateSvc.GetProductAffiliateAnalytics(c.Context(), pID, cID)
+	if err != nil {
+		return SendError(c, fiber.StatusInternalServerError, ErrInternalServer, "failed to get analytics", nil)
+	}
+
+	return SendOK(c, analytics)
 }

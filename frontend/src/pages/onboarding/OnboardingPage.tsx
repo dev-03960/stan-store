@@ -68,7 +68,10 @@ export default function OnboardingPage() {
     const handleClaimUsername = async () => {
         if (!usernameAvailable) return;
         try {
-            await api.post('/auth/username', { username });
+            await api.post('/auth/username', { 
+                username,
+                referred_by_username: localStorage.getItem('stan_ref') || undefined
+            });
             await checkAuth(); // Refresh user state
             setStep('profile');
         } catch (err: any) {

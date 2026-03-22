@@ -45,6 +45,19 @@ func (m *MockAffiliateRepo) FindAllByCreator(ctx context.Context, creatorID prim
 	return args.Get(0).([]*domain.Affiliate), args.Error(1)
 }
 
+func (m *MockAffiliateRepo) FindByID(ctx context.Context, id primitive.ObjectID) (*domain.Affiliate, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.Affiliate), args.Error(1)
+}
+
+func (m *MockAffiliateRepo) UpdateCommission(ctx context.Context, affiliateID primitive.ObjectID, rate float64) error {
+	args := m.Called(ctx, affiliateID, rate)
+	return args.Error(0)
+}
+
 func (m *MockAffiliateRepo) UpdateStats(ctx context.Context, id primitive.ObjectID, earned int64, isSale bool, isClick bool) error {
 	args := m.Called(ctx, id, earned, isSale, isClick)
 	return args.Error(0)
@@ -71,6 +84,14 @@ func (m *MockAffiliateSaleRepo) FindAllByAffiliate(ctx context.Context, affiliat
 
 func (m *MockAffiliateSaleRepo) FindPendingByAffiliate(ctx context.Context, affiliateID primitive.ObjectID) ([]*domain.AffiliateSale, error) {
 	args := m.Called(ctx, affiliateID)
+	return args.Get(0).([]*domain.AffiliateSale), args.Error(1)
+}
+
+func (m *MockAffiliateSaleRepo) FindAllByProduct(ctx context.Context, productID primitive.ObjectID) ([]*domain.AffiliateSale, error) {
+	args := m.Called(ctx, productID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
 	return args.Get(0).([]*domain.AffiliateSale), args.Error(1)
 }
 

@@ -54,6 +54,10 @@ type InstagramDMPayload struct {
 	Message   string `json:"message"`
 }
 
+type IGDeliverService interface {
+	SendDM(ctx context.Context, creatorID string, recipientIGID string, message string) error
+}
+
 // WorkerService handles initialization and routing of background jobs
 type WorkerService struct {
 	server       *asynq.Server
@@ -65,6 +69,7 @@ type WorkerService struct {
 	emailService domain.EmailService
 	igConnRepo   domain.InstagramConnectionRepository
 	igAutoRepo   domain.InstagramAutomationRepository
+	igDeliverSvc IGDeliverService
 	analyticsSvc *AnalyticsService
 	dailyRepo    domain.AnalyticsDailyRepository
 	aggregator   interface {
@@ -188,6 +193,10 @@ func (s *WorkerService) SetDependencies(
 	s.aggregator = aggregator
 }
 
+func (s *WorkerService) SetInstagramDeliverService(svc IGDeliverService) {
+	s.igDeliverSvc = svc
+}
+
 // --- Handlers ---
 
 func (s *WorkerService) handleEmailSend(ctx context.Context, t *asynq.Task) error {
@@ -289,20 +298,18 @@ func (s *WorkerService) handleInstagramDM(ctx context.Context, t *asynq.Task) er
 		return fmt.Errorf("instagram connection not found or error: %w", err)
 	}
 
-	// Mocking Decrypted token as we don't hold the encryption key in the worker here directly
-	decryptedToken := "mocked_decrypted_token"
+	if s.igDeliverSvc == nil {
+		return fmt.Errorf("instagram deliver service missing in worker service")
+	}
 
-	logger.Info("Sending IG DM", "recipient", payload.IGUserID, "creator", payload.CreatorID, "message", payload.Message)
+	logger.Info("Sending IG DM", "recipient", payload.IGUserID, "creator", payload.CreatorID)
 
-	// Mock dispatching Graph API request
-	_ = decryptedToken // simulate usage
-	// url := fmt.Sprintf("https://graph.facebook.com/v18.0/%s/messages?access_token=%s", conn.IGUserID, decryptedToken)
-	// (Simulation skips actual HTTP POST)
+	err = s.igDeliverSvc.SendDM(ctx, payload.CreatorID, payload.IGUserID, payload.Message)
+	if err != nil {
+		logger.Error("Failed to send IG DM", "error", err)
+		return err
+	}
 
-	// Update the DB stats successfully
-	// The payload from instagram_service enqueue contains automation_id as well, but our typical payload struct doesn't have it explicitly typed. Let's assume we can parse it if we added it.
-
-	// For simulation, we log success
 	logger.Info("IG DM Sent successfully")
 
 	return nil

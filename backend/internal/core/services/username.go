@@ -33,12 +33,16 @@ func (e *UsernameError) Error() string {
 
 // UsernameService handles username validation and claiming.
 type UsernameService struct {
-	userRepo domain.UserRepository
+	userRepo     domain.UserRepository
+	referralRepo domain.PlatformReferralRepository
 }
 
 // NewUsernameService creates a new UsernameService.
-func NewUsernameService(userRepo domain.UserRepository) *UsernameService {
-	return &UsernameService{userRepo: userRepo}
+func NewUsernameService(userRepo domain.UserRepository, referralRepo domain.PlatformReferralRepository) *UsernameService {
+	return &UsernameService{
+		userRepo:     userRepo,
+		referralRepo: referralRepo,
+	}
 }
 
 // ValidateUsername checks format and reserved status. Returns nil if valid.
@@ -80,7 +84,7 @@ func (s *UsernameService) CheckAvailability(ctx context.Context, username string
 }
 
 // ClaimUsername sets the username on a user's document.
-func (s *UsernameService) ClaimUsername(ctx context.Context, userID string, username string) (*domain.User, *UsernameError) {
+func (s *UsernameService) ClaimUsername(ctx context.Context, userID string, username string, referredByUsername string) (*domain.User, *UsernameError) {
 	username = strings.ToLower(strings.TrimSpace(username))
 
 	// Validate format
@@ -117,6 +121,24 @@ func (s *UsernameService) ClaimUsername(ctx context.Context, userID string, user
 			return nil, &UsernameError{Code: "USERNAME_TAKEN", Message: "This username is already claimed"}
 		}
 		return nil, &UsernameError{Code: "ERR_INTERNAL", Message: "Failed to update username"}
+	}
+
+	// Record Referral if applicable
+	if referredByUsername != "" {
+		referrer, _ := s.userRepo.FindByUsername(ctx, strings.ToLower(strings.TrimSpace(referredByUsername)))
+		if referrer != nil && referrer.ID.Hex() != userID {
+			ref := &domain.PlatformReferral{
+				ReferrerID:       referrer.ID,
+				ReferredID:       updated.ID,
+				Status:           domain.ReferralStatusPending,
+				CreatedAt:        time.Now(),
+				UpdatedAt:        time.Now(),
+				ReferredName:     updated.DisplayName,
+				ReferredEmail:    updated.Email,
+				ReferredUsername: updated.Username,
+			}
+			_ = s.referralRepo.Create(ctx, ref)
+		}
 	}
 
 	return updated, nil

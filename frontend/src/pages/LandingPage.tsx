@@ -152,7 +152,7 @@ export default function LandingPage() {
                     </motion.div>
 
                     {/* CTA Buttons */}
-                    <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-16">
                         <a
                             href="/login"
                             className="group relative inline-flex items-center gap-3 rounded-full bg-[#6786f5] px-10 py-5 text-xl font-bold text-white shadow-2xl shadow-blue-500/30 transition-all hover:shadow-blue-500/40 hover:scale-105 hover:bg-[#5570e0]"
@@ -169,6 +169,25 @@ export default function LandingPage() {
                             <ArrowRight className="w-5 h-5" />
                         </a>
                     </div>
+
+                    {/* Dashboard Mockup Showcase */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 100 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.4, duration: 1, type: "spring", stiffness: 100 }}
+                        className="relative mx-auto max-w-5xl rounded-[2rem] sm:rounded-[4rem] bg-gray-900/5 dark:bg-white/5 p-2 sm:p-4 backdrop-blur-xl border border-white/20 shadow-2xl shadow-indigo-500/10"
+                    >
+                        <div className="rounded-[1.5rem] sm:rounded-[3rem] overflow-hidden border border-gray-200/50 dark:border-gray-800 shadow-2xl bg-black relative aspect-[16/10] sm:aspect-[16/9]">
+                            <img 
+                                src="/mockups/dashboard.png" 
+                                alt="Mio Store Creator Dashboard" 
+                                className="w-full h-full object-cover opacity-90 hover:opacity-100 transition-opacity duration-500"
+                            />
+                            {/* Overlay glow */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 via-transparent to-transparent pointer-events-none" />
+                        </div>
+                    </motion.div>
+
                 </motion.div>
             </section>
 
@@ -264,6 +283,14 @@ export default function LandingPage() {
                                     </motion.div>
                                 ))}
                             </div>
+                            
+                            <motion.div 
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                whileInView={{ opacity: 1, scale: 1 }}
+                                className="mt-8 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-xl"
+                            >
+                                <img src="/mockups/marketing.png" alt="Marketing Automation Tool" className="w-full object-cover" />
+                            </motion.div>
                         </motion.div>
                     </div>
                 </div>
@@ -343,32 +370,54 @@ export default function LandingPage() {
                         Your store works perfectly across Instagram, YouTube, and social media.
                     </p>
 
-                    <motion.div 
-                        variants={staggerContainer}
-                        initial="initial"
-                        whileInView="whileInView"
-                        className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4"
-                    >
-                        {[
-                            { text: 'Mobile-first design', icon: Smartphone },
-                            { text: 'Link-in-bio storefront', icon: Globe },
-                            { text: 'Custom domains', icon: Layers },
-                            { text: 'Custom themes', icon: PenTool },
-                            { text: 'Optimized checkout', icon: Zap }
-                        ].map((item) => (
+                    <div className="flex flex-col lg:flex-row items-center justify-between gap-12 max-w-5xl mx-auto">
+                        <div className="lg:w-1/2 text-left">
                             <motion.div 
-                                variants={fadeInUp}
-                                whileHover={{ y: -8, transition: { duration: 0.2 } }}
-                                key={item.text} 
-                                className="p-6 rounded-2xl bg-white dark:bg-[#0f111a] border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col items-center gap-4 transition-colors hover:border-[#6786f5]"
+                                variants={staggerContainer}
+                                initial="initial"
+                                whileInView="whileInView"
+                                className="grid gap-6"
                             >
-                                <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-[#6786f5]">
-                                    <item.icon className="w-6 h-6" />
-                                </div>
-                                <span className="font-bold text-gray-800 dark:text-gray-200 text-sm">{item.text}</span>
+                                {[
+                                    { text: 'Mobile-first design', icon: Smartphone, desc: 'Optimized for mobile link-in-bios.' },
+                                    { text: 'Link-in-bio storefront', icon: Globe, desc: 'One central hub for all your offerings.' },
+                                    { text: 'Custom domains', icon: Layers, desc: 'Connect your own branded domain easily.' },
+                                    { text: 'Custom themes', icon: PenTool, desc: 'Match your exact brand aesthetic.' },
+                                    { text: 'Optimized checkout', icon: Zap, desc: 'Frictionless 1-click Apple Pay checkouts.' }
+                                ].map((item) => (
+                                    <motion.div 
+                                        variants={fadeInUp}
+                                        whileHover={{ x: 8, transition: { duration: 0.2 } }}
+                                        key={item.text} 
+                                        className="p-5 rounded-2xl bg-white dark:bg-[#0f111a] border border-gray-100 dark:border-gray-800 shadow-sm flex items-start gap-4 transition-colors hover:border-[#6786f5]"
+                                    >
+                                        <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-[#6786f5]">
+                                            <item.icon className="w-6 h-6" />
+                                        </div>
+                                        <div>
+                                            <span className="block font-bold text-gray-900 dark:text-white mb-1">{item.text}</span>
+                                            <span className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">{item.desc}</span>
+                                        </div>
+                                    </motion.div>
+                                ))}
                             </motion.div>
-                        ))}
-                    </motion.div>
+                        </div>
+                        
+                        <div className="lg:w-1/2 flex justify-center perspective-[2000px]">
+                            <motion.div
+                                initial={{ rotateY: 20, rotateX: 10, opacity: 0, y: 50 }}
+                                whileInView={{ rotateY: 0, rotateX: 0, opacity: 1, y: 0 }}
+                                transition={{ duration: 1, type: "spring" }}
+                                className="relative rounded-[2.5rem] p-3 bg-gray-900 shadow-2xl max-w-[320px] w-full border-4 border-gray-800"
+                            >
+                                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/3 h-6 bg-gray-900 rounded-b-xl z-20" />
+                                <div className="rounded-[2rem] overflow-hidden bg-white h-[650px] relative">
+                                    <img src="/mockups/mobile.png" alt="Mobile Storefront" className="w-full h-full object-cover" />
+                                </div>
+                            </motion.div>
+                        </div>
+                    </div>
+
                 </div>
             </motion.section>
 

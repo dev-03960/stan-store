@@ -29,7 +29,8 @@ func (h *UsernameHandler) ClaimUsername(c *fiber.Ctx) error {
 
 	// Parse request body
 	var req struct {
-		Username string `json:"username"`
+		Username         string `json:"username"`
+		ReferredBy       string `json:"referred_by_username"`
 	}
 	if err := c.BodyParser(&req); err != nil {
 		return SendError(c, fiber.StatusBadRequest, ErrBadRequest, "Invalid request body", nil)
@@ -40,7 +41,7 @@ func (h *UsernameHandler) ClaimUsername(c *fiber.Ctx) error {
 	}
 
 	// Claim username
-	user, usernameErr := h.usernameService.ClaimUsername(c.Context(), userID, req.Username)
+	user, usernameErr := h.usernameService.ClaimUsername(c.Context(), userID, req.Username, req.ReferredBy)
 	if usernameErr != nil {
 		switch usernameErr.Code {
 		case "ERR_VALIDATION":

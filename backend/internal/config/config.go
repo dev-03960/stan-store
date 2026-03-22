@@ -36,6 +36,7 @@ type Config struct {
 	InstagramAppSecret        string `json:"instagramAppSecret"`
 	InstagramVerifyToken      string `json:"instagramVerifyToken"`
 	InstagramRedirectURI      string `json:"instagramRedirectUri"`
+	InstagramConfigID         string `json:"instagramConfigId"`
 	GoogleCalendarRedirectURL string `json:"googleCalendarRedirectUrl"`
 }
 
@@ -73,6 +74,7 @@ func Load() (*Config, error) {
 		InstagramAppSecret:        os.Getenv("INSTAGRAM_APP_SECRET"),
 		InstagramVerifyToken:      getEnv("INSTAGRAM_VERIFY_TOKEN", "mio_store_ig_verify"),
 		InstagramRedirectURI:      os.Getenv("INSTAGRAM_REDIRECT_URI"),
+		InstagramConfigID:         os.Getenv("INSTAGRAM_CONFIG_ID"),
 		GoogleCalendarRedirectURL: getEnv("GOOGLE_CALENDAR_REDIRECT_URL", "http://localhost:8080/api/v1/integrations/google-calendar/oauth/callback"),
 	}
 

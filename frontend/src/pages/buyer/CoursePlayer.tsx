@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Loader2, ArrowLeft, ChevronDown, ChevronRight, PlayCircle, FileText, Paperclip, CheckCircle } from 'lucide-react';
+import { Loader2, ArrowLeft, ChevronDown, ChevronRight, PlayCircle, FileText, Paperclip, CheckCircle, ExternalLink } from 'lucide-react';
 import { getPurchasedCourse } from '../../lib/api/buyer';
 import type { Lesson } from '../../lib/api/products';
 import ReactMarkdown from 'react-markdown';
@@ -83,6 +83,7 @@ export const CoursePlayer = () => {
             case 'video': return <PlayCircle className="w-4 h-4" />;
             case 'text': return <FileText className="w-4 h-4" />;
             case 'attachment': return <Paperclip className="w-4 h-4" />;
+            case 'link': return <ExternalLink className="w-4 h-4" />;
             default: return <FileText className="w-4 h-4" />;
         }
     };
@@ -171,6 +172,29 @@ export const CoursePlayer = () => {
 
                         {activeLesson.type === 'video' && !activeLesson.content.includes('youtube.com') && (
                             <p className="text-slate-600 italic mt-8">Watch the video above for this lesson. Notes will appear here if the creator updates the course.</p>
+                        )}
+
+                        {activeLesson.type === 'link' && (
+                            <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-6 flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 bg-indigo-100 flex items-center justify-center rounded-lg text-indigo-600">
+                                        <ExternalLink className="w-6 h-6" />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-semibold text-slate-900">External Course</h3>
+                                        <p className="text-sm text-slate-600">This lesson is hosted on an external platform</p>
+                                    </div>
+                                </div>
+                                <a
+                                    href={activeLesson.content}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="bg-indigo-600 text-white px-5 py-2.5 rounded-lg font-medium hover:bg-indigo-700 transition flex items-center gap-2"
+                                >
+                                    <ExternalLink className="w-4 h-4" />
+                                    Open Link
+                                </a>
+                            </div>
                         )}
                     </div>
                 </div>

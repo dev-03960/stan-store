@@ -52,6 +52,8 @@ func main() {
 	bookingRepo := storage.NewMongoBookingRepository(mongoDB)
 	courseRepo := storage.NewMongoCourseRepository(mongoDB)
 	blogRepo := storage.NewMongoBlogRepository(mongoDB)
+	platformSubRepo := storage.NewMongoPlatformSubscriptionRepository(mongoDB.Database)
+	platformReferralRepo := storage.NewMongoPlatformReferralRepository(mongoDB.Database)
 
 	// 5. Initialize services
 	jwtService := services.NewJWTService(cfg.JWTSecret)
@@ -71,7 +73,7 @@ func main() {
 		rawRedisClient = redisClient.Client
 	}
 	authService := services.NewAuthService(userRepo, jwtService, rawRedisClient, emailAdapter)
-	usernameService := services.NewUsernameService(userRepo)
+	usernameService := services.NewUsernameService(userRepo, platformReferralRepo)
 	profileService := services.NewProfileService(userRepo, cache)
 	productService := services.NewProductService(productRepo, cache)
 	storeService := services.NewStoreService(userRepo, productRepo, cache)
@@ -193,6 +195,14 @@ func main() {
 	blogService := services.NewBlogService(blogRepo)
 	blogHandler := httpAdapter.NewBlogHandler(blogService)
 
+	// Platform Subscription
+	platformSubService := services.NewPlatformSubscriptionService(platformSubRepo, userRepo, platformReferralRepo, transactionRepo)
+	platformSubHandler := httpAdapter.NewPlatformSubscriptionHandler(platformSubService)
+
+	// Platform Referral
+	platformReferralService := services.NewPlatformReferralService(platformReferralRepo, transactionRepo)
+	platformReferralHandler := httpAdapter.NewPlatformReferralHandler(platformReferralService)
+
 	var aiHandler *httpAdapter.AIHandler
 	if cfg.AIApiKey != "" {
 		geminiGen, err := ai.NewGeminiGenerator(context.Background(), cfg.AIApiKey)
@@ -234,6 +244,7 @@ func main() {
 		igAppID,
 		igAppSecret,
 		igRedirect,
+		cfg.InstagramConfigID,
 	)
 	igHandler := httpAdapter.NewInstagramHandler(igService, igAppSecret, igVerifyToken, cfg.FrontendURL)
 
@@ -253,6 +264,7 @@ func main() {
 	orderService.SetWorkerClient(workerService.GetClient())
 	orderService.SetFrontendURL(cfg.FrontendURL)
 	workerService.SetDependencies(orderService, emailAdapter, igConnRepo, igAutoRepo, analyticsService, analyticsDailyRepo, analyticsRepo)
+	workerService.SetInstagramDeliverService(igService)
 	adminService.SetWorkerService(workerService)
 
 	// Initialize Cron Scheduling
@@ -292,6 +304,7 @@ func main() {
 		FrontendURL:     cfg.FrontendURL,
 		JWTService:      jwtService,
 		UserRepo:        userRepo,
+		PlatformSubRepo: platformSubRepo,
 		AuthHandler:     authHandler,
 		UsernameHandler: usernameHandler,
 		ProfileHandler:  profileHandler,
@@ -319,6 +332,8 @@ func main() {
 		AffiliateHandler:      httpAdapter.NewAffiliateHandler(affiliateSvc, productService),
 		AnalyticsHandler:      analyticsHandler,
 		BlogHandler:           blogHandler,
+		PlatformSubHandler:    platformSubHandler,
+		PlatformReferralHandler: platformReferralHandler,
 		WorkerService:         workerService,
 	})
 

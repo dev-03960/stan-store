@@ -11,11 +11,12 @@ import (
 type ProductType string
 
 const (
-	ProductTypeDownload   ProductType = "download"
-	ProductTypeCourse     ProductType = "course"
-	ProductTypeBooking    ProductType = "booking"
-	ProductTypeLeadMagnet ProductType = "lead_magnet"
-	ProductTypeMembership ProductType = "membership"
+	ProductTypeDownload      ProductType = "download"
+	ProductTypeCourse        ProductType = "course"
+	ProductTypeBooking       ProductType = "booking"
+	ProductTypeLeadMagnet    ProductType = "lead_magnet"
+	ProductTypeMembership    ProductType = "membership"
+	ProductTypeExternalLink  ProductType = "external_link"
 )
 
 // BumpConfig holds order bump configuration for a product.
@@ -49,7 +50,12 @@ type Product struct {
 	Availability            []AvailabilityWindow `bson:"availability,omitempty" json:"availability,omitempty"`
 	CancellationWindowHours int                  `bson:"cancellation_window_hours,omitempty" json:"cancellation_window_hours,omitempty"`
 	// Subscription Fields
-	SubscriptionInterval string `bson:"subscription_interval,omitempty" json:"subscription_interval,omitempty"` // "monthly", "yearly"
+	SubscriptionInterval      string `bson:"subscription_interval,omitempty" json:"subscription_interval,omitempty"`             // "daily", "weekly", "monthly", "yearly"
+	SubscriptionBillingCycles int    `bson:"subscription_billing_cycles,omitempty" json:"subscription_billing_cycles,omitempty"` // 0 = indefinite
+
+	// External Link Fields
+	ExternalURL string `bson:"external_url,omitempty" json:"external_url,omitempty"`
+	ButtonText  string `bson:"button_text,omitempty" json:"button_text,omitempty"` // CTA label, e.g. "Watch Now"
 
 	// Affiliate Fields
 	AffiliateEnabled bool    `bson:"affiliate_enabled" json:"affiliate_enabled"`

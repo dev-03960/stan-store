@@ -126,6 +126,18 @@ func (s *ProductService) UpdateProduct(ctx context.Context, id string, creatorID
 	if updates.CoverImageURL != "" {
 		existing.CoverImageURL = updates.CoverImageURL
 	}
+	if updates.DurationMinutes != 0 {
+		existing.DurationMinutes = updates.DurationMinutes
+	}
+	if updates.Timezone != "" {
+		existing.Timezone = updates.Timezone
+	}
+	if updates.CancellationWindowHours != 0 {
+		existing.CancellationWindowHours = updates.CancellationWindowHours
+	}
+	if updates.Availability != nil {
+		existing.Availability = updates.Availability
+	}
 	// Note: We might want to allow updating visibility and sort order too.
 	// Assuming 'updates' contains the fields to change.
 	// Bool fields are tricky with zero values. Ideally we use a map or pointer fields for updates.

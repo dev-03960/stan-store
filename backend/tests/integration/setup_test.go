@@ -137,7 +137,8 @@ func setupTestApp(t *testing.T) (*fiber.App, func()) {
 	var cache domain.Cache
 	jwtService := services.NewJWTService(testJWTSecret)
 	authService := services.NewAuthService(userRepo, jwtService, nil, nil)
-	usernameService := services.NewUsernameService(userRepo)
+	platformReferralRepo := storage.NewMongoPlatformReferralRepository(testStorageDB.Database)
+	usernameService := services.NewUsernameService(userRepo, platformReferralRepo)
 	profileService := services.NewProfileService(userRepo, cache)
 	productService := services.NewProductService(productRepo, cache)
 

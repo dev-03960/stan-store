@@ -18,6 +18,7 @@ type RouterDeps struct {
 	FrontendURL           string
 	JWTService            *services.JWTService
 	UserRepo              domain.UserRepository
+	PlatformSubRepo       domain.PlatformSubscriptionRepository
 	AuthHandler           *AuthHandler
 	UsernameHandler       *UsernameHandler
 	ProfileHandler        *ProfileHandler
@@ -44,6 +45,8 @@ type RouterDeps struct {
 	AnalyticsHandler      *AnalyticsHandler
 	NewsletterHandler     *NewsletterHandler
 	BlogHandler           *BlogHandler
+	PlatformSubHandler    *PlatformSubscriptionHandler
+	PlatformReferralHandler *PlatformReferralHandler
 	WorkerService         *services.WorkerService
 }
 
@@ -63,6 +66,7 @@ func SetupRouter(app *fiber.App, deps *RouterDeps) {
 	// Auth middleware (reusable)
 	authRequired := AuthRequired(deps.JWTService)
 	banCheck := BanCheck(deps.UserRepo)
+	subscriptionCheck := SubscriptionRequired(deps.PlatformSubRepo)
 
 	// API v1 routes
 	v1 := app.Group("/api/v1")
@@ -120,12 +124,16 @@ func SetupRouter(app *fiber.App, deps *RouterDeps) {
 	auth.Post("/logout", authRequired, deps.AuthHandler.Logout)
 	auth.Post("/username", authRequired, banCheck, deps.UsernameHandler.ClaimUsername)
 
-	// Creator routes (protected)
+	// Platform Subscription routes (protected - but NOT gated by subscription check itself)
+	platformSub := v1.Group("/platform")
+	platformSub.Get("/subscription", authRequired, banCheck, deps.PlatformSubHandler.GetMySubscription)
+
+	// Creator routes (protected + subscription required)
 	creator := v1.Group("/creator")
-	creator.Get("/profile", authRequired, banCheck, deps.ProfileHandler.GetProfile)
-	creator.Put("/profile", authRequired, banCheck, deps.ProfileHandler.UpdateProfile)
-	creator.Post("/payout-settings", authRequired, banCheck, deps.PayoutHandler.SavePayoutSettings)
-	creator.Get("/payout-settings", authRequired, banCheck, deps.PayoutHandler.GetPayoutSettings)
+	creator.Get("/profile", authRequired, banCheck, subscriptionCheck, deps.ProfileHandler.GetProfile)
+	creator.Put("/profile", authRequired, banCheck, subscriptionCheck, deps.ProfileHandler.UpdateProfile)
+	creator.Post("/payout-settings", authRequired, banCheck, subscriptionCheck, deps.PayoutHandler.SavePayoutSettings)
+	creator.Get("/payout-settings", authRequired, banCheck, subscriptionCheck, deps.PayoutHandler.GetPayoutSettings)
 
 	// Concurrency limiter for withdrawals
 	var withdrawMu sync.Map
@@ -150,6 +158,9 @@ func SetupRouter(app *fiber.App, deps *RouterDeps) {
 		creator.Post("/newsletter", authRequired, banCheck, deps.NewsletterHandler.SendNewsletter)
 	}
 	creator.Get("/analytics", authRequired, banCheck, deps.AnalyticsHandler.GetDashboardMetrics)
+	if deps.PlatformReferralHandler != nil {
+		creator.Get("/referrals", authRequired, banCheck, deps.PlatformReferralHandler.GetMyReferrals)
+	}
 
 	creator.Get("/email-templates/:type", authRequired, banCheck, deps.EmailTemplateHandler.GetTemplate)
 	creator.Put("/email-templates/:type", authRequired, banCheck, deps.EmailTemplateHandler.UpdateTemplate)
@@ -175,7 +186,12 @@ func SetupRouter(app *fiber.App, deps *RouterDeps) {
 
 	// Affiliate Protected Routes
 	creator.Post("/products/:id/affiliates", deps.AffiliateHandler.EnableAffiliate)
+	creator.Get("/products/:id/affiliate-analytics", deps.AffiliateHandler.GetProductAffiliateAnalytics)
 	creator.Get("/affiliates", deps.AffiliateHandler.GetCreatorAffiliates)
+	creator.Put("/affiliates/:id/commission", deps.AffiliateHandler.UpdateAffiliateCommission)
+	creator.Patch("/affiliates/:id/suspend", deps.AffiliateHandler.SuspendAffiliate)
+	creator.Patch("/affiliates/:id/reactivate", deps.AffiliateHandler.ReactivateAffiliate)
+	creator.Post("/affiliates/manual-grant", deps.AffiliateHandler.ManualGrantAffiliate)
 
 	// Coupon routes (protected)
 	coupons := v1.Group("/coupons", authRequired, banCheck)
@@ -339,6 +355,15 @@ func SetupRouter(app *fiber.App, deps *RouterDeps) {
 		admin.Get("/jobs/stats", authRequired, RoleRequired("admin"), deps.AdminHandler.GetJobStats)
 	}
 	admin.Get("/webhooks/stats", authRequired, RoleRequired("admin"), deps.AdminHandler.GetWebhookStats)
+
+	// Admin Subscription Management routes
+	if deps.PlatformSubHandler != nil {
+		admin.Get("/subscriptions", authRequired, RoleRequired("admin"), deps.PlatformSubHandler.ListSubscriptions)
+		admin.Get("/subscriptions/analytics", authRequired, RoleRequired("admin"), deps.PlatformSubHandler.GetAnalytics)
+		admin.Post("/subscriptions/grant", authRequired, RoleRequired("admin"), deps.PlatformSubHandler.GrantSubscription)
+		admin.Post("/subscriptions/revoke", authRequired, RoleRequired("admin"), deps.PlatformSubHandler.RevokeSubscription)
+		admin.Post("/creators", authRequired, RoleRequired("admin"), deps.PlatformSubHandler.AddCreator)
+	}
 
 	// Blog Admin routes
 	admin.Get("/blogs", authRequired, RoleRequired("admin"), deps.BlogHandler.AdminListBlogs)

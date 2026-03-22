@@ -7,6 +7,7 @@ import (
 
 	"github.com/devanshbhargava/stan-store/internal/core/domain"
 	"github.com/devanshbhargava/stan-store/internal/core/services"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // AuthRequired middleware extracts and validates the JWT from the HTTP-Only cookie.
@@ -87,6 +88,40 @@ func BanCheck(userRepo domain.UserRepository) fiber.Handler {
 
 		if user.Status == domain.UserStatusBanned {
 			return SendError(c, fiber.StatusForbidden, ErrAccountBanned, "Your account has been suspended", nil)
+		}
+
+		return c.Next()
+	}
+}
+
+// SubscriptionRequired middleware verifies that the authenticated creator has an active platform subscription.
+// Must be used AFTER AuthRequired and BanCheck in the middleware chain.
+// Admin users bypass this check. Buyer users bypass this check.
+func SubscriptionRequired(subRepo domain.PlatformSubscriptionRepository) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		// Only apply to creator role
+		role, _ := c.Locals("role").(string)
+		if role == domain.RoleAdmin || role == domain.RoleBuyer {
+			return c.Next()
+		}
+
+		userID, ok := c.Locals("userId").(string)
+		if !ok || userID == "" {
+			return c.Next() // Let AuthRequired handle missing userId
+		}
+
+		objID, err := primitive.ObjectIDFromHex(userID)
+		if err != nil {
+			return c.Next()
+		}
+
+		sub, err := subRepo.FindByCreatorID(context.Background(), objID)
+		if err != nil || sub == nil {
+			return SendError(c, fiber.StatusForbidden, ErrSubscriptionRequired, "Platform subscription required. Please subscribe to access the dashboard.", nil)
+		}
+
+		if !sub.IsAccessAllowed() {
+			return SendError(c, fiber.StatusForbidden, ErrSubscriptionRequired, "Your subscription has expired. Please renew to continue using the platform.", nil)
 		}
 
 		return c.Next()

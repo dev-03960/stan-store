@@ -22,20 +22,36 @@ func NewProductHandler(service *services.ProductService) *ProductHandler {
 
 // CreateProductDTO defines the request body for creating a product.
 type CreateProductDTO struct {
-	Title         string `json:"title"`
-	Description   string `json:"description"`
-	Price         int64  `json:"price"` // In paise
-	CoverImageURL string `json:"cover_image_url"`
-	FileURL       string `json:"file_url"`
-	ProductType   string `json:"product_type"`
+	Title                   string                      `json:"title"`
+	Description             string                      `json:"description"`
+	Price                   int64                       `json:"price"` // In paise
+	CoverImageURL           string                      `json:"cover_image_url"`
+	FileURL                 string                      `json:"file_url"`
+	ProductType             string                      `json:"product_type"`
+	DurationMinutes         int                         `json:"duration_minutes,omitempty"`
+	Timezone                string                      `json:"timezone,omitempty"`
+	CancellationWindowHours int                         `json:"cancellation_window_hours,omitempty"`
+	Availability              []domain.AvailabilityWindow `json:"availability,omitempty"`
+	SubscriptionInterval      string                      `json:"subscription_interval,omitempty"`
+	SubscriptionBillingCycles int                         `json:"subscription_billing_cycles,omitempty"`
+	ExternalURL               string                      `json:"external_url,omitempty"`
+	ButtonText                string                      `json:"button_text,omitempty"`
 }
 
 // UpdateProductDTO defines the request body for updating a product.
 type UpdateProductDTO struct {
-	Title         string `json:"title,omitempty"`
-	Description   string `json:"description,omitempty"`
-	Price         int64  `json:"price,omitempty"`
-	CoverImageURL string `json:"cover_image_url,omitempty"`
+	Title                   string                      `json:"title,omitempty"`
+	Description             string                      `json:"description,omitempty"`
+	Price                   int64                       `json:"price,omitempty"`
+	CoverImageURL           string                      `json:"cover_image_url,omitempty"`
+	DurationMinutes         int                         `json:"duration_minutes,omitempty"`
+	Timezone                string                      `json:"timezone,omitempty"`
+	CancellationWindowHours int                         `json:"cancellation_window_hours,omitempty"`
+	Availability              []domain.AvailabilityWindow `json:"availability,omitempty"`
+	SubscriptionInterval      string                      `json:"subscription_interval,omitempty"`
+	SubscriptionBillingCycles int                         `json:"subscription_billing_cycles,omitempty"`
+	ExternalURL               string                      `json:"external_url,omitempty"`
+	ButtonText                string                      `json:"button_text,omitempty"`
 }
 
 // CreateProduct handles POST /api/v1/products.
@@ -65,14 +81,22 @@ func (h *ProductHandler) CreateProduct(c *fiber.Ctx) error {
 
 	// 3. Map DTO to Domain Model
 	product := &domain.Product{
-		CreatorID:     creatorID,
-		Title:         req.Title,
-		Description:   req.Description,
-		Price:         req.Price,
-		CoverImageURL: req.CoverImageURL,
-		FileURL:       req.FileURL,
-		ProductType:   domain.ProductType(req.ProductType),
-		IsVisible:     true, // Default to visible
+		CreatorID:               creatorID,
+		Title:                   req.Title,
+		Description:             req.Description,
+		Price:                   req.Price,
+		CoverImageURL:           req.CoverImageURL,
+		FileURL:                 req.FileURL,
+		ProductType:             domain.ProductType(req.ProductType),
+		IsVisible:                 true, // Default to visible
+		DurationMinutes:           req.DurationMinutes,
+		Timezone:                  req.Timezone,
+		CancellationWindowHours:   req.CancellationWindowHours,
+		Availability:              req.Availability,
+		SubscriptionInterval:      req.SubscriptionInterval,
+		SubscriptionBillingCycles: req.SubscriptionBillingCycles,
+		ExternalURL:               req.ExternalURL,
+		ButtonText:              req.ButtonText,
 	}
 
 	// 4. Call Service
@@ -136,13 +160,45 @@ func (h *ProductHandler) UpdateProduct(c *fiber.Ctx) error {
 	// This means we can't unset fields to empty/zero easily with this simple struct.
 	// For MVP strict updates, this is acceptable.
 
-	updateData := &domain.Product{
-		Title:         req.Title,
-		Description:   req.Description,
-		Price:         req.Price,
-		CoverImageURL: req.CoverImageURL,
-		// FileURL is not updatable via this endpoint usually, maybe separate endpoint?
-		// For now, simple textual updates.
+	updateData := &domain.Product{} // Initialize an empty product to hold updates
+
+	// Conditionally set fields if they are provided in the DTO (not zero/empty)
+	if req.Title != "" {
+		updateData.Title = req.Title
+	}
+	if req.Description != "" {
+		updateData.Description = req.Description
+	}
+	if req.Price != 0 { // Price can be 0, so this might need more nuanced handling if 0 is a valid update
+		updateData.Price = req.Price
+	}
+	if req.CoverImageURL != "" {
+		updateData.CoverImageURL = req.CoverImageURL
+	}
+	if req.DurationMinutes != 0 {
+		updateData.DurationMinutes = req.DurationMinutes
+	}
+	if req.Timezone != "" {
+		updateData.Timezone = req.Timezone
+	}
+	if req.CancellationWindowHours != 0 {
+		updateData.CancellationWindowHours = req.CancellationWindowHours
+	}
+	if len(req.Availability) > 0 {
+		updateData.Availability = req.Availability
+	}
+	if req.SubscriptionInterval != "" {
+		updateData.SubscriptionInterval = req.SubscriptionInterval
+	}
+	// Billing cycles can be 0 or populated
+	if req.SubscriptionBillingCycles >= 0 { // Assuming -1 or other negative values are not valid for "not provided"
+		updateData.SubscriptionBillingCycles = req.SubscriptionBillingCycles
+	}
+	if req.ExternalURL != "" {
+		updateData.ExternalURL = req.ExternalURL
+	}
+	if req.ButtonText != "" {
+		updateData.ButtonText = req.ButtonText
 	}
 
 	updatedProduct, err := h.service.UpdateProduct(c.Context(), productID, userID, updateData)

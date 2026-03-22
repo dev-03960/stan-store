@@ -175,6 +175,7 @@ export default function AdminBlogEditor() {
                                 placeholder="https://..."
                                 className="w-full px-4 py-2 bg-gray-50 dark:bg-[#0a0a0a] border border-gray-100 dark:border-gray-800 rounded-xl text-sm dark:text-white"
                             />
+                            <p className="mt-1 text-[10px] text-gray-400">Suggested: 1200x630px (1.9:1 Ratio)</p>
                             {blog.cover_image && (
                                 <div className="mt-3 aspect-video rounded-xl overflow-hidden border border-gray-100 dark:border-gray-800">
                                     <img src={blog.cover_image} alt="Preview" className="w-full h-full object-cover" />

@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../lib/api';
 import { MioLogo } from '../../components/brand/MioLogo';
@@ -18,10 +18,12 @@ export default function LoginPage() {
     const [error, setError] = useState('');
 
     // Redirect if already logged in
-    if (isAuthenticated && user) {
-        const from = (location.state as any)?.from?.pathname || (user.username ? '/dashboard' : '/onboarding');
-        return <Navigate to={from} replace />;
-    }
+    useEffect(() => {
+        if (isAuthenticated && user) {
+            const from = (location.state as any)?.from?.pathname || (user.username ? '/dashboard' : '/onboarding');
+            navigate(from, { replace: true });
+        }
+    }, [isAuthenticated, user, navigate, location.state]);
 
     const handleGoogleLogin = () => {
         window.location.href = '/api/v1/auth/google';
@@ -50,7 +52,7 @@ export default function LoginPage() {
                 const res = await api.post<{ user: any; token: string; redirectUrl: string }>('/auth/creator/login', { email, password });
                 if (res.data?.redirectUrl) {
                     await checkAuth();
-                    navigate(res.data.redirectUrl);
+                    // The useEffect above will handle the actual redirection once checkAuth finishes
                 }
             }
         } catch (err: any) {

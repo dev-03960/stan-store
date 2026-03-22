@@ -49,15 +49,18 @@ type AffiliateSale struct {
 type AffiliateRepository interface {
 	Create(ctx context.Context, aff *Affiliate) error
 	FindByCode(ctx context.Context, code string) (*Affiliate, error)
+	FindByID(ctx context.Context, id primitive.ObjectID) (*Affiliate, error)
 	FindByEmailAndCreator(ctx context.Context, email string, creatorID primitive.ObjectID) (*Affiliate, error)
 	FindAllByCreator(ctx context.Context, creatorID primitive.ObjectID) ([]*Affiliate, error)
 	UpdateStats(ctx context.Context, affiliateID primitive.ObjectID, addedEarned int64, isSale bool, isClick bool) error
 	UpdateStatus(ctx context.Context, affiliateID primitive.ObjectID, status string) error
+	UpdateCommission(ctx context.Context, affiliateID primitive.ObjectID, rate float64) error
 }
 
 type AffiliateSaleRepository interface {
 	Create(ctx context.Context, sale *AffiliateSale) error
 	FindAllByAffiliate(ctx context.Context, affiliateID primitive.ObjectID) ([]*AffiliateSale, error)
 	FindPendingByAffiliate(ctx context.Context, affiliateID primitive.ObjectID) ([]*AffiliateSale, error)
+	FindAllByProduct(ctx context.Context, productID primitive.ObjectID) ([]*AffiliateSale, error)
 	UpdateStatus(ctx context.Context, saleID primitive.ObjectID, status AffiliateSaleStatus) error
 }

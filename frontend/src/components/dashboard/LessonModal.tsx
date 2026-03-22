@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { X, Video, FileText, Paperclip, Loader2, Upload } from 'lucide-react';
+import { X, Video, FileText, Paperclip, Loader2, Upload, ExternalLink } from 'lucide-react';
 import { createLesson, updateLesson, getPresignedUrl, uploadFileToUrl } from '../../lib/api/products';
 import type { Lesson } from '../../lib/api/products';
 
@@ -94,7 +94,8 @@ export const LessonModal: React.FC<LessonModalProps> = ({ productId, moduleId, l
                             {[
                                 { id: 'video', icon: Video, label: 'Video' },
                                 { id: 'text', icon: FileText, label: 'Text' },
-                                { id: 'attachment', icon: Paperclip, label: 'File' }
+                                { id: 'attachment', icon: Paperclip, label: 'File' },
+                                { id: 'link', icon: ExternalLink, label: 'Link' }
                             ].map((type) => {
                                 const Icon = type.icon;
                                 const isSelected = formData.type === type.id;
@@ -133,6 +134,7 @@ export const LessonModal: React.FC<LessonModalProps> = ({ productId, moduleId, l
                                         <span className="text-sm font-medium text-indigo-600 hover:text-indigo-500">
                                             {file ? file.name : 'Upload MP4 File'}
                                         </span>
+                                        <span className="text-xs text-slate-400 block mt-1">Suggested: 1080p MP4 (Max 2GB)</span>
                                         {!file && <p className="text-xs text-slate-500 mt-1">or link external below</p>}
                                     </label>
                                 </div>
@@ -195,6 +197,21 @@ export const LessonModal: React.FC<LessonModalProps> = ({ productId, moduleId, l
                             {formData.content && !file && (
                                 <p className="text-xs text-slate-500 dark:text-gray-400 mt-2 truncate">Current file: {formData.content}</p>
                             )}
+                        </div>
+                    )}
+
+                    {formData.type === 'link' && (
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">External Course URL</label>
+                            <input
+                                type="url"
+                                required
+                                placeholder="https://teachable.com/your-course or any URL"
+                                className="w-full p-2 border border-slate-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-[#0f111a] dark:text-white"
+                                value={formData.content}
+                                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                            />
+                            <p className="text-xs text-slate-500 dark:text-gray-400 mt-1">Paste the link to your externally hosted course, lesson, or resource.</p>
                         </div>
                     )}
 

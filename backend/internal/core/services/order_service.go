@@ -190,7 +190,7 @@ func (s *OrderService) CreateOrder(ctx context.Context, productID primitive.Obje
 			return nil, fmt.Errorf("failed to create razorpay plan: %w", err)
 		}
 		// 2. Create the Subscription against the plan
-		razorpayOrderID, errRP = s.paymentSvc.CreateRazorpaySubscription(planID)
+		razorpayOrderID, errRP = s.paymentSvc.CreateRazorpaySubscription(planID, product.SubscriptionBillingCycles)
 		if errRP != nil {
 			return nil, fmt.Errorf("failed to create razorpay subscription: %w", errRP)
 		}
@@ -400,6 +400,30 @@ func (s *OrderService) HandlePaymentSuccess(ctx context.Context, razorpayOrderID
 
 	if err := s.walletSvc.CreditTransaction(ctx, order.CreatorID, netAmount, "Order Payment via "+paymentID+fmt.Sprintf(" (net after %.1f%% fee)", feeRate), order.ID.Hex(), domain.TransactionSourceOrder); err != nil {
 		fmt.Printf("CRITICAL: Failed to credit wallet for order %s: %v\n", order.ID.Hex(), err)
+	}
+
+	// 3.5 Add subscriber (async, best-effort) to allow creators to market to buyers
+	if s.subscriberRepo != nil {
+		go func() {
+			bgCtx := context.Background()
+			
+			// Determine the primary product ID for attribution
+			primaryProductID := order.ProductID
+			if len(order.LineItems) > 0 {
+				primaryProductID = order.LineItems[0].ProductID
+			}
+
+			sub := &domain.EmailSubscriber{
+				CreatorID:    order.CreatorID,
+				Email:        order.CustomerEmail,
+				Name:         order.CustomerName,
+				Source:       primaryProductID,
+				ConsentGiven: true,
+			}
+			if err := s.subscriberRepo.Upsert(bgCtx, sub); err != nil {
+				fmt.Printf("Failed to add subscriber for paid order: %v\n", err)
+			}
+		}()
 	}
 
 	// 4. Send Order Confirmation Email

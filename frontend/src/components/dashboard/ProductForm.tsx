@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createProduct, updateProduct, getPresignedUrl, uploadFileToUrl, updateBumpConfig } from '../../lib/api/products';
 import type { CreateProductDTO } from '../../lib/api/products';
 import type { Product, BumpConfig } from '../../lib/api/store';
-import { Loader2, Upload, X, Sparkles, FileText, Mail, Video, BookOpen, Users } from 'lucide-react';
+import { Loader2, Upload, X, Sparkles, FileText, Mail, Video, BookOpen, Users, ExternalLink } from 'lucide-react';
 import { aiApi } from '../../features/dashboard/aiApi';
 import { CoachingSettings } from './CoachingSettings';
 import { OrderBumpSettings } from './OrderBumpSettings';
@@ -54,6 +54,14 @@ const PRODUCT_TYPES = [
         color: 'from-cyan-400 to-teal-500',
         bgColor: 'bg-cyan-50',
     },
+    {
+        id: 'external_link',
+        name: 'External Link / URL',
+        description: 'Link to any URL — affiliate, YouTube, podcast, etc.',
+        icon: ExternalLink,
+        color: 'from-orange-400 to-rose-500',
+        bgColor: 'bg-orange-50',
+    },
 ];
 
 interface ProductFormProps {
@@ -81,6 +89,9 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, defaultProductType, 
         cancellation_window_hours: product?.cancellation_window_hours || 24,
         availability: product?.availability || [],
         subscription_interval: product?.subscription_interval || 'monthly',
+        subscription_billing_cycles: product?.subscription_billing_cycles || 0,
+        external_url: product?.external_url || '',
+        button_text: product?.button_text || '',
     });
 
     const handleSelectType = (typeId: string) => {
@@ -169,8 +180,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, defaultProductType, 
                 finalFileUrl = `${r2PublicUrl}/${presigned.key}`; // Placeholder
             }
 
-            // Force price to 0 if it's a lead magnet
-            const finalPrice = data.product_type === 'lead_magnet' ? 0 : Math.round(data.price * 100);
+            // Force price to 0 if it's a lead magnet or external link
+            const finalPrice = (data.product_type === 'lead_magnet' || data.product_type === 'external_link') ? 0 : Math.round(data.price * 100);
 
             // Convert rupees to paise before sending to backend
             const payload = { ...data, price: finalPrice, cover_image_url: finalImageUrl, file_url: finalFileUrl };
@@ -284,6 +295,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, defaultProductType, 
                                 <option value="booking">1:1 Coaching</option>
                                 <option value="course">Course / e-Learning</option>
                                 <option value="membership">Membership</option>
+                                <option value="external_link">External Link / URL</option>
                             </select>
                             {isEditing && (
                                 <p className="text-xs text-slate-400 dark:text-gray-500 mt-1">Product type cannot be changed after creation.</p>
@@ -291,16 +303,35 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, defaultProductType, 
                         </div>
 
                         {formData.product_type === 'membership' && (
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">Billing Cycle</label>
-                                <select
-                                    className="w-full p-2 border border-slate-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-white dark:bg-[#0f111a] dark:text-white"
-                                    value={formData.subscription_interval}
-                                    onChange={(e) => setFormData({ ...formData, subscription_interval: e.target.value as any })}
-                                >
-                                    <option value="monthly">Monthly</option>
-                                    <option value="yearly">Yearly</option>
-                                </select>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">Billing Cycle</label>
+                                    <select
+                                        className="w-full p-2 border border-slate-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-white dark:bg-[#0f111a] dark:text-white"
+                                        value={formData.subscription_interval}
+                                        onChange={(e) => setFormData({ ...formData, subscription_interval: e.target.value as any })}
+                                    >
+                                        <option value="daily">Daily</option>
+                                        <option value="weekly">Weekly</option>
+                                        <option value="monthly">Monthly</option>
+                                        <option value="yearly">Yearly</option>
+                                    </select>
+                                </div>
+                                <div className="pt-2 border-t border-slate-100 dark:border-gray-700">
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">Cancel Subscription After (cycles)</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="1"
+                                        className="w-full p-2 border border-slate-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-white dark:bg-[#0f111a] dark:text-white"
+                                        value={formData.subscription_billing_cycles || ''}
+                                        onChange={(e) => setFormData({ ...formData, subscription_billing_cycles: Number(e.target.value) || 0 })}
+                                        placeholder="0 (Indefinite)"
+                                    />
+                                    <p className="text-xs text-slate-400 dark:text-gray-500 mt-1">
+                                        E.g. Setting this to 6 on a Monthly cycle will stop billing after 6 months. Leave empty or 0 to charge indefinitely.
+                                    </p>
+                                </div>
                             </div>
                         )}
 
@@ -366,7 +397,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, defaultProductType, 
                             />
                         </div>
 
-                        {formData.product_type !== 'lead_magnet' && (
+                        {formData.product_type !== 'lead_magnet' && formData.product_type !== 'external_link' && (
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">Price (₹ INR)</label>
                                 <div className="relative">
@@ -390,6 +421,34 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, defaultProductType, 
                             </div>
                         )}
 
+                        {formData.product_type === 'external_link' && (
+                            <>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">External URL <span className="text-red-500">*</span></label>
+                                    <input
+                                        type="url"
+                                        required
+                                        placeholder="https://youtube.com/your-video"
+                                        className="w-full p-2 border border-slate-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-white dark:bg-[#0f111a] dark:text-white"
+                                        value={formData.external_url || ''}
+                                        onChange={(e) => setFormData({ ...formData, external_url: e.target.value })}
+                                    />
+                                    <p className="text-xs text-slate-400 dark:text-gray-500 mt-1">The URL visitors will be redirected to when they click this product.</p>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">Button Text</label>
+                                    <input
+                                        type="text"
+                                        placeholder="Visit Link"
+                                        className="w-full p-2 border border-slate-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-white dark:bg-[#0f111a] dark:text-white"
+                                        value={formData.button_text || ''}
+                                        onChange={(e) => setFormData({ ...formData, button_text: e.target.value })}
+                                    />
+                                    <p className="text-xs text-slate-400 dark:text-gray-500 mt-1">Custom call-to-action text, e.g. "Watch Now", "Listen Here", "Shop Now"</p>
+                                </div>
+                            </>
+                        )}
+
                         <div>
                             <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">Thumbnail Image</label>
                             <div className="border-2 border-dashed border-slate-300 dark:border-gray-600 rounded-lg p-6 text-center hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
@@ -405,11 +464,12 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, defaultProductType, 
                                     <span className="text-sm text-slate-600 dark:text-gray-400">
                                         {imageFile ? imageFile.name : (formData.cover_image_url ? 'Change Image' : 'Click to upload thumbnail')}
                                     </span>
+                                    <span className="text-xs text-slate-400 dark:text-gray-500 mt-1">Suggested: 1080x1080px (1:1 Ratio)</span>
                                 </label>
                             </div>
                         </div>
 
-                        {formData.product_type !== 'booking' && formData.product_type !== 'course' && (
+                        {formData.product_type !== 'booking' && formData.product_type !== 'course' && formData.product_type !== 'external_link' && (
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">Product File</label>
                                 <div className="border-2 border-dashed border-slate-300 dark:border-gray-600 rounded-lg p-6 text-center hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
@@ -424,6 +484,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, defaultProductType, 
                                         <span className="text-sm text-slate-600">
                                             {productFile ? productFile.name : (formData.file_url ? 'Change File' : 'Click to upload product file')}
                                         </span>
+                                        <span className="text-xs text-slate-400 mt-1">Files supported: PDF, ZIP, MP4 (Max 2GB)</span>
                                     </label>
                                 </div>
                             </div>
@@ -440,7 +501,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, defaultProductType, 
                         )}
 
                         {/* Order Bump Settings — only for paid products when editing */}
-                        {isEditing && formData.product_type !== 'lead_magnet' && (
+                        {isEditing && formData.product_type !== 'lead_magnet' && formData.product_type !== 'external_link' && (
                             <OrderBumpSettings
                                 currentProductId={product?.id}
                                 bumpConfig={bumpConfig || undefined}
@@ -449,7 +510,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, defaultProductType, 
                         )}
 
                         {/* Affiliate Program Settings — only when editing */}
-                        {isEditing && (
+                        {isEditing && formData.product_type !== 'external_link' && (
                             <AffiliateSettings
                                 config={affiliateConfig}
                                 onChange={setAffiliateConfig}
@@ -457,10 +518,16 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, defaultProductType, 
                         )}
 
                         {/* Course Builder UI - Documented in Story 8.5 */}
-                        {isEditing && formData.product_type === 'course' && (
+                        {isEditing && (formData.product_type === 'course' || formData.product_type === 'membership') && (
                             <div className="pt-6 border-t border-slate-100">
-                                <h3 className="text-lg font-bold font-heading mb-4">Course Curriculum</h3>
-                                <p className="text-sm text-slate-500 mb-4">Manage your course modules and lessons. Drag and drop to reorder.</p>
+                                <h3 className="text-lg font-bold font-heading mb-4">
+                                    {formData.product_type === 'membership' ? 'Membership Content' : 'Course Curriculum'}
+                                </h3>
+                                <p className="text-sm text-slate-500 mb-4">
+                                    {formData.product_type === 'membership'
+                                        ? 'Add content for your subscribers. You can add videos, text lessons, files, or external course links.'
+                                        : 'Manage your course modules and lessons. Drag and drop to reorder.'}
+                                </p>
                                 <CourseBuilder productId={product.id} />
                             </div>
                         )}

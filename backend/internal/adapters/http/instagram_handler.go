@@ -10,6 +10,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/devanshbhargava/stan-store/internal/core/services"
+	"github.com/devanshbhargava/stan-store/pkg/logger"
 )
 
 type InstagramHandler struct {
@@ -60,6 +61,7 @@ func (h *InstagramHandler) OAuthCallback(c *fiber.Ctx) error {
 
 	err := h.instagramService.ExchangeCodeAndConnect(c.Context(), creatorID, code)
 	if err != nil {
+		logger.Error("Instagram OAuthCallback failed", "error", err.Error(), "creatorID", creatorID)
 		return SendError(c, fiber.StatusInternalServerError, ErrInternalServer, "Failed to connect Instagram account", nil)
 	}
 
@@ -128,8 +130,7 @@ func (h *InstagramHandler) HandleWebhook(c *fiber.Ctx) error {
 	expectedSignature := "sha256=" + hex.EncodeToString(hash.Sum(nil))
 
 	if !hmac.Equal([]byte(signature), []byte(expectedSignature)) {
-		// Mock implementation drops this for easy testing, but in prod block it
-		// return c.SendStatus(fiber.StatusForbidden)
+		return c.SendStatus(fiber.StatusForbidden)
 	}
 
 	// 2. Process async to respond 200 OK immediately

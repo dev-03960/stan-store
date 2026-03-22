@@ -80,6 +80,10 @@ func (s *PaymentService) CreateRazorpayPlan(name string, amount int64, currency 
 	period := "monthly"
 	if interval == "yearly" {
 		period = "yearly"
+	} else if interval == "weekly" {
+		period = "weekly"
+	} else if interval == "daily" {
+		period = "daily"
 	}
 
 	data := map[string]interface{}{
@@ -110,10 +114,14 @@ func (s *PaymentService) CreateRazorpayPlan(name string, amount int64, currency 
 }
 
 // CreateRazorpaySubscription creates a subscription for a plan
-func (s *PaymentService) CreateRazorpaySubscription(planID string) (string, error) {
+func (s *PaymentService) CreateRazorpaySubscription(planID string, maxCycles int) (string, error) {
+	if maxCycles <= 0 {
+		maxCycles = 1200 // Large number for ongoing subscription
+	}
+
 	data := map[string]interface{}{
 		"plan_id":         planID,
-		"total_count":     1200, // Large number for ongoing subscription
+		"total_count":     maxCycles,
 		"customer_notify": 1,
 	}
 

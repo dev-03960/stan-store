@@ -19,8 +19,9 @@ const (
 type TransactionSource string
 
 const (
-	TransactionSourceOrder  TransactionSource = "order"
-	TransactionSourcePayout TransactionSource = "payout"
+	TransactionSourceOrder    TransactionSource = "order"
+	TransactionSourcePayout   TransactionSource = "payout"
+	TransactionSourceReferral TransactionSource = "referral"
 )
 
 // Transaction represents a financial record in the immutable ledger

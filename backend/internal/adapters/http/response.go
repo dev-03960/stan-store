@@ -28,8 +28,9 @@ const (
 	ErrValidation      = "ERR_VALIDATION"
 	ErrConflict        = "ERR_CONFLICT"
 	ErrTooManyRequests = "ERR_TOO_MANY_REQUESTS"
-	ErrAccountBanned   = "ERR_ACCOUNT_BANNED"
-	ErrStoreBanned     = "ERR_STORE_BANNED"
+	ErrAccountBanned       = "ERR_ACCOUNT_BANNED"
+	ErrStoreBanned         = "ERR_STORE_BANNED"
+	ErrSubscriptionRequired = "ERR_SUBSCRIPTION_REQUIRED"
 )
 
 // SendSuccess sends a successful response with the standardized envelope.

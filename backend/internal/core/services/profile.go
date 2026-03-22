@@ -138,6 +138,14 @@ func (s *ProfileService) validateProfileInput(input *ProfileInput) *ValidationEr
 		}
 	}
 
+	// Cover Photo URL
+	if input.CoverPhotoURL != "" {
+		if _, err := url.ParseRequestURI(input.CoverPhotoURL); err != nil ||
+			(!strings.HasPrefix(input.CoverPhotoURL, "http://") && !strings.HasPrefix(input.CoverPhotoURL, "https://")) {
+			errs = append(errs, FieldError{Field: "coverPhotoUrl", Message: "Cover Photo URL must be a valid HTTP/HTTPS URL"})
+		}
+	}
+
 	// Social links
 	if len(input.SocialLinks) > 5 {
 		errs = append(errs, FieldError{Field: "socialLinks", Message: "Maximum 5 social links allowed"})

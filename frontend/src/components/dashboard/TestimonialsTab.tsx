@@ -193,11 +193,14 @@ export const TestimonialsTab: React.FC<TestimonialsTabProps> = ({ productId }) =
                                 </div>
                             )}
 
-                            <label className="cursor-pointer border border-dashed border-gray-300 px-4 py-2 rounded-lg flex items-center gap-2 text-sm text-gray-600 hover:bg-gray-100 transition">
-                                <Upload className="w-4 h-4" />
-                                {imageFile || formState.avatar_url ? 'Change Avatar' : 'Upload Image'}
-                                <input type="file" className="hidden" accept="image/*" onChange={(e) => setImageFile(e.target.files?.[0] || null)} />
-                            </label>
+                            <div className="flex flex-col">
+                                <label className="cursor-pointer border border-dashed border-gray-300 px-4 py-2 rounded-lg flex items-center gap-2 text-sm text-gray-600 hover:bg-gray-100 transition">
+                                    <Upload className="w-4 h-4" />
+                                    {imageFile || formState.avatar_url ? 'Change Avatar' : 'Upload Image'}
+                                    <input type="file" className="hidden" accept="image/*" onChange={(e) => setImageFile(e.target.files?.[0] || null)} />
+                                </label>
+                                <span className="text-xs text-gray-400 mt-1">Suggested: 400x400px (1:1)</span>
+                            </div>
 
                             {(imageFile || formState.avatar_url) && (
                                 <button type="button" onClick={() => { setImageFile(null); setFormState(f => ({ ...f, avatar_url: '' })); }} className="text-sm text-red-500 hover:text-red-700">Remove</button>

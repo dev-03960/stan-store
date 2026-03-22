@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import type { Product } from '../../lib/api/store';
-import { ArrowRight, FileText, BookOpen, Video, Star } from 'lucide-react';
+import { ArrowRight, FileText, BookOpen, Video, Star, ExternalLink } from 'lucide-react';
 
 interface ProductCardProps {
     product: Product;
@@ -11,6 +11,7 @@ const getProductTypeIcon = (type: string) => {
     switch (type) {
         case 'course': return <BookOpen className="w-5 h-5 sm:w-6 sm:h-6" />;
         case 'coaching': return <Video className="w-5 h-5 sm:w-6 sm:h-6" />;
+        case 'external_link': return <ExternalLink className="w-5 h-5 sm:w-6 sm:h-6" />;
         default: return <FileText className="w-5 h-5 sm:w-6 sm:h-6" />;
     }
 };
@@ -20,6 +21,7 @@ const getProductTypeLabel = (type: string) => {
         case 'course': return 'Online Course';
         case 'coaching': return 'Coaching Call';
         case 'membership': return 'Membership';
+        case 'external_link': return 'External Link';
         default: return 'Digital Download';
     }
 };
@@ -99,23 +101,34 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onBuy }) => {
                 {/* Price & CTA */}
                 <div className="flex-shrink-0 flex flex-col items-end pl-2">
                     <div className="text-right mb-2">
-                        <span
-                            className="block text-base sm:text-2xl font-black tracking-tighter"
-                            style={{ color: 'var(--theme-text-primary)' }}
-                        >
-                            {new Intl.NumberFormat('en-IN', {
-                                style: 'currency',
-                                currency: 'INR',
-                                minimumFractionDigits: 0
-                            }).format(product.price / 100)}
-                        </span>
-                        {product.product_type === 'membership' && (
+                        {product.product_type === 'external_link' ? (
                             <span
-                                className="text-[10px] sm:text-xs font-medium block -mt-1 uppercase tracking-widest opacity-50"
-                                style={{ color: 'var(--theme-text-secondary)' }}
+                                className="block text-sm sm:text-base font-bold"
+                                style={{ color: 'var(--theme-accent)' }}
                             >
-                                PER {product.subscription_interval === 'yearly' ? 'YEAR' : 'MONTH'}
+                                {product.button_text || 'Visit Link'}
                             </span>
+                        ) : (
+                            <>
+                                <span
+                                    className="block text-base sm:text-2xl font-black tracking-tighter"
+                                    style={{ color: 'var(--theme-text-primary)' }}
+                                >
+                                    {new Intl.NumberFormat('en-IN', {
+                                        style: 'currency',
+                                        currency: 'INR',
+                                        minimumFractionDigits: 0
+                                    }).format(product.price / 100)}
+                                </span>
+                                {product.product_type === 'membership' && (
+                                    <span
+                                        className="text-[10px] sm:text-xs font-medium block -mt-1 uppercase tracking-widest opacity-50"
+                                        style={{ color: 'var(--theme-text-secondary)' }}
+                                    >
+                                        PER {product.subscription_interval === 'yearly' ? 'YEAR' : 'MONTH'}
+                                    </span>
+                                )}
+                            </>
                         )}
                     </div>
                     <button
@@ -125,7 +138,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onBuy }) => {
                             color: 'var(--theme-button-text, #fff)',
                         }}
                     >
-                        <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6" />
+                        {product.product_type === 'external_link'
+                            ? <ExternalLink className="w-5 h-5 sm:w-6 sm:h-6" />
+                            : <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6" />
+                        }
                     </button>
                 </div>
             </div>
